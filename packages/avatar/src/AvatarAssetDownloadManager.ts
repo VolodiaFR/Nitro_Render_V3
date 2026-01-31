@@ -15,6 +15,7 @@ export class AvatarAssetDownloadManager
     private _incompleteFigures: Map<string, AvatarAssetDownloadLibrary[]> = new Map();
     private _currentDownloads: AvatarAssetDownloadLibrary[] = [];
     private _libraryNames: string[] = [];
+    private _libraryLoadedCallback: (event: AvatarRenderLibraryEvent) => void = null;
 
     constructor(assets: IAssetManager, structure: AvatarStructure)
     {
@@ -38,9 +39,25 @@ export class AvatarAssetDownloadManager
 
         this.processFigureMap(responseData.libraries);
 
-        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_ASSET_DOWNLOADED, (event: AvatarRenderLibraryEvent) => this.onLibraryLoaded(event));
+        // Store callback for cleanup
+        this._libraryLoadedCallback = (event: AvatarRenderLibraryEvent) => this.onLibraryLoaded(event);
+        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_ASSET_DOWNLOADED, this._libraryLoadedCallback);
 
         await this.processMissingLibraries();
+    }
+
+    public dispose(): void
+    {
+        if(this._libraryLoadedCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.AVATAR_ASSET_DOWNLOADED, this._libraryLoadedCallback);
+            this._libraryLoadedCallback = null;
+        }
+
+        this._figureMap.clear();
+        this._figureListeners.clear();
+        this._incompleteFigures.clear();
+        this._currentDownloads = [];
     }
 
     private processFigureMap(data: any): void

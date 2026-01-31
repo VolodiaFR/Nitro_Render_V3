@@ -24,6 +24,7 @@ export class AvatarRenderManager implements IAvatarRenderManager
     private _effectAssetDownloadManager: EffectAssetDownloadManager = new EffectAssetDownloadManager(GetAssetManager(), this._structure);
 
     private _placeHolderFigure: AvatarFigureContainer = new AvatarFigureContainer(AvatarRenderManager.DEFAULT_FIGURE);
+    private _aliasResetCallback: () => void = null;
 
     public async init(): Promise<void>
     {
@@ -37,11 +38,28 @@ export class AvatarRenderManager implements IAvatarRenderManager
 
         this._aliasCollection.init();
 
-        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_ASSET_LOADED, () => this._aliasCollection.reset());
-        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_EFFECT_LOADED, () => this._aliasCollection.reset());
+        // Store callback for cleanup
+        this._aliasResetCallback = () => this._aliasCollection.reset();
+        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_ASSET_LOADED, this._aliasResetCallback);
+        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_EFFECT_LOADED, this._aliasResetCallback);
 
         await this._avatarAssetDownloadManager.init();
         await this._effectAssetDownloadManager.init();
+    }
+
+    public dispose(): void
+    {
+        // Remove event listeners
+        if(this._aliasResetCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.AVATAR_ASSET_LOADED, this._aliasResetCallback);
+            GetEventDispatcher().removeEventListener(NitroEventType.AVATAR_EFFECT_LOADED, this._aliasResetCallback);
+            this._aliasResetCallback = null;
+        }
+
+        // Dispose download managers
+        this._avatarAssetDownloadManager?.dispose();
+        this._effectAssetDownloadManager?.dispose();
     }
 
     private async loadActions(): Promise<void>

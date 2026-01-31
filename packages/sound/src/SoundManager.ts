@@ -15,16 +15,44 @@ export class SoundManager implements ISoundManager
     private _furnitureBeingPlayed: IAdvancedMap<number, number> = new AdvancedMap();
 
     private _musicController: IMusicController = new MusicController();
+    private _eventCallback: (event: INitroEvent) => void = null;
 
     public async init(): Promise<void>
     {
         this._musicController.init();
 
-        GetEventDispatcher().addEventListener<RoomEngineSamplePlaybackEvent>(RoomEngineSamplePlaybackEvent.PLAY_SAMPLE, event => this.onEvent(event));
-        GetEventDispatcher().addEventListener<RoomEngineObjectEvent>(RoomEngineObjectEvent.REMOVED, event => this.onEvent(event));
-        GetEventDispatcher().addEventListener<RoomEngineEvent>(RoomEngineEvent.DISPOSED, event => this.onEvent(event));
-        GetEventDispatcher().addEventListener<NitroSettingsEvent>(NitroSettingsEvent.SETTINGS_UPDATED, event => this.onEvent(event));
-        GetEventDispatcher().addEventListener<NitroSoundEvent>(NitroSoundEvent.PLAY_SOUND, event => this.onEvent(event));
+        // Store callback for cleanup
+        this._eventCallback = (event: INitroEvent) => this.onEvent(event);
+
+        GetEventDispatcher().addEventListener<RoomEngineSamplePlaybackEvent>(RoomEngineSamplePlaybackEvent.PLAY_SAMPLE, this._eventCallback);
+        GetEventDispatcher().addEventListener<RoomEngineObjectEvent>(RoomEngineObjectEvent.REMOVED, this._eventCallback);
+        GetEventDispatcher().addEventListener<RoomEngineEvent>(RoomEngineEvent.DISPOSED, this._eventCallback);
+        GetEventDispatcher().addEventListener<NitroSettingsEvent>(NitroSettingsEvent.SETTINGS_UPDATED, this._eventCallback);
+        GetEventDispatcher().addEventListener<NitroSoundEvent>(NitroSoundEvent.PLAY_SOUND, this._eventCallback);
+    }
+
+    public dispose(): void
+    {
+        if(this._eventCallback)
+        {
+            GetEventDispatcher().removeEventListener(RoomEngineSamplePlaybackEvent.PLAY_SAMPLE, this._eventCallback);
+            GetEventDispatcher().removeEventListener(RoomEngineObjectEvent.REMOVED, this._eventCallback);
+            GetEventDispatcher().removeEventListener(RoomEngineEvent.DISPOSED, this._eventCallback);
+            GetEventDispatcher().removeEventListener(NitroSettingsEvent.SETTINGS_UPDATED, this._eventCallback);
+            GetEventDispatcher().removeEventListener(NitroSoundEvent.PLAY_SOUND, this._eventCallback);
+            this._eventCallback = null;
+        }
+
+        // Stop all playing samples
+        this._furnitureBeingPlayed.getKeys().forEach((objectId: number) =>
+        {
+            this.stopFurniSample(objectId);
+        });
+
+        // Clear all samples
+        this._internalSamples.dispose();
+        this._furniSamples.dispose();
+        this._furnitureBeingPlayed.dispose();
     }
 
     private onEvent(event: INitroEvent)

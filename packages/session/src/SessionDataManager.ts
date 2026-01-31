@@ -1,4 +1,4 @@
-import { IFurnitureData, IGroupInformationManager, IMessageComposer, IProductData, ISessionDataManager, NoobnessLevelEnum, SecurityLevel } from '@nitrots/api';
+import { IFurnitureData, IGroupInformationManager, IMessageComposer, IMessageEvent, IProductData, ISessionDataManager, NoobnessLevelEnum, SecurityLevel } from '@nitrots/api';
 import { AccountSafetyLockStatusChangeMessageEvent, AccountSafetyLockStatusChangeParser, AvailabilityStatusMessageEvent, ChangeUserNameResultMessageEvent, EmailStatusResultEvent, FigureUpdateEvent, GetCommunication, GetUserTagsComposer, InClientLinkEvent, MysteryBoxKeysEvent, NoobnessLevelMessageEvent, PetRespectComposer, PetScratchFailedMessageEvent, RoomReadyMessageEvent, RoomUnitChatComposer, UserInfoEvent, UserNameChangeMessageEvent, UserPermissionsEvent, UserRespectComposer, UserTagsMessageEvent } from '@nitrots/communication';
 import { GetConfiguration } from '@nitrots/configuration';
 import { GetEventDispatcher, MysteryBoxKeysUpdateEvent, NitroSettingsEvent, SessionDataPreferencesEvent, UserNameUpdateEvent } from '@nitrots/events';
@@ -12,6 +12,8 @@ import { ProductDataLoader } from './product/ProductDataLoader';
 
 export class SessionDataManager implements ISessionDataManager
 {
+    private _messageEvents: IMessageEvent[] = [];
+    private _settingsEventCallback: (event: NitroSettingsEvent) => void = null;
     private _userId: number;
     private _name: string;
     private _figure: string;
@@ -62,35 +64,57 @@ export class SessionDataManager implements ISessionDataManager
             this._groupInformationManager.init()
         ]);
 
-        GetCommunication().registerMessageEvent(new FigureUpdateEvent((event: FigureUpdateEvent) =>
-        {
-            this._figure = event.getParser().figure;
-            this._gender = event.getParser().gender;
+        // Store message event references for cleanup
+        this._messageEvents.push(
+            GetCommunication().registerMessageEvent(new FigureUpdateEvent((event: FigureUpdateEvent) =>
+            {
+                this._figure = event.getParser().figure;
+                this._gender = event.getParser().gender;
 
-            HabboWebTools.updateFigure(this._figure);
-        }));
+                HabboWebTools.updateFigure(this._figure);
+            })),
+            GetCommunication().registerMessageEvent(new UserInfoEvent(this.onUserInfoEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new UserPermissionsEvent(this.onUserPermissionsEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new AvailabilityStatusMessageEvent(this.onAvailabilityStatusMessageEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new PetScratchFailedMessageEvent(this.onPetRespectFailed.bind(this))),
+            GetCommunication().registerMessageEvent(new ChangeUserNameResultMessageEvent(this.onChangeNameUpdateEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new UserNameChangeMessageEvent(this.onUserNameChangeMessageEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new UserTagsMessageEvent(this.onUserTags.bind(this))),
+            GetCommunication().registerMessageEvent(new RoomReadyMessageEvent(this.onRoomModelNameEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new InClientLinkEvent(this.onInClientLinkEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new MysteryBoxKeysEvent(this.onMysteryBoxKeysEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new NoobnessLevelMessageEvent(this.onNoobnessLevelMessageEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new AccountSafetyLockStatusChangeMessageEvent(this.onAccountSafetyLockStatusChangeMessageEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new EmailStatusResultEvent(this.onEmailStatus.bind(this)))
+        );
 
-        GetCommunication().registerMessageEvent(new UserInfoEvent(this.onUserInfoEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new UserPermissionsEvent(this.onUserPermissionsEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new AvailabilityStatusMessageEvent(this.onAvailabilityStatusMessageEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new PetScratchFailedMessageEvent(this.onPetRespectFailed.bind(this)));
-        GetCommunication().registerMessageEvent(new ChangeUserNameResultMessageEvent(this.onChangeNameUpdateEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new UserNameChangeMessageEvent(this.onUserNameChangeMessageEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new UserTagsMessageEvent(this.onUserTags.bind(this)));
-        GetCommunication().registerMessageEvent(new RoomReadyMessageEvent(this.onRoomModelNameEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new InClientLinkEvent(this.onInClientLinkEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new MysteryBoxKeysEvent(this.onMysteryBoxKeysEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new NoobnessLevelMessageEvent(this.onNoobnessLevelMessageEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new AccountSafetyLockStatusChangeMessageEvent(this.onAccountSafetyLockStatusChangeMessageEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new EmailStatusResultEvent(this.onEmailStatus.bind(this)));
-
-        GetEventDispatcher().addEventListener<NitroSettingsEvent>(NitroSettingsEvent.SETTINGS_UPDATED, event =>
+        // Store event dispatcher callback for cleanup
+        this._settingsEventCallback = (event: NitroSettingsEvent) =>
         {
             this._isRoomCameraFollowDisabled = event.cameraFollow;
             this._uiFlags = event.flags;
 
             GetEventDispatcher().dispatchEvent(new SessionDataPreferencesEvent(this._uiFlags));
-        });
+        };
+
+        GetEventDispatcher().addEventListener<NitroSettingsEvent>(NitroSettingsEvent.SETTINGS_UPDATED, this._settingsEventCallback);
+    }
+
+    public dispose(): void
+    {
+        // Remove all message events
+        for(const event of this._messageEvents)
+        {
+            GetCommunication().removeMessageEvent(event);
+        }
+        this._messageEvents = [];
+
+        // Remove event dispatcher listener
+        if(this._settingsEventCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroSettingsEvent.SETTINGS_UPDATED, this._settingsEventCallback);
+            this._settingsEventCallback = null;
+        }
     }
 
     private resetUserInfo(): void

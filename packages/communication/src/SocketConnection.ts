@@ -17,6 +17,12 @@ export class SocketConnection implements IConnection
 
     private _isAuthenticated: boolean = false;
 
+    // Store callbacks for cleanup
+    private _onOpenCallback: (event: Event) => void = null;
+    private _onCloseCallback: (event: Event) => void = null;
+    private _onErrorCallback: (event: Event) => void = null;
+    private _onMessageCallback: (event: MessageEvent) => void = null;
+
     public init(socketUrl: string): void
     {
         if(!socketUrl || !socketUrl.length) return;
@@ -26,18 +32,49 @@ export class SocketConnection implements IConnection
         this._socket = new WebSocket(socketUrl);
         this._socket.binaryType = 'arraybuffer';
 
-        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_OPENED, event => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_OPENED)));
-
-        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_CLOSED, event => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_CLOSED)));
-
-        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_ERROR, event => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_ERROR)));
-
-        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, (event: MessageEvent) =>
+        // Store callbacks for cleanup
+        this._onOpenCallback = () => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_OPENED));
+        this._onCloseCallback = () => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_CLOSED));
+        this._onErrorCallback = () => GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_ERROR));
+        this._onMessageCallback = (event: MessageEvent) =>
         {
             this._dataBuffer = this.concatArrayBuffers(this._dataBuffer, event.data);
-
             this.processReceivedData();
-        });
+        };
+
+        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_OPENED, this._onOpenCallback);
+        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_CLOSED, this._onCloseCallback);
+        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_ERROR, this._onErrorCallback);
+        this._socket.addEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, this._onMessageCallback);
+    }
+
+    public dispose(): void
+    {
+        if(this._socket)
+        {
+            // Remove all event listeners
+            if(this._onOpenCallback) this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_OPENED, this._onOpenCallback);
+            if(this._onCloseCallback) this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_CLOSED, this._onCloseCallback);
+            if(this._onErrorCallback) this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_ERROR, this._onErrorCallback);
+            if(this._onMessageCallback) this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, this._onMessageCallback);
+
+            // Close socket if still open
+            if(this._socket.readyState === WebSocket.OPEN || this._socket.readyState === WebSocket.CONNECTING)
+            {
+                this._socket.close();
+            }
+
+            this._socket = null;
+        }
+
+        this._onOpenCallback = null;
+        this._onCloseCallback = null;
+        this._onErrorCallback = null;
+        this._onMessageCallback = null;
+
+        this._pendingClientMessages = [];
+        this._pendingServerMessages = [];
+        this._dataBuffer = null;
     }
 
     public ready(): void

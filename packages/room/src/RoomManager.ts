@@ -16,12 +16,14 @@ export class RoomManager implements IRoomManager, IRoomInstanceContainer
 
     private _pendingContentTypes: string[] = [];
     private _skipContentProcessing: boolean = false;
+    private _contentLoadedCallback: (event: RoomContentLoadedEvent) => void = null;
 
     public async init(listener: IRoomManagerListener): Promise<void>
     {
         this._listener = listener;
 
-        const onRoomContentLoadedEvent = (event: RoomContentLoadedEvent) =>
+        // Store callback for cleanup
+        this._contentLoadedCallback = (event: RoomContentLoadedEvent) =>
         {
             if(!GetRoomContentLoader()) return;
 
@@ -32,9 +34,30 @@ export class RoomManager implements IRoomManager, IRoomInstanceContainer
             this._pendingContentTypes.push(contentType);
         };
 
-        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_SUCCESS, onRoomContentLoadedEvent);
-        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_FAILURE, onRoomContentLoadedEvent);
-        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_CANCEL, onRoomContentLoadedEvent);
+        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_SUCCESS, this._contentLoadedCallback);
+        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_FAILURE, this._contentLoadedCallback);
+        GetEventDispatcher().addEventListener(RoomContentLoadedEvent.RCLE_CANCEL, this._contentLoadedCallback);
+    }
+
+    public dispose(): void
+    {
+        // Remove event listeners
+        if(this._contentLoadedCallback)
+        {
+            GetEventDispatcher().removeEventListener(RoomContentLoadedEvent.RCLE_SUCCESS, this._contentLoadedCallback);
+            GetEventDispatcher().removeEventListener(RoomContentLoadedEvent.RCLE_FAILURE, this._contentLoadedCallback);
+            GetEventDispatcher().removeEventListener(RoomContentLoadedEvent.RCLE_CANCEL, this._contentLoadedCallback);
+            this._contentLoadedCallback = null;
+        }
+
+        // Dispose all room instances
+        for(const room of this._rooms.values())
+        {
+            room.dispose();
+        }
+
+        this._rooms.clear();
+        this._pendingContentTypes = [];
     }
 
     public getRoomInstance(roomId: string): IRoomInstance

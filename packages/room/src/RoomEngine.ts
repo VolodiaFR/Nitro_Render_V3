@@ -64,13 +64,16 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
     private _mouseCursorUpdate: boolean = false;
     private _badgeListenerObjects: Map<string, RoomObjectBadgeImageAssetListener[]> = new Map();
     private _areaSelectionManager: IRoomAreaSelectionManager = new RoomAreaSelectionManager(this);
+    private _roomSessionEventCallback: (event: RoomSessionEvent) => void = null;
 
     public async init(): Promise<void>
     {
         GetRoomObjectLogicFactory().registerEventFunction(event => this.processRoomObjectEvent(event));
 
-        GetEventDispatcher().addEventListener<RoomSessionEvent>(RoomSessionEvent.STARTED, event => this.onRoomSessionEvent(event));
-        GetEventDispatcher().addEventListener<RoomSessionEvent>(RoomSessionEvent.ENDED, event => this.onRoomSessionEvent(event));
+        // Store callback for cleanup
+        this._roomSessionEventCallback = (event: RoomSessionEvent) => this.onRoomSessionEvent(event);
+        GetEventDispatcher().addEventListener<RoomSessionEvent>(RoomSessionEvent.STARTED, this._roomSessionEventCallback);
+        GetEventDispatcher().addEventListener<RoomSessionEvent>(RoomSessionEvent.ENDED, this._roomSessionEventCallback);
 
         await GetRoomMessageHandler().init();
         await this._roomContentLoader.init();
@@ -106,6 +109,32 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
                 this.removeRoomInstance(event.session.roomId);
                 return;
         }
+    }
+
+    public dispose(): void
+    {
+        // Remove event listeners
+        if(this._roomSessionEventCallback)
+        {
+            GetEventDispatcher().removeEventListener(RoomSessionEvent.STARTED, this._roomSessionEventCallback);
+            GetEventDispatcher().removeEventListener(RoomSessionEvent.ENDED, this._roomSessionEventCallback);
+            this._roomSessionEventCallback = null;
+        }
+
+        // Dispose room message handler
+        GetRoomMessageHandler().dispose();
+
+        // Clear all room instances
+        for(const roomId of this._roomDatas.keys())
+        {
+            this.removeRoomInstance(roomId);
+        }
+
+        this._roomDatas.clear();
+        this._roomInstanceDatas.clear();
+        this._imageCallbacks.clear();
+        this._thumbnailCallbacks.clear();
+        this._badgeListenerObjects.clear();
     }
 
     public setActiveRoomId(roomId: number): void

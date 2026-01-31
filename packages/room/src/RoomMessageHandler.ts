@@ -1,4 +1,4 @@
-import { AvatarGuideStatus, IConnection, IRoomCreator, IVector3D, LegacyDataType, ObjectRolling, PetType, RoomObjectType, RoomObjectUserType, RoomObjectVariable } from '@nitrots/api';
+import { AvatarGuideStatus, IConnection, IMessageEvent, IRoomCreator, IVector3D, LegacyDataType, ObjectRolling, PetType, RoomObjectType, RoomObjectUserType, RoomObjectVariable } from '@nitrots/api';
 import { AreaHideMessageEvent, DiceValueMessageEvent, FloorHeightMapEvent, FurnitureAliasesComposer, FurnitureAliasesEvent, FurnitureDataEvent, FurnitureFloorAddEvent, FurnitureFloorDataParser, FurnitureFloorEvent, FurnitureFloorRemoveEvent, FurnitureFloorUpdateEvent, FurnitureWallAddEvent, FurnitureWallDataParser, FurnitureWallEvent, FurnitureWallRemoveEvent, FurnitureWallUpdateEvent, GetCommunication, GetRoomEntryDataMessageComposer, GuideSessionEndedMessageEvent, GuideSessionErrorMessageEvent, GuideSessionStartedMessageEvent, IgnoreResultEvent, ItemDataUpdateMessageEvent, ObjectsDataUpdateEvent, ObjectsRollingEvent, OneWayDoorStatusMessageEvent, PetExperienceEvent, PetFigureUpdateEvent, RoomEntryTileMessageEvent, RoomEntryTileMessageParser, RoomHeightMapEvent, RoomHeightMapUpdateEvent, RoomPaintEvent, RoomReadyMessageEvent, RoomUnitChatEvent, RoomUnitChatShoutEvent, RoomUnitChatWhisperEvent, RoomUnitDanceEvent, RoomUnitEffectEvent, RoomUnitEvent, RoomUnitExpressionEvent, RoomUnitHandItemEvent, RoomUnitIdleEvent, RoomUnitInfoEvent, RoomUnitNumberEvent, RoomUnitRemoveEvent, RoomUnitStatusEvent, RoomUnitTypingEvent, RoomVisualizationSettingsEvent, UserInfoEvent, YouArePlayingGameEvent } from '@nitrots/communication';
 import { GetRoomSessionManager, GetSessionDataManager } from '@nitrots/session';
 import { Vector3d } from '@nitrots/utils';
@@ -13,6 +13,7 @@ export class RoomMessageHandler
     private _roomEngine: IRoomCreator = null;
     private _planeParser = new RoomPlaneParser();
     private _latestEntryTileEvent: RoomEntryTileMessageEvent = null;
+    private _messageEvents: IMessageEvent[] = [];
 
     private _currentRoomId: number = 0;
     private _ownUserId: number = 0;
@@ -25,51 +26,77 @@ export class RoomMessageHandler
         this._connection = GetCommunication().connection;
         this._roomEngine = GetRoomEngine();
 
-        this._connection.addMessageEvent(new UserInfoEvent(this.onUserInfoEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomReadyMessageEvent(this.onRoomReadyMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomPaintEvent(this.onRoomPaintEvent.bind(this)));
-        this._connection.addMessageEvent(new FloorHeightMapEvent(this.onRoomModelEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomHeightMapEvent(this.onRoomHeightMapEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomHeightMapUpdateEvent(this.onRoomHeightMapUpdateEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomVisualizationSettingsEvent(this.onRoomThicknessEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomEntryTileMessageEvent(this.onRoomDoorEvent.bind(this)));
-        this._connection.addMessageEvent(new ObjectsRollingEvent(this.onRoomRollingEvent.bind(this)));
-        this._connection.addMessageEvent(new ObjectsDataUpdateEvent(this.onObjectsDataUpdateEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureAliasesEvent(this.onFurnitureAliasesEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureFloorAddEvent(this.onFurnitureFloorAddEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureFloorEvent(this.onFurnitureFloorEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureFloorRemoveEvent(this.onFurnitureFloorRemoveEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureFloorUpdateEvent(this.onFurnitureFloorUpdateEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureWallAddEvent(this.onFurnitureWallAddEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureWallEvent(this.onFurnitureWallEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureWallRemoveEvent(this.onFurnitureWallRemoveEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureWallUpdateEvent(this.onFurnitureWallUpdateEvent.bind(this)));
-        this._connection.addMessageEvent(new FurnitureDataEvent(this.onFurnitureDataEvent.bind(this)));
-        this._connection.addMessageEvent(new ItemDataUpdateMessageEvent(this.onItemDataUpdateMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new OneWayDoorStatusMessageEvent(this.onOneWayDoorStatusMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new AreaHideMessageEvent(this.onAreaHideMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitDanceEvent(this.onRoomUnitDanceEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitEffectEvent(this.onRoomUnitEffectEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitEvent(this.onRoomUnitEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitExpressionEvent(this.onRoomUnitExpressionEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitHandItemEvent(this.onRoomUnitHandItemEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitIdleEvent(this.onRoomUnitIdleEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitInfoEvent(this.onRoomUnitInfoEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitNumberEvent(this.onRoomUnitNumberEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitRemoveEvent(this.onRoomUnitRemoveEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitStatusEvent(this.onRoomUnitStatusEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitChatEvent(this.onRoomUnitChatEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitChatShoutEvent(this.onRoomUnitChatEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitChatWhisperEvent(this.onRoomUnitChatEvent.bind(this)));
-        this._connection.addMessageEvent(new RoomUnitTypingEvent(this.onRoomUnitTypingEvent.bind(this)));
-        this._connection.addMessageEvent(new PetFigureUpdateEvent(this.onPetFigureUpdateEvent.bind(this)));
-        this._connection.addMessageEvent(new PetExperienceEvent(this.onPetExperienceEvent.bind(this)));
-        this._connection.addMessageEvent(new YouArePlayingGameEvent(this.onYouArePlayingGameEvent.bind(this)));
-        this._connection.addMessageEvent(new DiceValueMessageEvent(this.onDiceValueMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new IgnoreResultEvent(this.onIgnoreResultEvent.bind(this)));
-        this._connection.addMessageEvent(new GuideSessionStartedMessageEvent(this.onGuideSessionStartedMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new GuideSessionEndedMessageEvent(this.onGuideSessionEndedMessageEvent.bind(this)));
-        this._connection.addMessageEvent(new GuideSessionErrorMessageEvent(this.onGuideSessionErrorMessageEvent.bind(this)));
+        // Store all message events for cleanup
+        this._messageEvents = [
+            new UserInfoEvent(this.onUserInfoEvent.bind(this)),
+            new RoomReadyMessageEvent(this.onRoomReadyMessageEvent.bind(this)),
+            new RoomPaintEvent(this.onRoomPaintEvent.bind(this)),
+            new FloorHeightMapEvent(this.onRoomModelEvent.bind(this)),
+            new RoomHeightMapEvent(this.onRoomHeightMapEvent.bind(this)),
+            new RoomHeightMapUpdateEvent(this.onRoomHeightMapUpdateEvent.bind(this)),
+            new RoomVisualizationSettingsEvent(this.onRoomThicknessEvent.bind(this)),
+            new RoomEntryTileMessageEvent(this.onRoomDoorEvent.bind(this)),
+            new ObjectsRollingEvent(this.onRoomRollingEvent.bind(this)),
+            new ObjectsDataUpdateEvent(this.onObjectsDataUpdateEvent.bind(this)),
+            new FurnitureAliasesEvent(this.onFurnitureAliasesEvent.bind(this)),
+            new FurnitureFloorAddEvent(this.onFurnitureFloorAddEvent.bind(this)),
+            new FurnitureFloorEvent(this.onFurnitureFloorEvent.bind(this)),
+            new FurnitureFloorRemoveEvent(this.onFurnitureFloorRemoveEvent.bind(this)),
+            new FurnitureFloorUpdateEvent(this.onFurnitureFloorUpdateEvent.bind(this)),
+            new FurnitureWallAddEvent(this.onFurnitureWallAddEvent.bind(this)),
+            new FurnitureWallEvent(this.onFurnitureWallEvent.bind(this)),
+            new FurnitureWallRemoveEvent(this.onFurnitureWallRemoveEvent.bind(this)),
+            new FurnitureWallUpdateEvent(this.onFurnitureWallUpdateEvent.bind(this)),
+            new FurnitureDataEvent(this.onFurnitureDataEvent.bind(this)),
+            new ItemDataUpdateMessageEvent(this.onItemDataUpdateMessageEvent.bind(this)),
+            new OneWayDoorStatusMessageEvent(this.onOneWayDoorStatusMessageEvent.bind(this)),
+            new AreaHideMessageEvent(this.onAreaHideMessageEvent.bind(this)),
+            new RoomUnitDanceEvent(this.onRoomUnitDanceEvent.bind(this)),
+            new RoomUnitEffectEvent(this.onRoomUnitEffectEvent.bind(this)),
+            new RoomUnitEvent(this.onRoomUnitEvent.bind(this)),
+            new RoomUnitExpressionEvent(this.onRoomUnitExpressionEvent.bind(this)),
+            new RoomUnitHandItemEvent(this.onRoomUnitHandItemEvent.bind(this)),
+            new RoomUnitIdleEvent(this.onRoomUnitIdleEvent.bind(this)),
+            new RoomUnitInfoEvent(this.onRoomUnitInfoEvent.bind(this)),
+            new RoomUnitNumberEvent(this.onRoomUnitNumberEvent.bind(this)),
+            new RoomUnitRemoveEvent(this.onRoomUnitRemoveEvent.bind(this)),
+            new RoomUnitStatusEvent(this.onRoomUnitStatusEvent.bind(this)),
+            new RoomUnitChatEvent(this.onRoomUnitChatEvent.bind(this)),
+            new RoomUnitChatShoutEvent(this.onRoomUnitChatEvent.bind(this)),
+            new RoomUnitChatWhisperEvent(this.onRoomUnitChatEvent.bind(this)),
+            new RoomUnitTypingEvent(this.onRoomUnitTypingEvent.bind(this)),
+            new PetFigureUpdateEvent(this.onPetFigureUpdateEvent.bind(this)),
+            new PetExperienceEvent(this.onPetExperienceEvent.bind(this)),
+            new YouArePlayingGameEvent(this.onYouArePlayingGameEvent.bind(this)),
+            new DiceValueMessageEvent(this.onDiceValueMessageEvent.bind(this)),
+            new IgnoreResultEvent(this.onIgnoreResultEvent.bind(this)),
+            new GuideSessionStartedMessageEvent(this.onGuideSessionStartedMessageEvent.bind(this)),
+            new GuideSessionEndedMessageEvent(this.onGuideSessionEndedMessageEvent.bind(this)),
+            new GuideSessionErrorMessageEvent(this.onGuideSessionErrorMessageEvent.bind(this))
+        ];
+
+        // Register all message events
+        for(const event of this._messageEvents)
+        {
+            this._connection.addMessageEvent(event);
+        }
+    }
+
+    public dispose(): void
+    {
+        // Remove all message events
+        if(this._connection)
+        {
+            for(const event of this._messageEvents)
+            {
+                this._connection.removeMessageEvent(event);
+            }
+        }
+
+        this._messageEvents = [];
+        this._connection = null;
+        this._roomEngine = null;
+        this._latestEntryTileEvent = null;
     }
 
     public setRoomId(id: number): void

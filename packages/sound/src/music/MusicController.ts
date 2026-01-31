@@ -1,4 +1,4 @@
-import { IAdvancedMap, IMusicController, IPlaylistController, ISongInfo } from '@nitrots/api';
+import { IAdvancedMap, IMessageEvent, IMusicController, IPlaylistController, ISongInfo } from '@nitrots/api';
 import { GetCommunication, GetNowPlayingMessageComposer, GetSongInfoMessageComposer, GetUserSongDisksMessageComposer, TraxSongInfoMessageEvent, UserSongDisksInventoryMessageEvent } from '@nitrots/communication';
 import { GetConfiguration } from '@nitrots/configuration';
 import { GetEventDispatcher, NotifyPlayedSongEvent, NowPlayingEvent, RoomObjectSoundMachineEvent, SongDiskInventoryReceivedEvent, SongInfoReceivedEvent, SoundManagerEvent } from '@nitrots/events';
@@ -31,6 +31,7 @@ export class MusicController implements IMusicController
     private _songIdPlaying: number = 1;
     private _previousNotifiedSongId: number = -1;
     private _previousNotificationTime: number = -1;
+    private _messageEvents: IMessageEvent[] = [];
 
     constructor()
     {
@@ -44,8 +45,11 @@ export class MusicController implements IMusicController
 
     public init(): void
     {
-        GetCommunication().registerMessageEvent(new TraxSongInfoMessageEvent(this.onTraxSongInfoMessageEvent.bind(this)));
-        GetCommunication().registerMessageEvent(new UserSongDisksInventoryMessageEvent(this.onSongDiskInventoryMessage.bind(this)));
+        // Store message events for cleanup
+        this._messageEvents.push(
+            GetCommunication().registerMessageEvent(new TraxSongInfoMessageEvent(this.onTraxSongInfoMessageEvent.bind(this))),
+            GetCommunication().registerMessageEvent(new UserSongDisksInventoryMessageEvent(this.onSongDiskInventoryMessage.bind(this)))
+        );
 
         this._timerInstance = window.setInterval(this.onTick.bind(this), 1000);
         this._musicPlayer = new MusicPlayer(GetConfiguration().getValue<string>('external.samples.url'));
@@ -155,6 +159,13 @@ export class MusicController implements IMusicController
             clearInterval(this._timerInstance);
             this._timerInstance = undefined;
         }
+
+        // Remove message events
+        for(const event of this._messageEvents)
+        {
+            GetCommunication().removeMessageEvent(event);
+        }
+        this._messageEvents = [];
 
         GetEventDispatcher().removeEventListener(RoomObjectSoundMachineEvent.JUKEBOX_INIT, this.onJukeboxInit);
         GetEventDispatcher().removeEventListener(RoomObjectSoundMachineEvent.JUKEBOX_DISPOSE, this.onJukeboxDispose);

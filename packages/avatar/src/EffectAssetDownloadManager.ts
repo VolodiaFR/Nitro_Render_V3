@@ -15,6 +15,7 @@ export class EffectAssetDownloadManager
     private _incompleteEffects: Map<string, EffectAssetDownloadLibrary[]> = new Map();
     private _currentDownloads: EffectAssetDownloadLibrary[] = [];
     private _libraryNames: string[] = [];
+    private _libraryLoadedCallback: (event: AvatarRenderEffectLibraryEvent) => void = null;
 
     constructor(assets: IAssetManager, structure: AvatarStructure)
     {
@@ -38,9 +39,25 @@ export class EffectAssetDownloadManager
 
         this.processEffectMap(responseData.effects);
 
-        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_EFFECT_DOWNLOADED, (event: AvatarRenderEffectLibraryEvent) => this.onLibraryLoaded(event));
+        // Store callback for cleanup
+        this._libraryLoadedCallback = (event: AvatarRenderEffectLibraryEvent) => this.onLibraryLoaded(event);
+        GetEventDispatcher().addEventListener(NitroEventType.AVATAR_EFFECT_DOWNLOADED, this._libraryLoadedCallback);
 
         await this.processMissingLibraries();
+    }
+
+    public dispose(): void
+    {
+        if(this._libraryLoadedCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.AVATAR_EFFECT_DOWNLOADED, this._libraryLoadedCallback);
+            this._libraryLoadedCallback = null;
+        }
+
+        this._effectMap.clear();
+        this._effectListeners.clear();
+        this._incompleteEffects.clear();
+        this._currentDownloads = [];
     }
 
     private processEffectMap(data: any): void

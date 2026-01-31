@@ -13,6 +13,10 @@ export class CommunicationManager implements ICommunicationManager
     private _messages: IMessageConfiguration = new NitroMessages();
 
     private _pongInterval: any = null;
+    private _messageEvents: IMessageEvent[] = [];
+    private _socketClosedCallback: () => void = null;
+    private _socketOpenedCallback: () => void = null;
+    private _socketErrorCallback: () => void = null;
 	
 	private getGpu(): string {
         const e = document.createElement('canvas');
@@ -88,42 +92,84 @@ export class CommunicationManager implements ICommunicationManager
 
     public async init(): Promise<void>
     {
-        GetEventDispatcher().addEventListener(NitroEventType.SOCKET_CLOSED, () =>
+        // Store callback for cleanup
+        this._socketClosedCallback = () =>
         {
             this.stopPong();
-        });
+        };
+        GetEventDispatcher().addEventListener(NitroEventType.SOCKET_CLOSED, this._socketClosedCallback);
 
         return new Promise((resolve, reject) =>
         {
-            GetEventDispatcher().addEventListener(NitroEventType.SOCKET_OPENED, () =>
+            // Store callback for cleanup
+            this._socketOpenedCallback = () =>
             {
                 if(GetConfiguration().getValue<boolean>('system.pong.manually', false)) this.startPong();
-				
+
 				const machineId = this.generateMachineID();
-				
+
                 this._connection.send(new ClientHelloMessageComposer(null, null, null, null));
                 this._connection.send(new SSOTicketMessageComposer(GetConfiguration().getValue('sso.ticket', null), GetTickerTime()));
 				this._connection.send(new UniqueIDMessageComposer(machineId, '', ''));
-            });
+            };
+            GetEventDispatcher().addEventListener(NitroEventType.SOCKET_OPENED, this._socketOpenedCallback);
 
-            GetEventDispatcher().addEventListener(NitroEventType.SOCKET_ERROR, () =>
+            // Store callback for cleanup
+            this._socketErrorCallback = () =>
             {
                 reject();
-            });
+            };
+            GetEventDispatcher().addEventListener(NitroEventType.SOCKET_ERROR, this._socketErrorCallback);
 
-            this._connection.addMessageEvent(new ClientPingEvent((event: ClientPingEvent) => this.sendPong()));
-
-            this._connection.addMessageEvent(new AuthenticatedEvent((event: AuthenticatedEvent) =>
+            // Store message events for cleanup
+            const pingEvent = new ClientPingEvent((event: ClientPingEvent) => this.sendPong());
+            const authEvent = new AuthenticatedEvent((event: AuthenticatedEvent) =>
             {
                 this._connection.authenticated();
 
                 resolve();
 
                 event.connection.send(new InfoRetrieveMessageComposer());
-            }));
+            });
+
+            this._messageEvents.push(pingEvent, authEvent);
+            this._connection.addMessageEvent(pingEvent);
+            this._connection.addMessageEvent(authEvent);
 
             this._connection.init(GetConfiguration().getValue<string>('socket.url'));
         });
+    }
+
+    public dispose(): void
+    {
+        // Stop pong interval
+        this.stopPong();
+
+        // Remove event dispatcher listeners
+        if(this._socketClosedCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.SOCKET_CLOSED, this._socketClosedCallback);
+            this._socketClosedCallback = null;
+        }
+
+        if(this._socketOpenedCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.SOCKET_OPENED, this._socketOpenedCallback);
+            this._socketOpenedCallback = null;
+        }
+
+        if(this._socketErrorCallback)
+        {
+            GetEventDispatcher().removeEventListener(NitroEventType.SOCKET_ERROR, this._socketErrorCallback);
+            this._socketErrorCallback = null;
+        }
+
+        // Remove message events
+        for(const event of this._messageEvents)
+        {
+            this._connection.removeMessageEvent(event);
+        }
+        this._messageEvents = [];
     }
 
     protected startPong(): void
