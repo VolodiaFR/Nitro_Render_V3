@@ -1,6 +1,6 @@
 import { IGraphicAsset } from '@nitrots/api';
 import { GetRenderer, TextureUtils } from '@nitrots/utils';
-import { Matrix, Sprite, Texture, RenderTexture } from 'pixi.js';
+import { Container, Matrix, Sprite, Texture, RenderTexture } from 'pixi.js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
 
 export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualization {
@@ -138,7 +138,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         const width = 64;
         const height = 64;
 
-        const container = new Sprite();
+        const container = new Container();
         sprite.position.set((width - sprite.width) / 2, (height - sprite.height) / 2);
         container.addChild(sprite);
 
