@@ -1,7 +1,7 @@
 import { IGraphicAsset, IRoomObjectSprite, RoomObjectVariable } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
 import { GetSessionDataManager } from '@nitrots/session';
-import { Texture } from 'pixi.js';
+import { AnimatedSprite, Texture } from 'pixi.js';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
 
@@ -14,10 +14,36 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
     private _badgeAssetNameNormalScale = '';
     private _badgeAssetNameSmallScale = '';
     private _badgeVisibleInState = -1;
-    private _gifFrames: ImageData[] = null;
-    private _frameDelays: number[] = null;
-    private _currentFrame = 0;
-    private _lastFrameTime = 0;
+    private _frameTextures: Texture[] = null;
+    private _animatedSprite: AnimatedSprite = null;
+    private _lastFrameIndex = -1;
+
+    public dispose(): void
+    {
+        this.disposeAnimatedSprite();
+        super.dispose();
+    }
+
+    private disposeAnimatedSprite(): void
+    {
+        if(this._animatedSprite)
+        {
+            this._animatedSprite.stop();
+            this._animatedSprite.destroy();
+            this._animatedSprite = null;
+        }
+
+        if(this._frameTextures)
+        {
+            for(const texture of this._frameTextures)
+            {
+                texture.destroy(true);
+            }
+            this._frameTextures = null;
+        }
+
+        this._lastFrameIndex = -1;
+    }
 
     public getTexture(scale: number, layerId: number, asset: IGraphicAsset): Texture
     {
@@ -28,40 +54,40 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
     {
         super.update(geometry, time, update, skipUpdate);
 
-        // Update animated GIF
-        if(this._gifFrames && this._gifFrames.length > 1)
+        // GIF using AnimatedSprite's
+        if(this._animatedSprite && this._frameTextures && this._frameTextures.length > 1)
         {
-            const sessionDataManager = GetSessionDataManager();
-            let tex = sessionDataManager.getBadgeImage(this._badgeId);
-            if (!tex) tex = sessionDataManager.getGroupBadgeImage(this._badgeId);
-            
-            if(!tex)
+            const currentFrameIndex = this._animatedSprite.currentFrame;
+
+
+            if(currentFrameIndex !== this._lastFrameIndex)
             {
-                console.warn('⚠️ No texture found for badge:', this._badgeId);
-                return;
-            }
-            
-            const badgeCanvas = (tex.source as any).resource as HTMLCanvasElement;
-            
-            const now = performance.now();
-            const elapsed = now - this._lastFrameTime;
-            
-            const frameDelay = (this._frameDelays[this._currentFrame] || 10) * 10;
-            
-            if(elapsed >= frameDelay)
-            {
-                this._lastFrameTime = now;
-                const oldFrame = this._currentFrame;
-                this._currentFrame = (this._currentFrame + 1) % this._gifFrames.length;
-                
+                this._lastFrameIndex = currentFrameIndex;
+
+                const sessionDataManager = GetSessionDataManager();
+                let tex = sessionDataManager.getBadgeImage(this._badgeId);
+                if(!tex) tex = sessionDataManager.getGroupBadgeImage(this._badgeId);
+
+                if(!tex) return;
+
+                const currentFrameTexture = this._frameTextures[currentFrameIndex];
+                if(!currentFrameTexture) return;
+
+                const badgeCanvas = (tex.source as any).resource as HTMLCanvasElement;
                 const ctx = badgeCanvas.getContext('2d', { willReadFrequently: true });
-                const frame = this._gifFrames[this._currentFrame];
-                
-                if(frame)
+
+                const frameCanvas = document.createElement('canvas');
+                frameCanvas.width = currentFrameTexture.width;
+                frameCanvas.height = currentFrameTexture.height;
+                const frameCtx = frameCanvas.getContext('2d');
+
+                const frameSource = (currentFrameTexture.source as any).resource;
+                if(frameSource instanceof HTMLCanvasElement || frameSource instanceof HTMLImageElement)
                 {
-                    ctx.putImageData(frame, 0, 0);
+                    ctx.clearRect(0, 0, badgeCanvas.width, badgeCanvas.height);
+                    ctx.drawImage(frameSource, 0, 0);
                     tex.source.update();
-                    
+
                     const assetName = this._badgeAssetNameNormalScale;
                     if(this.asset && assetName)
                     {
@@ -83,19 +109,18 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
         const badgeStatus = this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BADGE_IMAGE_STATUS);
         const badgeId = this.object.model.getValue<string>(RoomObjectVariable.FURNITURE_BADGE_ASSET_NAME);
 
-        if (badgeStatus === -1)
+        if(badgeStatus === -1)
         {
             this._badgeId = '';
             this._badgeAssetNameNormalScale = '';
             this._badgeAssetNameSmallScale = '';
             this._badgeVisibleInState = -1;
-            this._gifFrames = null;
-            this._frameDelays = null;
+            this.disposeAnimatedSprite();
 
             return needsUpdate;
         }
 
-        if ((badgeStatus === 1) && badgeId && (badgeId !== this._badgeId))
+        if((badgeStatus === 1) && badgeId && (badgeId !== this._badgeId))
         {
             this._badgeId = badgeId;
             this._badgeAssetNameNormalScale = badgeId;
@@ -104,11 +129,7 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
             const visibleInState = this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BADGE_VISIBLE_IN_STATE);
             this._badgeVisibleInState = isNaN(visibleInState) ? -1 : visibleInState;
 
-            this._gifFrames = null;
-            this._frameDelays = null;
-            this._currentFrame = 0;
-            this._lastFrameTime = 0;
-
+            this.disposeAnimatedSprite();
             this.addBadgeToAssetCollection(badgeId);
 
             const layerId = FurnitureBadgeDisplayVisualization.BADGE_LAYER_ID;
@@ -127,21 +148,21 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
     {
         const tag = this.getLayerTag(scale, this.direction, layerId);
 
-        if (tag !== FurnitureBadgeDisplayVisualization.BADGE_TAG)
+        if(tag !== FurnitureBadgeDisplayVisualization.BADGE_TAG)
         {
             return super.getSpriteAssetName(scale, layerId);
         }
 
-        if ((this._badgeVisibleInState !== -1) && (this.object.getState(0) !== this._badgeVisibleInState))
+        if((this._badgeVisibleInState !== -1) && (this.object.getState(0) !== this._badgeVisibleInState))
         {
             return super.getSpriteAssetName(scale, layerId);
         }
 
         const assetName = (scale === 32) ? this._badgeAssetNameSmallScale : this._badgeAssetNameNormalScale;
-        if (!assetName) return super.getSpriteAssetName(scale, layerId);
+        if(!assetName) return super.getSpriteAssetName(scale, layerId);
 
         const a = this.getAsset(assetName, layerId);
-        if (!a || !a.texture) return super.getSpriteAssetName(scale, layerId);
+        if(!a || !a.texture) return super.getSpriteAssetName(scale, layerId);
 
         return assetName;
     }
@@ -152,7 +173,7 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
 
         const tag = this.getLayerTag(scale, this.direction, layerId);
 
-        if (tag === FurnitureBadgeDisplayVisualization.BADGE_TAG)
+        if(tag === FurnitureBadgeDisplayVisualization.BADGE_TAG)
         {
             sprite.visible = true;
             sprite.alpha = 255;
@@ -164,13 +185,13 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
     {
         let offset = super.getLayerXOffset(scale, direction, layerId);
 
-        if (this.getLayerTag(scale, direction, layerId) === FurnitureBadgeDisplayVisualization.BADGE_TAG)
+        if(this.getLayerTag(scale, direction, layerId) === FurnitureBadgeDisplayVisualization.BADGE_TAG)
         {
             const assetName = (scale === 32) ? this._badgeAssetNameSmallScale : this._badgeAssetNameNormalScale;
-            if (!assetName) return offset;
+            if(!assetName) return offset;
 
             const a = this.getAsset(assetName, layerId);
-            if (!a) return offset;
+            if(!a) return offset;
 
             const targetW = (scale === 64) ? 40 : 20;
             offset += ((targetW - a.width) / 2);
@@ -183,13 +204,13 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
     {
         let offset = super.getLayerYOffset(scale, direction, layerId);
 
-        if (this.getLayerTag(scale, direction, layerId) === FurnitureBadgeDisplayVisualization.BADGE_TAG)
+        if(this.getLayerTag(scale, direction, layerId) === FurnitureBadgeDisplayVisualization.BADGE_TAG)
         {
             const assetName = (scale === 32) ? this._badgeAssetNameSmallScale : this._badgeAssetNameNormalScale;
-            if (!assetName) return offset;
+            if(!assetName) return offset;
 
             const a = this.getAsset(assetName, layerId);
-            if (!a) return offset;
+            if(!a) return offset;
 
             const targetH = (scale === 64) ? 40 : 20;
             offset += ((targetH - a.height) / 2);
@@ -203,36 +224,36 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
         const sessionDataManager = GetSessionDataManager();
 
         let tex = sessionDataManager.getBadgeImage(badgeId);
-        if (!tex) tex = sessionDataManager.getGroupBadgeImage(badgeId);
+        if(!tex) tex = sessionDataManager.getGroupBadgeImage(badgeId);
 
-        if (!tex || !this.asset) return;
+        if(!tex || !this.asset) return;
 
         const badgeCanvas = (tex.source as any).resource as HTMLCanvasElement;
         const ctx = badgeCanvas.getContext('2d', { willReadFrequently: true });
         const imageData = ctx.getImageData(0, 0, 1, 1);
         const isEmpty = imageData.data[3] === 0;
 
-        if (isEmpty || !this._gifFrames)
+        if(isEmpty || !this._frameTextures)
         {
             const badgeUrl = GetConfiguration().getValue<string>('badge.asset.url', '').replace('%badgename%', badgeId);
-            
+
             try
             {
                 const response = await fetch(badgeUrl);
                 const arrayBuffer = await response.arrayBuffer();
                 const gif = parseGIF(arrayBuffer);
                 const frames = decompressFrames(gif, true);
-                
+
                 if(frames && frames.length > 0)
                 {
-                    this._gifFrames = [];
-                    this._frameDelays = [];
-                    
+                    this._frameTextures = [];
+                    const frameDelays: number[] = [];
+
                     const accCanvas = document.createElement('canvas');
                     accCanvas.width = gif.lsd.width;
                     accCanvas.height = gif.lsd.height;
                     const accCtx = accCanvas.getContext('2d', { willReadFrequently: true });
-                    
+
                     for(let i = 0; i < frames.length; i++)
                     {
                         const frame = frames[i];
@@ -245,43 +266,60 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
                                 accCtx.clearRect(0, 0, gif.lsd.width, gif.lsd.height);
                             }
                         }
-                        
+
                         const tempCanvas = document.createElement('canvas');
                         tempCanvas.width = frame.dims.width;
                         tempCanvas.height = frame.dims.height;
                         const tempCtx = tempCanvas.getContext('2d');
-                        
+
                         const patchData = new ImageData(
                             new Uint8ClampedArray(frame.patch),
                             frame.dims.width,
                             frame.dims.height
                         );
                         tempCtx.putImageData(patchData, 0, 0);
-                        
+
                         accCtx.drawImage(tempCanvas, frame.dims.left, frame.dims.top);
-                        
-                        const fullFrame = accCtx.getImageData(0, 0, gif.lsd.width, gif.lsd.height);
-                        this._gifFrames.push(fullFrame);
-                        this._frameDelays.push(frame.delay || 10);
+
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = gif.lsd.width;
+                        frameCanvas.height = gif.lsd.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        frameCtx.drawImage(accCanvas, 0, 0);
+
+                        const frameTexture = Texture.from(frameCanvas);
+                        this._frameTextures.push(frameTexture);
+
+                        frameDelays.push(frame.delay || 10);
                     }
-                    
-                    this._currentFrame = 0;
-                    this._lastFrameTime = performance.now();
-                    
-                    const avgDelay = this._frameDelays.reduce((a, b) => a + b, 0) / this._frameDelays.length;
-                    if(avgDelay > 50)
+
+                    if(this._frameTextures.length > 1)
                     {
-                        this._frameDelays = this._frameDelays.map(() => 10);
+                        this._animatedSprite = new AnimatedSprite(this._frameTextures);
+
+                        const avgDelay = frameDelays.reduce((a, b) => a + b, 0) / frameDelays.length;
+                        const delayMs = (avgDelay > 50 ? 10 : avgDelay) * 10;
+                        const framesPerTick = 16.67 / delayMs;
+                        this._animatedSprite.animationSpeed = framesPerTick;
+
+                        this._animatedSprite.loop = true;
+                        this._animatedSprite.play();
+                        this._lastFrameIndex = -1;
                     }
-                    
-                    ctx.putImageData(this._gifFrames[0], 0, 0);
-                    tex.source.update();
+
+                    const firstFrameSource = (this._frameTextures[0].source as any).resource;
+                    if(firstFrameSource instanceof HTMLCanvasElement)
+                    {
+                        ctx.clearRect(0, 0, badgeCanvas.width, badgeCanvas.height);
+                        ctx.drawImage(firstFrameSource, 0, 0);
+                        tex.source.update();
+                    }
                 }
             }
             catch(err)
             {
                 console.error('Failed to parse GIF, using static image:', err);
-                
+
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload = () =>
