@@ -14,10 +14,11 @@ export class RoomContentLoader implements IRoomContentLoader
     private static PLACE_HOLDER_PET: string = 'place_holder_pet';
     private static PLACE_HOLDER_DEFAULT: string = RoomContentLoader.PLACE_HOLDER;
     private static ROOM: string = 'room';
+    private static LANDSCAPE: string = 'landscape';
     private static TILE_CURSOR: string = 'tile_cursor';
     private static SELECTION_ARROW: string = 'selection_arrow';
 
-    public static MANDATORY_LIBRARIES: string[] = [RoomContentLoader.PLACE_HOLDER, RoomContentLoader.PLACE_HOLDER_WALL, RoomContentLoader.PLACE_HOLDER_PET, RoomContentLoader.ROOM, RoomContentLoader.TILE_CURSOR, RoomContentLoader.SELECTION_ARROW];
+    public static MANDATORY_LIBRARIES: string[] = [RoomContentLoader.PLACE_HOLDER, RoomContentLoader.PLACE_HOLDER_WALL, RoomContentLoader.PLACE_HOLDER_PET, RoomContentLoader.ROOM, RoomContentLoader.LANDSCAPE, RoomContentLoader.TILE_CURSOR, RoomContentLoader.SELECTION_ARROW];
 
     private _iconListener: IRoomContentListener;
     private _images: Map<string, HTMLImageElement> = new Map();

@@ -817,6 +817,7 @@ export class RoomVisualization extends RoomObjectSpriteVisualization implements 
                                             if(!plane.canBeVisible) _local_6 = true;
 
                                             plane.canBeVisible = true;
+                                            plane.addWindowMask(leftSideLoc, rightSideLoc);
 
                                             _local_5.push(i);
                                         }

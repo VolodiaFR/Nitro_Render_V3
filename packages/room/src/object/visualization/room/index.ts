@@ -1,3 +1,4 @@
+export * from './animated';
 export * from './PlaneDrawingData';
 export * from './RoomPlane';
 export * from './RoomPlaneBitmapMask';

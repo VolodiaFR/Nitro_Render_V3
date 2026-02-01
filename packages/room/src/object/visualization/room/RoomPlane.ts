@@ -1,8 +1,9 @@
-import { IAssetPlaneVisualizationLayer, IAssetRoomVisualizationData, IRoomGeometry, IRoomPlane, IVector3D } from '@nitrots/api';
+import { IAssetPlaneVisualizationAnimatedLayer, IAssetPlaneVisualizationLayer, IAssetRoomVisualizationData, IRoomGeometry, IRoomPlane, IVector3D } from '@nitrots/api';
 import { GetAssetManager } from '@nitrots/assets';
 import { GetRenderer, GetTexturePool, PlaneMaskFilter, Vector3d } from '@nitrots/utils';
-import { Container, Filter, Matrix, Point, Sprite, Texture, TilingSprite } from 'pixi.js';
+import { Container, Filter, Graphics, Matrix, Point, RenderTexture, Sprite, Texture, TilingSprite } from 'pixi.js';
 import { RoomGeometry } from '../../../utils';
+import { PlaneVisualizationAnimationLayer } from './animated';
 import { RoomPlaneBitmapMask } from './RoomPlaneBitmapMask';
 import { RoomPlaneRectangleMask } from './RoomPlaneRectangleMask';
 import { PlaneMaskManager } from './mask';
@@ -17,6 +18,7 @@ export class RoomPlane implements IRoomPlane
         '64': new RoomGeometry(64, new Vector3d(RoomPlane.HORIZONTAL_ANGLE_DEFAULT, RoomPlane.VERTICAL_ANGLE_DEFAULT), new Vector3d(-10, 0, 0))
     };
     private static LANDSCAPE_COLOR: number = 0x0082F0;
+    private static ANIMATION_UPDATE_INTERVAL: number = 500;
 
     public static TYPE_UNDEFINED: number = 0;
     public static TYPE_WALL: number = 1;
@@ -66,6 +68,18 @@ export class RoomPlane implements IRoomPlane
     private _planeSprite: TilingSprite = null;
     private _planeTexture: Texture = null;
     private _maskFilter: Filter = null;
+
+    private _animationLayers: PlaneVisualizationAnimationLayer[] = [];
+    private _isAnimated: boolean = false;
+    private _lastAnimationUpdate: number = 0;
+    private _animationCanvasWidth: number = 0;
+    private _animationCanvasHeight: number = 0;
+    private _landscapeRenderWidth: number = 0;
+    private _landscapeRenderHeight: number = 0;
+    private _landscapeOffsetX: number = 0;
+    private _landscapeOffsetY: number = 0;
+    private _hasWindowMask: boolean = false;
+    private _windowMasks: { leftSideLoc: number; rightSideLoc: number }[] = [];
 
     constructor(origin: IVector3D, location: IVector3D, leftSide: IVector3D, rightSide: IVector3D, type: number, usesMask: boolean, secondaryNormals: IVector3D[], randomSeed: number, textureOffsetX: number = 0, textureOffsetY: number = 0, textureMaxX: number = 0, textureMaxY: number = 0)
     {
@@ -122,6 +136,15 @@ export class RoomPlane implements IRoomPlane
             this._planeTexture = null;
         }
 
+        if(this._animationLayers)
+        {
+            for(const layer of this._animationLayers)
+            {
+                if(layer) layer.dispose();
+            }
+            this._animationLayers = [];
+        }
+
         this._disposed = true;
     }
 
@@ -136,9 +159,12 @@ export class RoomPlane implements IRoomPlane
             needsUpdate = true;
         }
 
-        if(!needsUpdate || !this._canBeVisible)
+        const needsAnimationUpdate = this._isAnimated && this._type === RoomPlane.TYPE_LANDSCAPE &&
+            (timeSinceStartMs - this._lastAnimationUpdate) >= RoomPlane.ANIMATION_UPDATE_INTERVAL;
+
+        if(!needsUpdate && !needsAnimationUpdate)
         {
-            if(!this.visible) return false;
+            if(!this._canBeVisible || !this.visible) return false;
         }
 
         if(needsUpdate)
@@ -208,16 +234,43 @@ export class RoomPlane implements IRoomPlane
                 const dataType: keyof IAssetRoomVisualizationData = (planeType === RoomPlane.TYPE_FLOOR) ? 'floorData' : (planeType === RoomPlane.TYPE_WALL) ? 'wallData' : 'landscapeData';
 
                 const roomCollection = GetAssetManager().getCollection('room');
-                const planeVisualizationData = roomCollection?.data?.roomVisualization?.[dataType];
-                const plane = planeVisualizationData?.planes?.find(plane => (plane.id === planeId));
+                let planeVisualizationData = roomCollection?.data?.roomVisualization?.[dataType];
+                let plane = planeVisualizationData?.planes?.find(plane => (plane.id === planeId));
+                let assetCollection = roomCollection;
+
+                if(!plane && planeType === RoomPlane.TYPE_LANDSCAPE)
+                {
+                    const landscapeCollection = GetAssetManager().getCollection('landscape');
+                    if(landscapeCollection?.data?.roomVisualization?.landscapeData)
+                    {
+                        planeVisualizationData = landscapeCollection.data.roomVisualization.landscapeData;
+                        plane = planeVisualizationData?.planes?.find(p => (p.id === planeId));
+                        if(plane) assetCollection = landscapeCollection;
+                    }
+                }
+
                 const planeVisualization = ((dataType === 'landscapeData') ? plane?.animatedVisualization : plane?.visualizations)?.find(visualization => (visualization.size === planeGeometry.scale)) ?? null;
                 const planeLayer = planeVisualization?.allLayers?.[0] as IAssetPlaneVisualizationLayer;
                 const planeMaterialId = planeLayer?.materialId;
                 const planeColor = planeLayer?.color;
                 const planeAssetName = planeVisualizationData?.textures?.find(texture => (texture.id === planeMaterialId))?.bitmaps?.[0]?.assetName;
-                const texture = GetAssetManager().getAsset(planeAssetName)?.texture;
+                const texture = assetCollection ? GetAssetManager().getAsset(planeAssetName)?.texture : null;
 
-                return { texture, color: planeColor };
+                const animationLayers: PlaneVisualizationAnimationLayer[] = [];
+                if(planeType === RoomPlane.TYPE_LANDSCAPE && planeVisualization?.allLayers && assetCollection)
+                {
+                    for(const layer of planeVisualization.allLayers)
+                    {
+                        const animatedLayer = layer as IAssetPlaneVisualizationAnimatedLayer;
+                        if(animatedLayer?.items && animatedLayer.items.length > 0)
+                        {
+                            const animLayer = new PlaneVisualizationAnimationLayer(animatedLayer.items, assetCollection);
+                            if(animLayer.hasItems) animationLayers.push(animLayer);
+                        }
+                    }
+                }
+
+                return { texture, color: planeColor, animationLayers };
             };
 
             const planeData = getTextureAndColorForPlane(this._id, this._type);
@@ -304,6 +357,23 @@ export class RoomPlane implements IRoomPlane
                     const renderOffsetX = Math.trunc(this._textureOffsetX * Math.abs((_local_13.x - _local_15.x)));
                     const renderOffsetY = Math.trunc(this._textureOffsetY * Math.abs((_local_13.y - _local_14.y)));
 
+                    this._landscapeRenderWidth = width;
+                    this._landscapeRenderHeight = height;
+                    this._animationCanvasWidth = renderMaxX;
+                    this._animationCanvasHeight = renderMaxY;
+                    this._landscapeOffsetX = renderOffsetX;
+                    this._landscapeOffsetY = renderOffsetY;
+
+                    if(this._animationLayers)
+                    {
+                        for(const layer of this._animationLayers)
+                        {
+                            if(layer) layer.dispose();
+                        }
+                    }
+                    this._animationLayers = planeData.animationLayers || [];
+                    this._isAnimated = this._animationLayers.length > 0;
+
                     this._planeSprite = new TilingSprite({
                         texture,
                         width,
@@ -349,7 +419,18 @@ export class RoomPlane implements IRoomPlane
 
         this._planeTexture.source.label = `room_plane_${ this._uniqueId.toString() }`;
 
-        if(needsUpdate)
+        let animationUpdate = false;
+        if(this._isAnimated && this._type === RoomPlane.TYPE_LANDSCAPE)
+        {
+            const timeSinceLastUpdate = timeSinceStartMs - this._lastAnimationUpdate;
+            if(timeSinceLastUpdate >= RoomPlane.ANIMATION_UPDATE_INTERVAL || needsUpdate)
+            {
+                animationUpdate = true;
+                this._lastAnimationUpdate = timeSinceStartMs;
+            }
+        }
+
+        if(needsUpdate || animationUpdate)
         {
             GetRenderer().render({
                 target: this._planeTexture,
@@ -357,9 +438,76 @@ export class RoomPlane implements IRoomPlane
                 transform: this.getMatrixForDimensions(this._planeSprite.width, this._planeSprite.height),
                 clear: true
             });
+			
+            if(this._isAnimated && this._type === RoomPlane.TYPE_LANDSCAPE && this._animationLayers.length > 0 && this._hasWindowMask)
+            {
+                this.renderAnimationLayers(timeSinceStartMs, geometry);
+            }
         }
 
         return true;
+    }
+
+    private renderAnimationLayers(timeSinceStartMs: number, geometry: IRoomGeometry): void
+    {
+        if(!this._planeTexture || this._animationCanvasWidth <= 0 || this._animationCanvasHeight <= 0) return;
+
+        const canvasWidth = this._landscapeRenderWidth;
+        const canvasHeight = this._landscapeRenderHeight;
+
+        if(canvasWidth <= 0 || canvasHeight <= 0) return;
+
+        const animationCanvas = RenderTexture.create({ width: canvasWidth, height: canvasHeight });
+
+        for(const layer of this._animationLayers)
+        {
+            if(!layer) continue;
+
+            layer.render(
+                animationCanvas,
+                this._landscapeOffsetX,
+                this._landscapeOffsetY,
+                this._animationCanvasWidth,
+                this._animationCanvasHeight,
+                this._leftSide.length,
+                this._rightSide.length,
+                timeSinceStartMs
+            );
+        }
+
+        const animContainer = new Container();
+        const animSprite = new Sprite(animationCanvas);
+        animContainer.addChild(animSprite);
+
+        if(this._maskFilter)
+        {
+            animContainer.filters = [this._maskFilter];
+        }
+
+        if(this._planeSprite && this._planeSprite.children)
+        {
+            for(const child of this._planeSprite.children)
+            {
+                if(child instanceof Sprite)
+                {
+                    const maskClone = new Sprite(child.texture);
+                    maskClone.position.copyFrom(child.position);
+                    maskClone.scale.copyFrom(child.scale);
+                    animContainer.addChild(maskClone);
+                }
+            }
+        }
+
+        const transform = this.getMatrixForDimensions(canvasWidth, canvasHeight);
+
+        GetRenderer().render({
+            target: this._planeTexture,
+            container: animContainer,
+            transform,
+            clear: false
+        });
+
+        animationCanvas.destroy(true);
     }
 
     private updateCorners(geometry: IRoomGeometry): void
@@ -434,6 +582,9 @@ export class RoomPlane implements IRoomPlane
 
     public resetBitmapMasks(): void
     {
+        this._hasWindowMask = false;
+        this._windowMasks = [];
+
         if(this._disposed || !this._useMask || !this._bitmapMasks.length) return;
 
         this._maskChanged = true;
@@ -457,6 +608,12 @@ export class RoomPlane implements IRoomPlane
         this._maskChanged = true;
 
         return true;
+    }
+
+    public addWindowMask(leftSideLoc: number, rightSideLoc: number): void
+    {
+        this._windowMasks.push({ leftSideLoc, rightSideLoc });
+        this._hasWindowMask = true;
     }
 
     public resetRectangleMasks(): void
@@ -652,5 +809,15 @@ export class RoomPlane implements IRoomPlane
     public set isHighlighter(flag: boolean)
     {
         this._isHighlighter = flag;
+    }
+
+    public get hasWindowMask(): boolean
+    {
+        return this._hasWindowMask;
+    }
+
+    public set hasWindowMask(flag: boolean)
+    {
+        this._hasWindowMask = flag;
     }
 }
