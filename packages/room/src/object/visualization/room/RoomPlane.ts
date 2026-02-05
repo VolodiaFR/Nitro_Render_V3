@@ -624,8 +624,8 @@ export class RoomPlane implements IRoomPlane
                 this._landscapeOffsetY,
                 this._animationCanvasWidth,
                 this._animationCanvasHeight,
-                this._leftSide.length,
-                this._rightSide.length,
+                this._textureMaxX,
+                this._textureMaxY,
                 timeSinceStartMs
             );
         }

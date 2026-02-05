@@ -5,11 +5,16 @@ import { AnimationItem } from './AnimationItem';
 
 export class PlaneVisualizationAnimationLayer
 {
+    private static RANDOM_SEED: number = 131071;
+
     private _isDisposed: boolean = false;
     private _items: AnimationItem[] = [];
+    private _randomState: number;
 
     constructor(items: IAssetPlaneVisualizationAnimatedLayerItem[], assets: IGraphicAssetCollection)
     {
+        this._randomState = PlaneVisualizationAnimationLayer.RANDOM_SEED;
+
         if(items && assets)
         {
             for(const item of items)
@@ -34,6 +39,13 @@ export class PlaneVisualizationAnimationLayer
         }
     }
 
+    private seededRandom(): number
+    {
+        this._randomState = ((this._randomState * 1103515245 + 12345) & 0x7fffffff);
+
+        return (this._randomState % 10000) / 10000;
+    }
+
     private parseCoordinate(value: string, randomValue: string): number
     {
         let result = 0;
@@ -53,7 +65,7 @@ export class PlaneVisualizationAnimationLayer
         if(randomValue)
         {
             const random = parseFloat(randomValue);
-            if(!isNaN(random)) result += (Math.random() * random);
+            if(!isNaN(random)) result += (this.seededRandom() * random);
         }
 
         return result;
