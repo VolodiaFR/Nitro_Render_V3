@@ -17,8 +17,11 @@ export class RoomContentLoader implements IRoomContentLoader
     private static LANDSCAPE: string = 'landscape';
     private static TILE_CURSOR: string = 'tile_cursor';
     private static SELECTION_ARROW: string = 'selection_arrow';
+    private static AVATAR_ADDITIONS: string = 'avatar_additions';
+    private static FLOOR_EDITOR: string = 'floor_editor';
+    private static GROUP_BADGE: string = 'group_badge';
 
-    public static MANDATORY_LIBRARIES: string[] = [RoomContentLoader.PLACE_HOLDER, RoomContentLoader.PLACE_HOLDER_WALL, RoomContentLoader.PLACE_HOLDER_PET, RoomContentLoader.ROOM, RoomContentLoader.LANDSCAPE, RoomContentLoader.TILE_CURSOR, RoomContentLoader.SELECTION_ARROW];
+    public static MANDATORY_LIBRARIES: string[] = [RoomContentLoader.PLACE_HOLDER, RoomContentLoader.PLACE_HOLDER_WALL, RoomContentLoader.PLACE_HOLDER_PET, RoomContentLoader.ROOM, RoomContentLoader.LANDSCAPE, RoomContentLoader.TILE_CURSOR, RoomContentLoader.SELECTION_ARROW, RoomContentLoader.AVATAR_ADDITIONS, RoomContentLoader.FLOOR_EDITOR, RoomContentLoader.GROUP_BADGE];
 
     private _iconListener: IRoomContentListener;
     private _images: Map<string, HTMLImageElement> = new Map();
@@ -454,17 +457,23 @@ export class RoomContentLoader implements IRoomContentLoader
         switch(type)
         {
             case RoomContentLoader.PLACE_HOLDER:
-                return [this.getAssetUrlWithGenericBase(RoomContentLoader.PLACE_HOLDER)];
+                return ['local://place_holder'];
             case RoomContentLoader.PLACE_HOLDER_WALL:
-                return [this.getAssetUrlWithGenericBase(RoomContentLoader.PLACE_HOLDER_WALL)];
+                return ['local://place_holder_wall'];
             case RoomContentLoader.PLACE_HOLDER_PET:
-                return [this.getAssetUrlWithGenericBase(RoomContentLoader.PLACE_HOLDER_PET)];
+                return ['local://place_holder_pet'];
             case RoomContentLoader.ROOM:
                 return ['local://room'];
             case RoomContentLoader.TILE_CURSOR:
-                return [this.getAssetUrlWithGenericBase(RoomContentLoader.TILE_CURSOR)];
+                return ['local://tile_cursor'];
             case RoomContentLoader.SELECTION_ARROW:
-                return [this.getAssetUrlWithGenericBase(RoomContentLoader.SELECTION_ARROW)];
+                return ['local://selection_arrow'];
+            case RoomContentLoader.AVATAR_ADDITIONS:
+                return ['local://avatar_additions'];
+            case RoomContentLoader.FLOOR_EDITOR:
+                return ['local://floor_editor'];
+            case RoomContentLoader.GROUP_BADGE:
+                return ['local://group_badge'];
             default: {
                 const category = this.getCategoryForType(type);
 
@@ -518,15 +527,6 @@ export class RoomContentLoader implements IRoomContentLoader
         if(assetUrls && assetUrls.length) return assetUrls[0];
 
         return null;
-    }
-
-    private getAssetUrlWithGenericBase(assetName: string): string
-    {
-        const assetUrl = GetConfiguration().getValue<string>('generic.asset.url').replace(/%libname%/gi, assetName);
-
-        if(assetUrl.endsWith('.nitro')) return assetUrl.replace(/\.nitro$/i, '.json');
-
-        return assetUrl;
     }
 
     public getAssetUrlWithFurniBase(assetName: string): string

@@ -106,6 +106,16 @@ export class AssetManager implements IAssetManager
                     case 'room':
                         await this.loadLocalRoom();
                         return true;
+                    case 'place_holder':
+                    case 'place_holder_wall':
+                    case 'place_holder_pet':
+                    case 'tile_cursor':
+                    case 'selection_arrow':
+                    case 'avatar_additions':
+                    case 'floor_editor':
+                    case 'group_badge':
+                        await this.loadLocalAsset(key);
+                        return true;
                 }
 
                 return false;
@@ -205,6 +215,69 @@ export class AssetManager implements IAssetManager
         }
 
         collection.define(roomData);
+    }
+
+    private async loadLocalAsset(name: string): Promise<void>
+    {
+        let dataModule: any;
+
+        switch(name)
+        {
+            case 'place_holder':
+                dataModule = await import('./assets/place_holder/place_holder.asset.json');
+                break;
+            case 'place_holder_wall':
+                dataModule = await import('./assets/place_holder_wall/place_holder_wall.asset.json');
+                break;
+            case 'place_holder_pet':
+                dataModule = await import('./assets/place_holder_pet/place_holder_pet.asset.json');
+                break;
+            case 'tile_cursor':
+                dataModule = await import('./assets/tile_cursor/tile_cursor.asset.json');
+                break;
+            case 'selection_arrow':
+                dataModule = await import('./assets/selection_arrow/selection_arrow.asset.json');
+                break;
+            case 'avatar_additions':
+                dataModule = await import('./assets/avatar_additions/avatar_additions.asset.json');
+                break;
+            case 'floor_editor':
+                dataModule = await import('./assets/floor_editor/floor_editor.asset.json');
+                break;
+            case 'group_badge':
+                dataModule = await import('./assets/group_badge/group_badge.asset.json');
+                break;
+            default:
+                return;
+        }
+
+        const data = (dataModule.default ?? dataModule) as IAssetData;
+        const collection = this.createCollection(data, null) as GraphicAssetCollection;
+        if(!collection) return;
+
+        const allImages = import.meta.glob('./assets/*/images/*.png', { eager: true });
+        const prefix = `./assets/${name}/images/`;
+
+        for(const path in allImages)
+        {
+            if(!path.startsWith(prefix)) continue;
+
+            const mod = allImages[path];
+            const imageUrl = (mod.default ?? mod) as string;
+
+            const file = path.split('/').pop()!;
+            const rawName = file.replace(/\.png$/i, '');
+
+            const texture = await Assets.load<Texture>(imageUrl);
+            if(!texture) continue;
+
+            this.setTexture(rawName, texture);
+
+            collection.textures.set(name + '_' + rawName, texture);
+            collection.textures.set(rawName, texture);
+        }
+
+        collection.define(data);
     }
 
     private async processAsset(texture: Texture, data: IAssetData): Promise<IGraphicAssetCollection>

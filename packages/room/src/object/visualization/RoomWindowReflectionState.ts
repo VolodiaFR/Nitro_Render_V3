@@ -28,6 +28,8 @@ export class RoomWindowReflectionState
             location: storedLocation
         });
 
+        // Always bump updateId so reflected walk cycles stay frame-synced
+        // even when avatar textures are recycled/cached by reference.
         this._updateId++;
     }
 
