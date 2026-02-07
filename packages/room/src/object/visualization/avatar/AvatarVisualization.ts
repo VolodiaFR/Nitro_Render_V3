@@ -76,6 +76,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _isAvatarReady: boolean;
     private _needsUpdate: boolean;
     private _geometryUpdateCounter: number;
+    private _reflectionVerticalOffset: number;
 
     private _additions: Map<number, IAvatarAddition>;
 
@@ -127,6 +128,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._isAvatarReady = false;
         this._needsUpdate = false;
         this._geometryUpdateCounter = -1;
+        this._reflectionVerticalOffset = 0;
 
         this._additions = new Map();
     }
@@ -307,7 +309,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     sprite.offsetX = ((((-1 * scale) / 2) + _local_20[0]) - ((sprite.texture.width - scale) / 2));
                     sprite.offsetY = (((-(sprite.texture.height) + (scale / 4)) + _local_20[1]) + this._postureOffset);
                 }
-					
+
                 if(this._isLaying)
                 {
                     if(this._layInside) sprite.relativeDepth = -0.5;
@@ -328,8 +330,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     sprite.spriteType = RoomObjectSpriteType.AVATAR;
                 }
             }
-
-            this.updateWindowReflectionSource();
 
             const typingBubble = this.getAddition(AvatarVisualization.TYPING_BUBBLE_ID) as TypingBubbleAddition;
 
@@ -451,6 +451,17 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     _local_21++;
                 }
             }
+
+            const avatarSprite = this.getSprite(AvatarVisualization.SPRITE_INDEX_AVATAR);
+
+            if(avatarSprite?.texture)
+            {
+                const baseOffsetY = (-(avatarSprite.texture.height) + (scale / 4));
+
+                this._reflectionVerticalOffset = avatarSprite.offsetY - baseOffsetY;
+            }
+
+            this.updateWindowReflectionSource();
         }
     }
 
@@ -1007,7 +1018,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(sprite?.texture)
         {
-            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation());
+            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset);
 
             return;
         }

@@ -91,8 +91,8 @@ export class RoomPlane implements IRoomPlane
     private _windowMasks: { leftSideLoc: number; rightSideLoc: number }[] = [];
     private _lastWindowReflectionUpdateId: number = -1;
     private _windowReflectionFirstSeenAt: Map<number, number> = new Map();
-    private _windowReflectionLastVisible: Map<number, { texture: Texture; location: IVector3D }> = new Map();
-    private _windowReflectionFadeOut: Map<number, { texture: Texture; location: IVector3D; startedAt: number }> = new Map();
+    private _windowReflectionLastVisible: Map<number, { texture: Texture; location: IVector3D; verticalOffset: number }> = new Map();
+    private _windowReflectionFadeOut: Map<number, { texture: Texture; location: IVector3D; verticalOffset: number; startedAt: number }> = new Map();
 
     constructor(origin: IVector3D, location: IVector3D, leftSide: IVector3D, rightSide: IVector3D, type: number, usesMask: boolean, secondaryNormals: IVector3D[], randomSeed: number, textureOffsetX: number = 0, textureOffsetY: number = 0, textureMaxX: number = 0, textureMaxY: number = 0)
     {
@@ -884,8 +884,8 @@ export class RoomPlane implements IRoomPlane
         const container = new Container();
         const visibleAvatarIds = new Set<number>();
 
-        const addReflectionSprite = (texture: Texture, location: IVector3D, alpha: number): boolean => {
-            if(!texture?.source || !location || alpha < 0) return false;
+        const addReflectionSprite = (texture: Texture, location: IVector3D, alpha: number, verticalOffset: number = 0): boolean => {
+            if(!texture?.source || texture.source.destroyed || !texture.source.style || !location || alpha < 0) return false;
 
             const relative = Vector3d.dif(location, this._location);
             const planeDistance = Math.abs(Vector3d.scalarProjection(relative, this._normal));
@@ -906,7 +906,7 @@ export class RoomPlane implements IRoomPlane
             if(!closestMask || (closestMask.score > 3)) return false;
 
             const x = (canvasWidth - ((canvasWidth * leftSideLoc) / this._leftSide.length));
-            const y = (canvasHeight - ((canvasHeight * rightSideLoc) / this._rightSide.length));
+            const y = (canvasHeight - ((canvasHeight * rightSideLoc) / this._rightSide.length)) + verticalOffset;
 
             const sprite = new Sprite(texture);
             sprite.anchor.set(0.5, 1);
@@ -922,7 +922,7 @@ export class RoomPlane implements IRoomPlane
 
         for(const avatar of avatars)
         {
-            if(!avatar?.texture?.source || !avatar.location) continue;
+            if(!avatar?.texture?.source || avatar.texture.source.destroyed || !avatar.texture.source.style || !avatar.location) continue;
 
             let firstSeenAt = this._windowReflectionFirstSeenAt.get(avatar.id);
 
@@ -935,7 +935,7 @@ export class RoomPlane implements IRoomPlane
             const progress = (elapsed / fadeDurationMs);
             const alpha = (0.4 * progress);
 
-            if(!addReflectionSprite(avatar.texture, avatar.location, alpha)) continue;
+            if(!addReflectionSprite(avatar.texture, avatar.location, alpha, avatar.verticalOffset || 0)) continue;
 
             if(!this._windowReflectionFirstSeenAt.has(avatar.id)) this._windowReflectionFirstSeenAt.set(avatar.id, firstSeenAt);
 
@@ -947,7 +947,8 @@ export class RoomPlane implements IRoomPlane
 
             this._windowReflectionLastVisible.set(avatar.id, {
                 texture: avatar.texture,
-                location: storedLocation
+                location: storedLocation,
+                verticalOffset: avatar.verticalOffset || 0
             });
         }
 
@@ -955,7 +956,7 @@ export class RoomPlane implements IRoomPlane
         {
             if(visibleAvatarIds.has(id) || this._windowReflectionFadeOut.has(id)) continue;
 
-            if(!lastVisible.texture?.source)
+            if(!lastVisible.texture?.source || lastVisible.texture.source.destroyed || !lastVisible.texture.source.style)
             {
                 this._windowReflectionLastVisible.delete(id);
                 this._windowReflectionFirstSeenAt.delete(id);
@@ -966,6 +967,7 @@ export class RoomPlane implements IRoomPlane
             this._windowReflectionFadeOut.set(id, {
                 texture: lastVisible.texture,
                 location: lastVisible.location,
+                verticalOffset: lastVisible.verticalOffset,
                 startedAt: now
             });
 
@@ -986,7 +988,7 @@ export class RoomPlane implements IRoomPlane
 
             const alpha = (0.4 * (1 - (elapsed / fadeDurationMs)));
 
-            if(!addReflectionSprite(fadeOut.texture, fadeOut.location, alpha)) this._windowReflectionFadeOut.delete(id);
+            if(!addReflectionSprite(fadeOut.texture, fadeOut.location, alpha, fadeOut.verticalOffset)) this._windowReflectionFadeOut.delete(id);
         }
 
         if(!container.children.length)

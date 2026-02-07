@@ -291,8 +291,6 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
             clear: true
         });
 
-        container.destroy();
-
         //@ts-ignore
         this._activeTexture.source.hitMap = null;
 
@@ -585,7 +583,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
                 this._effectIdInUse = -1;
             }
 
-            if(effectChanged) this._cache.disposeInactiveActions();
+            if(effectChanged) this._cache.disposeInactiveActions(0);
 
             if(this._lastActionsString != this._currentActionsString)
             {
@@ -653,6 +651,11 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
                         if(animation.hasDirectionData()) this._directionOffset = animation.directionData.offset;
 
                         if(animation.hasAvatarData()) this._avatarSpriteData = animation.avatarData;
+
+                        if(!this._isAnimating && (animation.spriteData?.length > 0 || animation.hasAvatarData()))
+                        {
+                            this._isAnimating = true;
+                        }
                     }
                 }
             }

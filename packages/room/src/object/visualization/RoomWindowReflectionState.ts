@@ -7,6 +7,7 @@ interface IWindowReflectionAvatarState
     id: number;
     texture: Texture;
     location: IVector3D;
+    verticalOffset: number;
 }
 
 export class RoomWindowReflectionState
@@ -14,7 +15,7 @@ export class RoomWindowReflectionState
     private static _avatars: Map<number, IWindowReflectionAvatarState> = new Map();
     private static _updateId: number = 0;
 
-    public static setAvatar(id: number, texture: Texture, location: IVector3D): void
+    public static setAvatar(id: number, texture: Texture, location: IVector3D, verticalOffset: number = 0): void
     {
         if(!texture || !location) return;
 
@@ -25,7 +26,8 @@ export class RoomWindowReflectionState
         this._avatars.set(id, {
             id,
             texture,
-            location: storedLocation
+            location: storedLocation,
+            verticalOffset
         });
 
         // Always bump updateId so reflected walk cycles stay frame-synced

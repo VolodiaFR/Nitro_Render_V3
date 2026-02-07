@@ -409,7 +409,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             const texture = sprite.texture;
             const baseTexture = texture && texture.source;
 
-            if(!texture || !baseTexture || baseTexture.destroyed) continue;
+            if(!texture || !baseTexture) continue;
 
             const spriteX = ((x + sprite.offsetX) + this._screenOffsetX);
             const spriteY = ((y + sprite.offsetY) + this._screenOffsetY);
