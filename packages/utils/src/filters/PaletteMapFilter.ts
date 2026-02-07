@@ -61,7 +61,7 @@ export class PaletteMapFilter extends Filter
 
             uniform sampler2D uTexture;
             uniform sampler2D uLutTexture;
-            uniform int channel;
+            uniform int uChannel;
 
             void main(void) {
                 vec4 currentColor = texture(uTexture, vTextureCoord);
@@ -69,15 +69,15 @@ export class PaletteMapFilter extends Filter
 
                 if(currentColor.a > 0.0)
                 {
-                    if(channel == 0)
+                    if(uChannel == 0)
                     {
-                        adjusted = texture2D(uLutTexture, vec2((currentColor.r * 255.0 + 0.5) / 256.0, 0.5));
-                    } else if(channel == 1) {
-                        adjusted = texture2D(uLutTexture, vec2((currentColor.g * 255.0 + 0.5) / 256.0, 0.5));
-                    } else if(channel == 2) {
-                        adjusted = texture2D(uLutTexture, vec2((currentColor.b * 255.0 + 0.5) / 256.0, 0.5));
-                    } else if(channel == 3) {
-                        adjusted = texture2D(uLutTexture, vec2((currentColor.a * 255.0 + 0.5) / 256.0, 0.5));
+                        adjusted = texture(uLutTexture, vec2((currentColor.r * 255.0 + 0.5) / 256.0, 0.5));
+                    } else if(uChannel == 1) {
+                        adjusted = texture(uLutTexture, vec2((currentColor.g * 255.0 + 0.5) / 256.0, 0.5));
+                    } else if(uChannel == 2) {
+                        adjusted = texture(uLutTexture, vec2((currentColor.b * 255.0 + 0.5) / 256.0, 0.5));
+                    } else if(uChannel == 3) {
+                        adjusted = texture(uLutTexture, vec2((currentColor.a * 255.0 + 0.5) / 256.0, 0.5));
                     }
                 }
 
@@ -102,7 +102,7 @@ export class PaletteMapFilter extends Filter
             glProgram,
             resources: {
                 paletteMapUniforms: {
-                    uChannel: { value: options.channel, type: 'int' }
+                    uChannel: { value: options.channel, type: 'i32' }
                 },
                 uLutTexture: lutTexture.source
             },
@@ -133,7 +133,7 @@ export class PaletteMapFilter extends Filter
             lookUpTable[(i * 4) + PaletteMapFilter.CHANNEL_RED] = ((data[i] >> 16) & 0xFF);
             lookUpTable[(i * 4) + PaletteMapFilter.CHANNEL_GREEN] = ((data[i] >> 8) & 0xFF);
             lookUpTable[(i * 4) + PaletteMapFilter.CHANNEL_BLUE] = (data[i] & 0xFF);
-            lookUpTable[(i * 4) + PaletteMapFilter.CHANNEL_ALPHA] = ((data[i] >> 24) & 0xFF);
+            lookUpTable[(i * 4) + PaletteMapFilter.CHANNEL_ALPHA] = 255;
         }
 
         return lookUpTable;

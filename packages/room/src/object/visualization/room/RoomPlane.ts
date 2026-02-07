@@ -885,7 +885,7 @@ export class RoomPlane implements IRoomPlane
         const visibleAvatarIds = new Set<number>();
 
         const addReflectionSprite = (texture: Texture, location: IVector3D, alpha: number): boolean => {
-            if(!texture || !location || alpha < 0) return false;
+            if(!texture?.source || !location || alpha < 0) return false;
 
             const relative = Vector3d.dif(location, this._location);
             const planeDistance = Math.abs(Vector3d.scalarProjection(relative, this._normal));
@@ -922,7 +922,7 @@ export class RoomPlane implements IRoomPlane
 
         for(const avatar of avatars)
         {
-            if(!avatar?.texture || !avatar.location) continue;
+            if(!avatar?.texture?.source || !avatar.location) continue;
 
             let firstSeenAt = this._windowReflectionFirstSeenAt.get(avatar.id);
 
@@ -954,6 +954,14 @@ export class RoomPlane implements IRoomPlane
         for(const [id, lastVisible] of this._windowReflectionLastVisible)
         {
             if(visibleAvatarIds.has(id) || this._windowReflectionFadeOut.has(id)) continue;
+
+            if(!lastVisible.texture?.source)
+            {
+                this._windowReflectionLastVisible.delete(id);
+                this._windowReflectionFirstSeenAt.delete(id);
+
+                continue;
+            }
 
             this._windowReflectionFadeOut.set(id, {
                 texture: lastVisible.texture,
