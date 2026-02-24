@@ -1,5 +1,5 @@
 import { AlphaTolerance, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObjectSprite, RoomObjectVariable, RoomObjectVisualizationType } from '@nitrots/api';
-import { BlackToAlphaFilter } from '@nitrots/utils';
+import { BlackToAlphaFilter, ChooserSelectionFilter } from '@nitrots/utils';
 import { BLEND_MODES, Filter, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
 import { ColorData, LayerData } from '../data';
@@ -335,15 +335,21 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
                 sprite.posture = this.getPostureForAsset(scale, assetData.source);
                 sprite.clickHandling = this._clickHandling;
 
+                const chooserFilters = (sprite.filters || []).filter(f => f instanceof ChooserSelectionFilter);
+
                 if(sprite.blendMode === 'add' && !this.isBackgroundColorBlack())
                 {
                     if(!FurnitureVisualization._blackToAlphaFilter) FurnitureVisualization._blackToAlphaFilter = new BlackToAlphaFilter();
 
-                    sprite.filters = [FurnitureVisualization._blackToAlphaFilter];
+                    sprite.filters = chooserFilters.length > 0
+                        ? [FurnitureVisualization._blackToAlphaFilter, ...chooserFilters]
+                        : [FurnitureVisualization._blackToAlphaFilter];
                 }
                 else
                 {
-                    sprite.filters = this._filters;
+                    sprite.filters = chooserFilters.length > 0
+                        ? [...this._filters, ...chooserFilters]
+                        : this._filters;
                 }
             }
             else
