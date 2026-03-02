@@ -6,6 +6,31 @@ import { TextureUtils } from '@nitrots/utils';
 import { BLEND_MODES, ColorMatrix, ColorMatrixFilter, Container, Filter, Sprite, Texture } from 'pixi.js';
 import { RoomCameraWidgetEffect } from './RoomCameraWidgetEffect';
 
+const COLOR_MATRIX_OFFSET_INDICES = [4, 9, 14, 19] as const;
+
+export const normalizeCameraColorMatrix = (matrix: ColorMatrix): ColorMatrix =>
+{
+    const normalized = [ ...matrix ] as ColorMatrix;
+
+    for(const index of COLOR_MATRIX_OFFSET_INDICES)
+    {
+        if(Math.abs(normalized[index]) > 1) normalized[index] /= 255;
+    }
+
+    for(const [ rowStart, offsetIndex ] of [[0, 4], [5, 9], [10, 14]] as const)
+    {
+        const rowHasOnlyNegativeWeights =
+            (normalized[rowStart] <= 0) &&
+            (normalized[rowStart + 1] <= 0) &&
+            (normalized[rowStart + 2] <= 0) &&
+            ((normalized[rowStart] !== 0) || (normalized[rowStart + 1] !== 0) || (normalized[rowStart + 2] !== 0));
+
+        if((normalized[offsetIndex] === 0) && rowHasOnlyNegativeWeights) normalized[offsetIndex] = 1;
+    }
+
+    return normalized;
+};
+
 export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
 {
     private _effects: Map<string, IRoomCameraWidgetEffect> = new Map();
@@ -26,16 +51,9 @@ export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
 
             const cameraEffect = new RoomCameraWidgetEffect(effect.name, effect.minLevel);
 
-            if(effect.colorMatrix.length)
+            if(effect.colorMatrix?.length)
             {
-                // Config offsets (indices 4,9,14,19) follow Flash's 0-255 convention.
-                // PixiJS v8 expects the full matrix in 0-1 space, so normalise them.
-                const m = [ ...effect.colorMatrix ] as ColorMatrix;
-                m[4]  /= 255;
-                m[9]  /= 255;
-                m[14] /= 255;
-                m[19] /= 255;
-                cameraEffect.colorMatrix = m;
+                cameraEffect.colorMatrix = normalizeCameraColorMatrix(effect.colorMatrix);
             }
             else
             {
