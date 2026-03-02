@@ -371,6 +371,12 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         return texture;
     }
 
+
+    public getAsset(name: string): IGraphicAsset
+    {
+        return this._assets.getAsset(name);
+    }
+
     public getDirection(): number
     {
         return this._mainDirection;
@@ -460,6 +466,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
             case AvatarAction.TALK:
             case AvatarAction.EXPRESSION_WAVE:
             case AvatarAction.SLEEP:
+            case AvatarAction.BLINK:
             case AvatarAction.SIGN:
             case AvatarAction.EXPRESSION_RESPECT:
             case AvatarAction.EXPRESSION_BLOW_A_KISS:

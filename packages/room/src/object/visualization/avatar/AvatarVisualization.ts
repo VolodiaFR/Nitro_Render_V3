@@ -1,5 +1,4 @@
 import { AlphaTolerance, AvatarAction, AvatarGuideStatus, AvatarSetType, IAdvancedMap, IAvatarEffectListener, IAvatarImage, IAvatarImageListener, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObject, IRoomObjectModel, RoomObjectSpriteType, RoomObjectVariable } from '@nitrots/api';
-import { GetAssetManager } from '@nitrots/assets';
 import { AdvancedMap, GetRenderer } from '@nitrots/utils';
 import { Container, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
@@ -429,7 +428,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                         const assetName = ((((((this._avatarImage.getScale() + '_') + spriteData.member) + '_') + dd) + '_') + frameNumber);
 
-                        const asset = GetAssetManager().getAsset(assetName);
+                        const asset = this._avatarImage.getAsset(assetName);
 
                         if(!asset) continue;
 
@@ -958,7 +957,15 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(this._talk) this._avatarImage.appendAction(AvatarAction.TALK);
 
-        if(this._sleep || this._blink) this._avatarImage.appendAction(AvatarAction.SLEEP);
+        if(this._sleep)
+        {
+            this._avatarImage.appendAction(AvatarAction.SLEEP);
+        }
+        else if(this._blink)
+        {
+            this._avatarImage.appendAction(AvatarAction.BLINK);
+            this._avatarImage.appendAction(AvatarAction.SLEEP);
+        }
 
         if(this._expression > 0)
         {
@@ -1189,7 +1196,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 {
                     sprite.libraryAssetName = 'sh_std_sd_1_0_0';
 
-                    this._shadow = GetAssetManager().getAsset(sprite.libraryAssetName);
+                    this._shadow = this._avatarImage.getAsset(sprite.libraryAssetName);
 
                     offsetX = -8;
                     offsetY = ((this._canStandUp) ? 6 : -3);
@@ -1198,7 +1205,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 {
                     sprite.libraryAssetName = 'h_std_sd_1_0_0';
 
-                    this._shadow = GetAssetManager().getAsset(sprite.libraryAssetName);
+                    this._shadow = this._avatarImage.getAsset(sprite.libraryAssetName);
 
                     offsetX = -17;
                     offsetY = ((this._canStandUp) ? 10 : -7);

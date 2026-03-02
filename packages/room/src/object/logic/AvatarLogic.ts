@@ -188,19 +188,30 @@ export class AvatarLogic extends MovingObjectLogic
             }
         }
 
-        if((this._blinkingStartTimestamp > -1) && (time > this._blinkingStartTimestamp))
-        {
-            model.setValue(RoomObjectVariable.FIGURE_BLINK, 1);
+        const isSleeping = (model.getValue<number>(RoomObjectVariable.FIGURE_SLEEP) > 0);
 
-            this._blinkingStartTimestamp = time + this.randomBlinkStartTimestamp();
-            this._blinkingEndTimestamp = time + this.randomBlinkEndTimestamp();
-        }
-
-        if((this._blinkingEndTimestamp > 0) && (time > this._blinkingEndTimestamp))
+        if(isSleeping)
         {
             model.setValue(RoomObjectVariable.FIGURE_BLINK, 0);
-
             this._blinkingEndTimestamp = 0;
+            this._blinkingStartTimestamp = -1;
+        }
+        else
+        {
+            if((this._blinkingStartTimestamp > -1) && (time > this._blinkingStartTimestamp))
+            {
+                model.setValue(RoomObjectVariable.FIGURE_BLINK, 1);
+
+                this._blinkingStartTimestamp = time + this.randomBlinkStartTimestamp();
+                this._blinkingEndTimestamp = time + this.randomBlinkEndTimestamp();
+            }
+
+            if((this._blinkingEndTimestamp > 0) && (time > this._blinkingEndTimestamp))
+            {
+                model.setValue(RoomObjectVariable.FIGURE_BLINK, 0);
+
+                this._blinkingEndTimestamp = 0;
+            }
         }
 
         if((this._effectChangeTimeStamp > 0) && (time > this._effectChangeTimeStamp))
@@ -305,6 +316,9 @@ export class AvatarLogic extends MovingObjectLogic
         if(message instanceof ObjectAvatarSleepUpdateMessage)
         {
             model.setValue(RoomObjectVariable.FIGURE_SLEEP, message.isSleeping ? 1 : 0);
+            model.setValue(RoomObjectVariable.FIGURE_BLINK, 0);
+
+            this._blinkingEndTimestamp = 0;
 
             if(message.isSleeping) this._blinkingStartTimestamp = -1;
             else this._blinkingStartTimestamp = (this.time + this.randomBlinkStartTimestamp());

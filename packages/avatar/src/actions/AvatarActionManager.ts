@@ -27,6 +27,7 @@ export class AvatarActionManager
             const definition = new ActionDefinition(action);
 
             this._actions.set(definition.state, definition);
+            this._actions.set(definition.state.toLowerCase(), definition);
         }
 
         if(data.actionOffsets) this.parseActionOffsets(data.actionOffsets);
@@ -38,7 +39,7 @@ export class AvatarActionManager
 
         for(const offset of offsets)
         {
-            const action = this._actions.get(offset.action);
+            const action = this.getActionByState(offset.action);
 
             if(!action) continue;
 
@@ -58,6 +59,13 @@ export class AvatarActionManager
         }
     }
 
+    private getActionByState(state: string): ActionDefinition
+    {
+        if(!state) return null;
+
+        return (this._actions.get(state) || this._actions.get(state.toLowerCase()) || this._actions.get(state.toUpperCase()) || null);
+    }
+
     public getActionDefinition(id: string): ActionDefinition
     {
         if(!id) return null;
@@ -74,11 +82,7 @@ export class AvatarActionManager
 
     public getActionDefinitionWithState(state: string): ActionDefinition
     {
-        const existing = this._actions.get(state);
-
-        if(!existing) return null;
-
-        return existing;
+        return this.getActionByState(state);
     }
 
     public getDefaultAction(): ActionDefinition
@@ -105,7 +109,7 @@ export class AvatarActionManager
         {
             if(!activeAction) continue;
 
-            const action = this._actions.get(activeAction.actionType);
+            const action = this.getActionByState(activeAction.actionType);
             const offsets = action && action.getOffsets(_arg_2, _arg_3);
 
             if(offsets) canvasOffsets = offsets;
@@ -126,7 +130,7 @@ export class AvatarActionManager
         {
             if(!action) continue;
 
-            const definition = this._actions.get(action.actionType);
+            const definition = this.getActionByState(action.actionType);
 
             if(!definition) continue;
 
@@ -161,7 +165,7 @@ export class AvatarActionManager
         {
             if(!action) continue;
 
-            const localAction = this._actions.get(action.actionType);
+            const localAction = this.getActionByState(action.actionType);
 
             if(localAction) preventions = preventions.concat(localAction.getPrevents(action.actionParameter));
         }
