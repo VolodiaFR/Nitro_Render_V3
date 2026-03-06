@@ -12,6 +12,7 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
     public static HIGHLIGHT_DARKEN = 'highlight_darken';
     public static HIGHLIGHT_BRIGHTEN = 'highlight_brighten';
     public static HIGHLIGHT_BLUE = 'highlight_blue';
+    public static HIGHLIGHT_GREEN = 'highlight_green';
 
     private static HIGHLIGHT_FILTERS: { [key: string]: ColorMatrixFilter } = {};
 
@@ -72,9 +73,19 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
             0, 0, 0, 1,
             -0.0392, -0.0392, -0.0392, 0];
 
+        const greenFilter = new ColorMatrixFilter();
+
+        greenFilter.matrix = [
+            0.5, 0, 0, 0,
+            0, 1.6, 0, 0,
+            0, 0, 0.5, 0,
+            0, 0, 0, 1,
+            0, 0.15, 0, 0];
+
         RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_DARKEN] = darkenFilter;
         RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN] = brightenFilter;
         RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_BLUE] = blueFilter;
+        RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_GREEN] = greenFilter;
     }
 
     private getAllFurniture(): IRoomObject[]
@@ -186,6 +197,18 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
         this._roomEngine.moveBlocked = false;
 
         if(this._callback) this._callback(0, 0, 0, 0);
+    }
+
+    public setHighlightType(highlightType: string): void
+    {
+        if(this._state === RoomAreaSelectionManager.NOT_ACTIVE) return;
+
+        this._highlightType = highlightType;
+
+        if(this._highlightWidth > 0 && this._highlightHeight > 0)
+        {
+            this.setHighlight(this._highlightRootX, this._highlightRootY, this._highlightWidth, this._highlightHeight);
+        }
     }
 
     public setHighlight(rootX: number, rootY: number, width: number, height: number): void

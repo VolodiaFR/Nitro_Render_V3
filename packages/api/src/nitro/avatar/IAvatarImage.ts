@@ -1,6 +1,5 @@
 import { Container, Texture } from 'pixi.js';
 import { IAvatarFigureContainer } from './IAvatarFigureContainer';
-import { IGraphicAsset } from '../../asset';
 import { IAnimationLayerData, ISpriteDataContainer } from './animation';
 import { IPartColor } from './structure';
 
@@ -16,7 +15,6 @@ export interface IAvatarImage
     processAsTexture(setType: string, hightlight: boolean, texture?: Texture): Texture;
     processAsImageUrl(setType: string): string;
     processAsContainer(setType: string): Container;
-    getAsset(name: string): IGraphicAsset;
     getDirection(): number;
     getFigure(): IAvatarFigureContainer;
     getPartColor(_arg_1: string): IPartColor;
