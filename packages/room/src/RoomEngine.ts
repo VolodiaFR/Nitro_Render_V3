@@ -357,9 +357,9 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
             let direction: IVector3D = null;
 
-            if(doorDirection === 90) direction = new Vector3d(-2000, 0, 0);
+            if(doorDirection === 90) direction = new Vector3d(-3000, 0, 0);
 
-            if(doorDirection === 180) direction = new Vector3d(0, -2000, 0);
+            if(doorDirection === 180) direction = new Vector3d(0, -3000, 0);
 
             canvas.geometry.setDisplacement(vector, direction);
 
