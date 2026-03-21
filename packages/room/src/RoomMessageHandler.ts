@@ -17,6 +17,7 @@ export class RoomMessageHandler
 
     private _currentRoomId: number = 0;
     private _ownUserId: number = 0;
+    private _ownRoomIndex: number = -1;
     private _initialConnection: boolean = true;
     private _guideId: number = -1;
     private _requesterId: number = -1;
@@ -635,6 +636,7 @@ export class RoomMessageHandler
 
             if(user.webID === this._ownUserId)
             {
+                this._ownRoomIndex = user.roomIndex;
                 this._roomEngine.setRoomSessionOwnUser(this._currentRoomId, user.roomIndex);
                 this._roomEngine.updateRoomObjectUserOwn(this._currentRoomId, user.roomIndex);
             }
@@ -734,6 +736,17 @@ export class RoomMessageHandler
 
             this._roomEngine.updateRoomObjectUserLocation(this._currentRoomId, status.id, location, goal, status.canStandUp, height, direction, status.headDirection);
             this._roomEngine.updateRoomObjectUserFlatControl(this._currentRoomId, status.id, null);
+
+            // Save own user's position for reconnection
+            if(status.id === this._ownRoomIndex)
+            {
+                try
+                {
+                    sessionStorage.setItem('nitro.session.lastPosX', status.x.toString());
+                    sessionStorage.setItem('nitro.session.lastPosY', status.y.toString());
+                }
+                catch(e) { /* ignore */ }
+            }
 
             let isPosture = true;
             let postureUpdate = false;
