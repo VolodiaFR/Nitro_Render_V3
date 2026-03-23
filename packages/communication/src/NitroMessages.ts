@@ -402,6 +402,7 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.ROOM_INFO_OWNER, RoomEntryInfoMessageEvent);
         this._events.set(IncomingHeader.ROOM_SCORE, RoomScoreEvent);
         this._events.set(IncomingHeader.ROOM_ROLLING, ObjectsRollingEvent);
+        this._events.set(IncomingHeader.WIRED_MOVEMENTS, WiredMovementsEvent);
         this._events.set(IncomingHeader.FURNITURE_FLOOR_ADD, FurnitureFloorAddEvent);
         this._events.set(IncomingHeader.FURNITURE_FLOOR, FurnitureFloorEvent);
         this._events.set(IncomingHeader.FURNITURE_FLOOR_REMOVE, FurnitureFloorRemoveEvent);
