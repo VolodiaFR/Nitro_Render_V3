@@ -8,7 +8,6 @@ export * from './competition';
 export * from './crafting';
 export * from './desktop';
 export * from './friendfurni';
-export * from './furnieditor';
 export * from './friendlist';
 export * from './game';
 export * from './game/arena';
