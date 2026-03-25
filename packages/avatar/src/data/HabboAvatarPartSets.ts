@@ -103,6 +103,17 @@ export const HabboAvatarPartSets = {
             },
             {
                 'setType': 'he'
+            },
+            {
+                'setType': 'pt'
+            },
+            {
+                'setType': 'ptl',
+                'flippedSetType': 'ptr'
+            },
+            {
+                'setType': 'ptr',
+                'flippedSetType': 'ptl'
             }
         ],
         'activePartSets': [
@@ -192,6 +203,15 @@ export const HabboAvatarPartSets = {
                     },
                     {
                         'setType': 'he'
+                    },
+                    {
+                        'setType': 'pt'
+                    },
+                    {
+                        'setType': 'ptl'
+                    },
+                    {
+                        'setType': 'ptr'
                     }
                 ]
             },
