@@ -8,4 +8,5 @@
     public static WARDROBE: string = 'wardrobe';
     public static EFFECTS: string = 'effects';
     public static PETS: string = 'pets';
+    public static NFT: string = 'nft';
 }
