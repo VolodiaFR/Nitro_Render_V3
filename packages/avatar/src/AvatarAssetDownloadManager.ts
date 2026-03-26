@@ -243,6 +243,28 @@ export class AvatarAssetDownloadManager
         return pendingLibraries;
     }
 
+    public isNftPartSet(partSet: { parts: { type: string, id: number }[] }): boolean
+    {
+        if(!partSet || !partSet.parts) return false;
+
+        for(const part of partSet.parts)
+        {
+            if(!part) continue;
+
+            const name = (part.type + ':' + part.id);
+            const libraries = this._figureMap.get(name);
+
+            if(!libraries) continue;
+
+            for(const library of libraries)
+            {
+                if(library && library.libraryName.toLowerCase().includes('nft')) return true;
+            }
+        }
+
+        return false;
+    }
+
     public downloadAvatarFigure(container: IAvatarFigureContainer, listener: IAvatarImageListener): void
     {
         const figure = container.getFigureString();
