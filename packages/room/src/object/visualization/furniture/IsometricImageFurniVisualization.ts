@@ -56,13 +56,10 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
             return;
         }
 
-        const thumbnailAssetName = this.getThumbnailAssetName(64);
-
         if (this._thumbnailImageNormal) {
             this.addThumbnailAsset(this._thumbnailImageNormal, 64);
         } else {
-            const layerId = 2;
-            const sprite = this.getSprite(layerId);
+            this.asset.disposeAsset(`${this.getThumbnailAssetName(64)}-${this._uniqueId}`);
         }
 
         this._thumbnailChanged = false;
@@ -101,60 +98,78 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     }
 
     protected generateTransformedThumbnail(texture: Texture, asset: IGraphicAsset): Texture {
-        const scaleFactor = (asset?.width || 64) / texture.width;
-        const verticalScale = 1.0265;
-        const matrix = new Matrix();
-        const frameThickness = 20;
-        const frameColor = 0x000000;
+        const assetWidth = asset?.width || 64;
+        const assetHeight = asset?.height || 64;
 
-        switch (this.direction) {
+        if(this._hasOutline)
+        {
+            const borderSize = 20;
+            const bgWidth = texture.width + borderSize * 2;
+            const bgHeight = texture.height + borderSize * 2;
+
+            const container = new Container();
+            const background = new Sprite(Texture.WHITE);
+            background.tint = 0x000000;
+            background.width = bgWidth;
+            background.height = bgHeight;
+
+            const imageSprite = new Sprite(texture);
+            imageSprite.position.set(borderSize, borderSize);
+
+            container.addChild(background, imageSprite);
+
+            const flatRenderTexture = RenderTexture.create({ width: bgWidth, height: bgHeight, resolution: 1 });
+            GetRenderer().render({ container, target: flatRenderTexture, clear: true });
+
+            texture = flatRenderTexture;
+        }
+
+        texture.source.scaleMode = 'linear';
+
+        const scaleX = assetWidth / texture.width;
+        const scaleY = assetHeight / texture.height;
+
+        const matrix = new Matrix();
+
+        switch(this.direction)
+        {
             case 2:
-                matrix.a = scaleFactor;
-                matrix.b = (-0.5 * scaleFactor);
+                matrix.a = scaleX;
+                matrix.b = -(0.5 * scaleX);
                 matrix.c = 0;
-                matrix.d = (scaleFactor * verticalScale);
+                matrix.d = (scaleY / 1.6);
                 matrix.tx = 0;
-                matrix.ty = (0.5 * scaleFactor * texture.width);
+                matrix.ty = (0.5 * scaleX * texture.width);
                 break;
             case 0:
             case 4:
-                matrix.a = scaleFactor;
-                matrix.b = (0.5 * scaleFactor);
+                matrix.a = scaleX;
+                matrix.b = (0.5 * scaleX);
                 matrix.c = 0;
-                matrix.d = (scaleFactor * verticalScale);
+                matrix.d = (scaleY / 1.6);
                 matrix.tx = 0;
                 matrix.ty = 0;
                 break;
             default:
-                matrix.a = scaleFactor;
+                matrix.a = scaleX;
                 matrix.b = 0;
                 matrix.c = 0;
-                matrix.d = scaleFactor;
+                matrix.d = scaleY;
                 matrix.tx = 0;
                 matrix.ty = 0;
         }
 
-        const imgWidth = texture.width;
-        const imgHeight = texture.height;
-        const flatWidth = imgWidth + frameThickness * 2;
-        const flatHeight = imgHeight + frameThickness * 2;
-        const flatRenderTexture = TextureUtils.createAndFillRenderTexture(flatWidth, flatHeight, frameColor);
-        const imageSprite = new Sprite(texture);
-        imageSprite.position.set(frameThickness, frameThickness);
-        TextureUtils.writeToTexture(imageSprite, flatRenderTexture, false);
-        const flatTexture = flatRenderTexture;
-        const transformedSprite = new Sprite(flatTexture);
+        const transformedSprite = new Sprite(texture);
         transformedSprite.setFromMatrix(matrix);
-        const width = 80;
-        const height = 80;
-        const finalContainer = new Container();
-        const posX = (width - transformedSprite.width) / 2;
-        const posY = (height - transformedSprite.height) / 2;
-        transformedSprite.position.set(posX, posY);
-        finalContainer.addChild(transformedSprite);
 
-        const renderTexture = RenderTexture.create({ width, height, resolution: 1 });
-        GetRenderer().render({ container: finalContainer, target: renderTexture, clear: true });
+        const bounds = transformedSprite.getBounds();
+        const renderWidth = Math.ceil(bounds.width);
+        const renderHeight = Math.ceil(bounds.height);
+
+        transformedSprite.position.set(-bounds.x, -bounds.y);
+
+        const renderTexture = RenderTexture.create({ width: renderWidth, height: renderHeight, resolution: 1 });
+        GetRenderer().render({ container: transformedSprite, target: renderTexture, clear: true });
 
         return renderTexture;
     }
