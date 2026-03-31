@@ -35,14 +35,12 @@ export class FurnitureDynamicThumbnailVisualization extends IsometricImageFurniV
                         }
                         image.onload = null;
                         image.onerror = null;
-                        image.src = '';
                     };
 
                     image.onerror = () => {
                         this.setThumbnailImages(null);
                         image.onload = null;
                         image.onerror = null;
-                        image.src = '';
                     };
                 } else {
                     this.setThumbnailImages(null);
