@@ -61,6 +61,9 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         if (this._thumbnailImageNormal) {
             this.addThumbnailAsset(this._thumbnailImageNormal, 64);
         } else {
+            if (this._thumbnailTexture instanceof RenderTexture) {
+                this._thumbnailTexture.destroy(true);
+            }
             this._thumbnailTexture = null;
             this._thumbnailLayerId = -1;
         }
@@ -82,6 +85,9 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
                 const asset = this.getAsset(assetName, layerId);
 
                 if (asset) {
+                    if (this._thumbnailTexture instanceof RenderTexture) {
+                        this._thumbnailTexture.destroy(true);
+                    }
                     this._thumbnailTexture = this.generateTransformedThumbnail(k, asset);
                 }
 
@@ -106,6 +112,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     protected generateTransformedThumbnail(texture: Texture, asset: IGraphicAsset): Texture {
         const assetWidth = asset.width;
         const assetHeight = asset.height;
+        let outlineTexture: RenderTexture = null;
 
         if(this._hasOutline)
         {
@@ -124,10 +131,10 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
 
             container.addChild(background, imageSprite);
 
-            const flatRenderTexture = RenderTexture.create({ width: bgWidth, height: bgHeight, resolution: 1 });
-            GetRenderer().render({ container, target: flatRenderTexture, clear: true });
+            outlineTexture = RenderTexture.create({ width: bgWidth, height: bgHeight, resolution: 1 });
+            GetRenderer().render({ container, target: outlineTexture, clear: true });
 
-            texture = flatRenderTexture;
+            texture = outlineTexture;
         }
 
         texture.source.scaleMode = 'linear';
@@ -196,6 +203,10 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
 
         const renderTexture = RenderTexture.create({ width: renderWidth, height: renderHeight, resolution: 1 });
         GetRenderer().render({ container: transformedSprite, target: renderTexture, clear: true });
+
+        if (outlineTexture) {
+            outlineTexture.destroy(true);
+        }
 
         return renderTexture;
     }

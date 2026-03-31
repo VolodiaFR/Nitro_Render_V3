@@ -340,6 +340,15 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
                     ctx.clearRect(0, 0, badgeCanvas.width, badgeCanvas.height);
                     ctx.drawImage(img, 0, 0, badgeCanvas.width, badgeCanvas.height);
                     tex.source.update();
+                    img.onload = null;
+                    img.onerror = null;
+                    img.src = '';
+                };
+                img.onerror = () =>
+                {
+                    img.onload = null;
+                    img.onerror = null;
+                    img.src = '';
                 };
                 img.src = badgeUrl;
             }
