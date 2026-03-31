@@ -65,8 +65,8 @@ export class OutgoingHeader
     public static GROUP_CREATE_OPTIONS = 798;
     public static GROUP_FAVORITE = 3549;
     public static GET_FORUM_STATS = 3149;
-    public static GET_FORUM_THREADS = 873;
-    public static GET_FORUMS_LIST = 436;
+    public static GET_FORUM_THREADS = 436;
+    public static GET_FORUMS_LIST = 873;
     public static GET_FORUM_MESSAGES = 232;
     public static GET_FORUM_THREAD = 3900;
     public static GET_UNREAD_FORUMS_COUNT = 2908;
@@ -475,6 +475,14 @@ export class OutgoingHeader
     public static RENTABLE_GET_RENT_OR_BUYOUT_OFFER = 2518;
 	
 	public static FURNITURE_PICKUP_ALL = 10017;
+
+	// Furni Editor
+	public static FURNI_EDITOR_SEARCH = 10040;
+	public static FURNI_EDITOR_DETAIL = 10041;
+	public static FURNI_EDITOR_BY_SPRITE = 10042;
+	public static FURNI_EDITOR_INTERACTIONS = 10043;
+	public static FURNI_EDITOR_UPDATE = 10044;
+	public static FURNI_EDITOR_DELETE = 10045;
 
 	public static CATALOG_ADMIN_SAVE_PAGE = 10050;
     public static CATALOG_ADMIN_CREATE_PAGE = 10051;
