@@ -269,6 +269,9 @@ export class IncomingHeader
     public static WIRED_ACTION = 1434;
     public static WIRED_CONDITION = 1108;
     public static WIRED_ERROR = 156;
+    public static WIRED_MONITOR_DATA = 5101;
+    public static WIRED_ROOM_SETTINGS_DATA = 5102;
+    public static WIRED_USER_VARIABLES_DATA = 5103;
     public static WIRED_OPEN = 1830;
     public static WIRED_REWARD = 178;
     public static WIRED_SAVE = 1155;
