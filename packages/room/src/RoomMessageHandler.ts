@@ -1,11 +1,21 @@
-import { AvatarGuideStatus, IConnection, IMessageEvent, IRoomCreator, IRoomObjectController, IVector3D, LegacyDataType, ObjectRolling, PetType, RoomObjectType, RoomObjectUserType, RoomObjectVariable } from '@nitrots/api';
-import { AreaHideMessageEvent, DiceValueMessageEvent, FloorHeightMapEvent, FurnitureAliasesComposer, FurnitureAliasesEvent, FurnitureDataEvent, FurnitureFloorAddEvent, FurnitureFloorDataParser, FurnitureFloorEvent, FurnitureFloorRemoveEvent, FurnitureFloorUpdateEvent, FurnitureWallAddEvent, FurnitureWallDataParser, FurnitureWallEvent, FurnitureWallRemoveEvent, FurnitureWallUpdateEvent, GetCommunication, GetRoomEntryDataMessageComposer, GuideSessionEndedMessageEvent, GuideSessionErrorMessageEvent, GuideSessionStartedMessageEvent, IgnoreResultEvent, ItemDataUpdateMessageEvent, ObjectsDataUpdateEvent, ObjectsRollingEvent, OneWayDoorStatusMessageEvent, PetExperienceEvent, PetFigureUpdateEvent, RoomEntryTileMessageEvent, RoomEntryTileMessageParser, RoomHeightMapEvent, RoomHeightMapUpdateEvent, RoomPaintEvent, RoomReadyMessageEvent, RoomUnitChatEvent, RoomUnitChatShoutEvent, RoomUnitChatWhisperEvent, RoomUnitDanceEvent, RoomUnitEffectEvent, RoomUnitEvent, RoomUnitExpressionEvent, RoomUnitHandItemEvent, RoomUnitIdleEvent, RoomUnitInfoEvent, RoomUnitNumberEvent, RoomUnitRemoveEvent, RoomUnitStatusEvent, RoomUnitStatusMessage, RoomUnitTypingEvent, RoomVisualizationSettingsEvent, UserInfoEvent, WiredFurniMovementData, WiredMovementsEvent, WiredUserDirectionUpdateData, WiredUserMovementData, YouArePlayingGameEvent } from '@nitrots/communication';
+import { AvatarGuideStatus, IConnection, IMessageEvent, IRoomCreator, IRoomObjectController, IRoomObject, IVector3D, LegacyDataType, ObjectRolling, PetType, RoomObjectCategory, RoomObjectType, RoomObjectUserType, RoomObjectVariable } from '@nitrots/api';
+import { AreaHideMessageEvent, ConfInvisStateMessageEvent, DiceValueMessageEvent, FloorHeightMapEvent, FurnitureAliasesComposer, FurnitureAliasesEvent, FurnitureDataEvent, FurnitureFloorAddEvent, FurnitureFloorDataParser, FurnitureFloorEvent, FurnitureFloorRemoveEvent, FurnitureFloorUpdateEvent, FurnitureWallAddEvent, FurnitureWallDataParser, FurnitureWallEvent, FurnitureWallRemoveEvent, FurnitureWallUpdateEvent, GetCommunication, GetRoomEntryDataMessageComposer, GuideSessionEndedMessageEvent, GuideSessionErrorMessageEvent, GuideSessionStartedMessageEvent, IgnoreResultEvent, ItemDataUpdateMessageEvent, ObjectsDataUpdateEvent, ObjectsRollingEvent, OneWayDoorStatusMessageEvent, PetExperienceEvent, PetFigureUpdateEvent, RoomEntryTileMessageEvent, RoomEntryTileMessageParser, RoomHeightMapEvent, RoomHeightMapUpdateEvent, RoomPaintEvent, RoomReadyMessageEvent, RoomUnitChatEvent, RoomUnitChatShoutEvent, RoomUnitChatWhisperEvent, RoomUnitDanceEvent, RoomUnitEffectEvent, RoomUnitEvent, RoomUnitExpressionEvent, RoomUnitHandItemEvent, RoomUnitIdleEvent, RoomUnitInfoEvent, RoomUnitNumberEvent, RoomUnitRemoveEvent, RoomUnitStatusEvent, RoomUnitStatusMessage, RoomUnitTypingEvent, RoomVisualizationSettingsEvent, UserInfoEvent, WiredFurniMovementData, WiredMovementsEvent, WiredUserDirectionUpdateData, WiredUserMovementData, YouArePlayingGameEvent } from '@nitrots/communication';
 import { GetRoomSessionManager, GetSessionDataManager } from '@nitrots/session';
 import { Vector3d } from '@nitrots/utils';
 import { GetRoomEngine } from './GetRoomEngine';
 import { RoomVariableEnum } from './RoomVariableEnum';
 import { RoomPlaneParser } from './object/RoomPlaneParser';
 import { FurnitureStackingHeightMap, LegacyWallGeometry } from './utils';
+
+type AreaHideControllerState = {
+    rootX: number;
+    rootY: number;
+    width: number;
+    length: number;
+    invert: boolean;
+    wallItems: boolean;
+    invisibility: boolean;
+};
 
 export class RoomMessageHandler
 {
@@ -23,6 +33,11 @@ export class RoomMessageHandler
     private _messageEvents: IMessageEvent[] = [];
     private _activeWiredUserMovements = new Map<number, { expiresAt: number, targetX: number, targetY: number, targetZ: number }>();
     private _activeRoomUserWalks = new Map<number, { startedAt: number, targetX: number, targetY: number, targetZ: number, duration: number }>();
+    private _activeConfInvisHiddenItemIds = new Set<number>();
+    private _confInvisReapplyTimeouts: ReturnType<typeof setTimeout>[] = [];
+    private _activeAreaHideControllers = new Map<number, AreaHideControllerState>();
+    private _areaHideReapplyTimeouts: ReturnType<typeof setTimeout>[] = [];
+    private _isConfInvisControlActive = false;
 
     private _currentRoomId: number = 0;
     private _ownUserId: number = 0;
@@ -62,6 +77,7 @@ export class RoomMessageHandler
             new ItemDataUpdateMessageEvent(this.onItemDataUpdateMessageEvent.bind(this)),
             new OneWayDoorStatusMessageEvent(this.onOneWayDoorStatusMessageEvent.bind(this)),
             new AreaHideMessageEvent(this.onAreaHideMessageEvent.bind(this)),
+            new ConfInvisStateMessageEvent(this.onConfInvisStateMessageEvent.bind(this)),
             new RoomUnitDanceEvent(this.onRoomUnitDanceEvent.bind(this)),
             new RoomUnitEffectEvent(this.onRoomUnitEffectEvent.bind(this)),
             new RoomUnitEvent(this.onRoomUnitEvent.bind(this)),
@@ -110,12 +126,16 @@ export class RoomMessageHandler
         this._latestEntryTileEvent = null;
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
-
         if(this._planeParser)
         {
             this._planeParser.dispose();
             this._planeParser = null;
         }
+        this._activeConfInvisHiddenItemIds.clear();
+        this.clearConfInvisReapplyTimeouts();
+        this._activeAreaHideControllers.clear();
+        this.clearAreaHideReapplyTimeouts();
+        this._isConfInvisControlActive = false;
     }
 
     public setRoomId(id: number): void
@@ -129,6 +149,11 @@ export class RoomMessageHandler
         this._latestEntryTileEvent = null;
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
+        this._activeConfInvisHiddenItemIds.clear();
+        this.clearConfInvisReapplyTimeouts();
+        this._activeAreaHideControllers.clear();
+        this.clearAreaHideReapplyTimeouts();
+        this._isConfInvisControlActive = false;
     }
 
     public clearRoomId(): void
@@ -137,6 +162,11 @@ export class RoomMessageHandler
         this._latestEntryTileEvent = null;
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
+        this._activeConfInvisHiddenItemIds.clear();
+        this.clearConfInvisReapplyTimeouts();
+        this._activeAreaHideControllers.clear();
+        this.clearAreaHideReapplyTimeouts();
+        this._isConfInvisControlActive = false;
     }
 
     private onUserInfoEvent(event: UserInfoEvent): void
@@ -383,6 +413,8 @@ export class RoomMessageHandler
 
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, parser.rollerId, null, null, 1, null);
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, parser.rollerId, null, null, 2, null);
+        this.applyConfInvisStateToFloorObjects([ parser.rollerId ]);
+        this.applyAreaHideStateToFloorObjects([ parser.rollerId ]);
 
         const furnitureRolling = parser.itemsRolling;
 
@@ -394,6 +426,8 @@ export class RoomMessageHandler
 
                 this._roomEngine.rollRoomObjectFloor(this._currentRoomId, rollData.id, rollData.location, rollData.targetLocation);
             }
+
+            this.scheduleAreaHideReapply(this._currentRoomId);
         }
 
         const unitRollData = parser.unitRolling;
@@ -671,6 +705,9 @@ export class RoomMessageHandler
         {
             this._roomEngine.updateRoomObjectFloor(this._currentRoomId, object.id, null, null, object.state, object.data);
         }
+
+        this.applyConfInvisStateToFloorObjects();
+        this.applyAreaHideStateToFloorObjects();
     }
 
     private onFurnitureAliasesEvent(event: FurnitureAliasesEvent): void
@@ -691,6 +728,8 @@ export class RoomMessageHandler
         if(!item) return;
 
         this.addRoomObjectFurnitureFloor(this._currentRoomId, item);
+        this.applyConfInvisStateToFloorObjects([ item.itemId ]);
+        this.applyAreaHideStateToFloorObjects([ item.itemId ]);
     }
 
     private onFurnitureFloorEvent(event: FurnitureFloorEvent): void
@@ -713,6 +752,10 @@ export class RoomMessageHandler
 
             iterator++;
         }
+
+        this.applyConfInvisStateToFloorObjects();
+        this.applyAreaHideStateToFloorObjects();
+        this.scheduleAreaHideReapply(this._currentRoomId);
     }
 
     private onFurnitureFloorRemoveEvent(event: FurnitureFloorRemoveEvent): void
@@ -727,12 +770,18 @@ export class RoomMessageHandler
         {
             setTimeout(() =>
             {
+                this._activeConfInvisHiddenItemIds.delete(parser.itemId);
+                this._activeAreaHideControllers.delete(parser.itemId);
                 this._roomEngine.removeRoomObjectFloor(this._currentRoomId, parser.itemId, (parser.isExpired) ? -1 : parser.userId, true);
+                this.applyAreaHideStateToRoomObjects();
             }, parser.delay);
         }
         else
         {
+            this._activeConfInvisHiddenItemIds.delete(parser.itemId);
+            this._activeAreaHideControllers.delete(parser.itemId);
             this._roomEngine.removeRoomObjectFloor(this._currentRoomId, parser.itemId, (parser.isExpired) ? -1 : parser.userId, true);
+            this.applyAreaHideStateToRoomObjects();
         }
     }
 
@@ -750,6 +799,73 @@ export class RoomMessageHandler
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, item.itemId, location, direction, item.data.state, item.data, item.extra);
         this._roomEngine.updateRoomObjectFloorHeight(this._currentRoomId, item.itemId, item.stackHeight);
         this._roomEngine.updateRoomObjectFloorExpiration(this._currentRoomId, item.itemId, item.expires);
+        this.applyConfInvisStateToFloorObjects([ item.itemId ]);
+        this.applyAreaHideStateToFloorObjects([ item.itemId ]);
+    }
+
+    private onConfInvisStateMessageEvent(event: ConfInvisStateMessageEvent): void
+    {
+        if(!(event instanceof ConfInvisStateMessageEvent) || !event.connection || !this._roomEngine) return;
+
+        const parser = event.getParser();
+
+        if(!parser?.stateData) return;
+        if(parser.stateData.roomId !== this._currentRoomId) return;
+
+        this._isConfInvisControlActive = parser.stateData.active;
+        this._activeConfInvisHiddenItemIds = new Set<number>(parser.stateData.hiddenItemIds);
+        this.applyConfInvisStateToFloorObjects();
+        this.applyAreaHideStateToRoomObjects();
+        this.scheduleConfInvisReapply(parser.stateData.roomId);
+        this.scheduleAreaHideReapply(parser.stateData.roomId);
+    }
+
+    private applyConfInvisStateToFloorObjects(itemIds?: number[]): void
+    {
+        const floorObjects = ((this._roomEngine as any)?.getRoomObjects?.(this._currentRoomId, RoomObjectCategory.FLOOR) as IRoomObject[]) ?? [];
+
+        if(!floorObjects?.length) return;
+
+        const scopedIds = itemIds?.length ? new Set<number>(itemIds) : null;
+
+        for(const roomObject of floorObjects)
+        {
+            if(!roomObject?.model) continue;
+            if(scopedIds && !scopedIds.has(roomObject.id)) continue;
+
+            roomObject.model.setValue(RoomObjectVariable.FURNITURE_CONF_INVIS_HIDDEN, this._activeConfInvisHiddenItemIds.has(roomObject.id) ? 1 : 0);
+        }
+    }
+
+    private scheduleConfInvisReapply(roomId: number): void
+    {
+        this.clearConfInvisReapplyTimeouts();
+
+        const retryDelays = [ 0, 50, 150, 300, 600, 1000 ];
+
+        for(const delay of retryDelays)
+        {
+            const timeout = setTimeout(() =>
+            {
+                if(roomId !== this._currentRoomId) return;
+
+                this.applyConfInvisStateToFloorObjects();
+            }, delay);
+
+            this._confInvisReapplyTimeouts.push(timeout);
+        }
+    }
+
+    private clearConfInvisReapplyTimeouts(): void
+    {
+        if(!this._confInvisReapplyTimeouts.length) return;
+
+        for(const timeout of this._confInvisReapplyTimeouts)
+        {
+            clearTimeout(timeout);
+        }
+
+        this._confInvisReapplyTimeouts = [];
     }
 
     private onFurnitureWallAddEvent(event: FurnitureWallAddEvent): void
@@ -761,6 +877,7 @@ export class RoomMessageHandler
         if(!data) return;
 
         this.addRoomObjectFurnitureWall(this._currentRoomId, data);
+        this.applyAreaHideStateToWallObjects([ data.itemId ]);
     }
 
     private onFurnitureWallEvent(event: FurnitureWallEvent): void
@@ -783,6 +900,9 @@ export class RoomMessageHandler
 
             iterator++;
         }
+
+        this.applyAreaHideStateToWallObjects();
+        this.scheduleAreaHideReapply(this._currentRoomId);
     }
 
     private onFurnitureWallRemoveEvent(event: FurnitureWallRemoveEvent): void
@@ -794,6 +914,7 @@ export class RoomMessageHandler
         if(!parser) return;
 
         this._roomEngine.removeRoomObjectWall(this._currentRoomId, parser.itemId, parser.userId);
+        this.applyAreaHideStateToWallObjects();
     }
 
     private onFurnitureWallUpdateEvent(event: FurnitureWallUpdateEvent): void
@@ -813,6 +934,7 @@ export class RoomMessageHandler
 
         this._roomEngine.updateRoomObjectWall(this._currentRoomId, item.itemId, location, direction, item.state, item.stuffData);
         this._roomEngine.updateRoomObjectWallExpiration(this._currentRoomId, item.itemId, item.secondsToExpiration);
+        this.applyAreaHideStateToWallObjects([ item.itemId ]);
     }
 
     private onFurnitureDataEvent(event: FurnitureDataEvent): void
@@ -822,6 +944,8 @@ export class RoomMessageHandler
         const parser = event.getParser();
 
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, parser.furnitureId, null, null, parser.objectData.state, parser.objectData);
+        this.applyConfInvisStateToFloorObjects([ parser.furnitureId ]);
+        this.applyAreaHideStateToFloorObjects([ parser.furnitureId ]);
     }
 
     private onItemDataUpdateMessageEvent(event: ItemDataUpdateMessageEvent): void
@@ -831,6 +955,7 @@ export class RoomMessageHandler
         const parser = event.getParser();
 
         this._roomEngine.updateRoomObjectWallItemData(this._currentRoomId, parser.furnitureId, parser.data);
+        this.applyAreaHideStateToWallObjects([ parser.furnitureId ]);
     }
 
     private onOneWayDoorStatusMessageEvent(event: OneWayDoorStatusMessageEvent): void
@@ -840,6 +965,8 @@ export class RoomMessageHandler
         const parser = event.getParser();
 
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, parser.itemId, null, null, parser.state, new LegacyDataType());
+        this.applyConfInvisStateToFloorObjects([ parser.itemId ]);
+        this.applyAreaHideStateToFloorObjects([ parser.itemId ]);
     }
 
     private onAreaHideMessageEvent(event: AreaHideMessageEvent): void
@@ -850,6 +977,26 @@ export class RoomMessageHandler
         const areaData = parser.areaData;
 
         this._roomEngine.updateAreaHide(this._currentRoomId, areaData.furniId, areaData.on, areaData.rootX, areaData.rootY, areaData.width, areaData.length, areaData.invert);
+
+        if(areaData.on)
+        {
+            this._activeAreaHideControllers.set(areaData.furniId, {
+                rootX: areaData.rootX,
+                rootY: areaData.rootY,
+                width: areaData.width,
+                length: areaData.length,
+                invert: areaData.invert,
+                wallItems: areaData.wallItems,
+                invisibility: areaData.invisibility
+            });
+        }
+        else
+        {
+            this._activeAreaHideControllers.delete(areaData.furniId);
+        }
+
+        this.applyAreaHideStateToRoomObjects();
+        this.scheduleAreaHideReapply(this._currentRoomId);
     }
 
     private onDiceValueMessageEvent(event: DiceValueMessageEvent): void
@@ -859,6 +1006,210 @@ export class RoomMessageHandler
         const parser = event.getParser();
 
         this._roomEngine.updateRoomObjectFloor(this._currentRoomId, parser.itemId, null, null, parser.value, new LegacyDataType());
+        this.applyConfInvisStateToFloorObjects([ parser.itemId ]);
+        this.applyAreaHideStateToFloorObjects([ parser.itemId ]);
+    }
+
+    private applyAreaHideStateToRoomObjects(floorItemIds?: number[], wallItemIds?: number[]): void
+    {
+        this.applyAreaHideStateToFloorObjects(floorItemIds);
+        this.applyAreaHideStateToWallObjects(wallItemIds);
+    }
+
+    private applyAreaHideStateToFloorObjects(itemIds?: number[]): void
+    {
+        const floorObjects = ((this._roomEngine as any)?.getRoomObjects?.(this._currentRoomId, RoomObjectCategory.FLOOR) as IRoomObject[]) ?? [];
+
+        if(!floorObjects?.length) return;
+
+        const scopedIds = itemIds?.length ? new Set<number>(itemIds) : null;
+
+        for(const roomObject of floorObjects)
+        {
+            if(!roomObject?.model) continue;
+            if(scopedIds && !scopedIds.has(roomObject.id)) continue;
+
+            roomObject.model.setValue(RoomObjectVariable.FURNITURE_AREA_HIDE_HIDDEN, this.shouldHideRoomObjectByAreaHide(roomObject, RoomObjectCategory.FLOOR) ? 1 : 0);
+        }
+    }
+
+    private applyAreaHideStateToWallObjects(itemIds?: number[]): void
+    {
+        const wallObjects = ((this._roomEngine as any)?.getRoomObjects?.(this._currentRoomId, RoomObjectCategory.WALL) as IRoomObject[]) ?? [];
+
+        if(!wallObjects?.length) return;
+
+        const scopedIds = itemIds?.length ? new Set<number>(itemIds) : null;
+
+        for(const roomObject of wallObjects)
+        {
+            if(!roomObject?.model) continue;
+            if(scopedIds && !scopedIds.has(roomObject.id)) continue;
+
+            roomObject.model.setValue(RoomObjectVariable.FURNITURE_AREA_HIDE_HIDDEN, this.shouldHideRoomObjectByAreaHide(roomObject, RoomObjectCategory.WALL) ? 1 : 0);
+        }
+    }
+
+    private shouldHideRoomObjectByAreaHide(roomObject: IRoomObject, category: number): boolean
+    {
+        if(!roomObject?.model) return false;
+
+        const controllerState = this.getAreaHideControllerStateFromObject(roomObject, category);
+
+        if(controllerState)
+        {
+            return (controllerState.invisibility && this._isConfInvisControlActive);
+        }
+
+        if(!this._activeAreaHideControllers.size) return false;
+
+        for(const activeState of this._activeAreaHideControllers.values())
+        {
+            if((activeState.width <= 0) || (activeState.length <= 0)) continue;
+            if((category === RoomObjectCategory.WALL) && !activeState.wallItems) continue;
+
+            const intersectsArea = (category === RoomObjectCategory.WALL)
+                ? this.isWallObjectInsideArea(roomObject, activeState)
+                : this.doesFloorObjectIntersectArea(roomObject, activeState);
+            const shouldHide = (activeState.invert ? !intersectsArea : intersectsArea);
+
+            if(shouldHide) return true;
+        }
+
+        return false;
+    }
+
+    private doesFloorObjectIntersectArea(roomObject: IRoomObject, areaState: AreaHideControllerState): boolean
+    {
+        if(!roomObject?.model) return false;
+
+        const location = roomObject.getLocation();
+
+        if(!location) return false;
+
+        let sizeX = roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_SIZE_X);
+        let sizeY = roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_SIZE_Y);
+
+        if(!sizeX || (sizeX < 1)) sizeX = 1;
+        if(!sizeY || (sizeY < 1)) sizeY = 1;
+
+        const direction = roomObject.getDirection();
+        const directionQuarterTurns = (((Math.trunc(((direction?.x ?? 0) + 45)) % 360) + 360) % 360) / 90;
+
+        if((directionQuarterTurns === 1) || (directionQuarterTurns === 3))
+        {
+            [ sizeX, sizeY ] = [ sizeY, sizeX ];
+        }
+
+        const objectMinX = location.x;
+        const objectMinY = location.y;
+        const objectMaxX = objectMinX + sizeX;
+        const objectMaxY = objectMinY + sizeY;
+        const areaMinX = areaState.rootX;
+        const areaMinY = areaState.rootY;
+        const areaMaxX = areaMinX + areaState.width;
+        const areaMaxY = areaMinY + areaState.length;
+
+        return (objectMinX < areaMaxX)
+            && (objectMaxX > areaMinX)
+            && (objectMinY < areaMaxY)
+            && (objectMaxY > areaMinY);
+    }
+
+    private isWallObjectInsideArea(roomObject: IRoomObject, areaState: AreaHideControllerState): boolean
+    {
+        const location = roomObject?.getLocation();
+
+        if(!location) return false;
+
+        const xCandidates = Array.from(new Set([ Math.floor(location.x), Math.ceil(location.x), Math.round(location.x) ]));
+        const yCandidates = Array.from(new Set([ Math.floor(location.y), Math.ceil(location.y), Math.round(location.y) ]));
+
+        for(const x of xCandidates)
+        {
+            for(const y of yCandidates)
+            {
+                if((x >= areaState.rootX)
+                    && (x < (areaState.rootX + areaState.width))
+                    && (y >= areaState.rootY)
+                    && (y < (areaState.rootY + areaState.length)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private getAreaHideControllerStateFromObject(roomObject: IRoomObject, category: number): AreaHideControllerState
+    {
+        if(!roomObject?.model || (category !== RoomObjectCategory.FLOOR)) return null;
+
+        if(this._activeAreaHideControllers.has(roomObject.id))
+        {
+            return this._activeAreaHideControllers.get(roomObject.id);
+        }
+
+        if(!this.isAreaHideControllerObject(roomObject)) return null;
+
+        return {
+            rootX: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_ROOT_X) ?? 0),
+            rootY: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_ROOT_Y) ?? 0),
+            width: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_WIDTH) ?? 0),
+            length: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_LENGTH) ?? 0),
+            invert: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_INVERT) === 1),
+            wallItems: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_WALL_ITEMS) === 1),
+            invisibility: (roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_AREA_HIDE_INVISIBILITY) === 1)
+        };
+    }
+
+    private isAreaHideControllerObject(roomObject: IRoomObject): boolean
+    {
+        if(!roomObject?.model) return false;
+
+        const furniData = GetSessionDataManager().getFloorItemDataByName(roomObject.type);
+        const customParams = (furniData?.customParams || '').toLowerCase();
+
+        if(customParams.includes('area_hide_control') || customParams.includes('wf_conf_area_hide') || customParams.includes('conf_area_hide'))
+        {
+            return true;
+        }
+
+        const stuffData = roomObject.model.getValue<number[]>(RoomObjectVariable.FURNITURE_DATA);
+
+        return Array.isArray(stuffData) && (stuffData.length >= 8);
+    }
+
+    private scheduleAreaHideReapply(roomId: number): void
+    {
+        this.clearAreaHideReapplyTimeouts();
+
+        const retryDelays = [ 0, 50, 150, 300, 600, 1000 ];
+
+        for(const delay of retryDelays)
+        {
+            const timeout = setTimeout(() =>
+            {
+                if(roomId !== this._currentRoomId) return;
+
+                this.applyAreaHideStateToRoomObjects();
+            }, delay);
+
+            this._areaHideReapplyTimeouts.push(timeout);
+        }
+    }
+
+    private clearAreaHideReapplyTimeouts(): void
+    {
+        if(!this._areaHideReapplyTimeouts.length) return;
+
+        for(const timeout of this._areaHideReapplyTimeouts)
+        {
+            clearTimeout(timeout);
+        }
+
+        this._areaHideReapplyTimeouts = [];
     }
 
     private onRoomUnitDanceEvent(event: RoomUnitDanceEvent): void
