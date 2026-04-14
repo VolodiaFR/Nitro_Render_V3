@@ -117,12 +117,7 @@ export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
 
         TextureUtils.writeToTexture(container, renderTexture);
 
-        const image = await TextureUtils.generateImage(renderTexture);
-
-        renderTexture.destroy(true);
-        container.destroy({ children: true });
-
-        return image;
+        return await TextureUtils.generateImage(renderTexture);
     }
 
     public get effects(): Map<string, IRoomCameraWidgetEffect>
