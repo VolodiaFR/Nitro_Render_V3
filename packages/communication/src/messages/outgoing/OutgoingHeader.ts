@@ -516,4 +516,3 @@ export class OutgoingHeader
     public static YOUTUBE_ROOM_WATCHING = 8002;
     public static YOUTUBE_ROOM_SETTINGS = 8003;
 }
-}
