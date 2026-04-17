@@ -648,6 +648,8 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_MOVE_OFFER, CatalogAdminMoveOfferComposer);
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_MOVE_PAGE, CatalogAdminMovePageComposer);
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_PUBLISH, CatalogAdminPublishComposer);
+        this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_PAGE_IMAGES, CatalogAdminSavePageImagesComposer);
+        this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_PAGE_ICON, CatalogAdminSavePageIconComposer);
 
 		// Furni Editor
 		this._composers.set(OutgoingHeader.FURNI_EDITOR_SEARCH, FurniEditorSearchComposer);
