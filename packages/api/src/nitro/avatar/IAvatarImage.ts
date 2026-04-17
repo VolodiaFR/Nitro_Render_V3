@@ -1,4 +1,5 @@
 import { Container, Texture } from 'pixi.js';
+import { IActiveActionData } from './actions';
 import { IAvatarFigureContainer } from './IAvatarFigureContainer';
 import { IAnimationLayerData, ISpriteDataContainer } from './animation';
 import { IPartColor } from './structure';
@@ -18,6 +19,7 @@ export interface IAvatarImage
     getDirection(): number;
     getFigure(): IAvatarFigureContainer;
     getPartColor(_arg_1: string): IPartColor;
+    getMainAction(): IActiveActionData;
     isAnimating(): boolean;
     getCanvasOffsets(): number[];
     initActionAppends(): void;

@@ -366,6 +366,9 @@ export class AvatarStructure
 
         const visiblePartTypes = this._geometry.getParts(geometryType, bodyPartId, direction, activePartTypes, avatar);
         const figurePartTypeIds = figureContainer.getPartTypeIds();
+        const mainAction = avatar?.getMainAction?.();
+        const isSittingPosture = (mainAction?.definition?.assetPartDefinition === 'sit')
+            || (action.definition.assetPartDefinition === 'sit');
 
         for(const figurePartType of figurePartTypeIds)
         {
@@ -390,8 +393,44 @@ export class AvatarStructure
                     {
                         removes = removes.concat(figurePartSet.hiddenLayers);
 
+                        let petHasVisibleSit = false;
+
+                        if(isSittingPosture && figurePartType === 'pt')
+                        {
+                            for(const fp of figurePartSet.parts)
+                            {
+                                if(fp.type === 'pt')
+                                {
+                                    for(const dir of ['0', '2'])
+                                    {
+                                        const assetName = 'h_sit_pt_' + fp.id + '_' + dir + '_0';
+                                        const testAsset = this._renderManager.getAssetByName(assetName);
+
+                                        if(testAsset && testAsset.width > 1 && testAsset.height > 1 && testAsset.source === assetName)
+                                        {
+                                            const stdName = 'h_std_pt_' + fp.id + '_' + dir + '_0';
+                                            const stdAsset = this._renderManager.getAssetByName(stdName);
+
+                                            if(!stdAsset || stdAsset.source !== assetName)
+                                            {
+                                                petHasVisibleSit = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+
                         for(const figurePart of figurePartSet.parts)
                         {
+                            if(isSittingPosture && figurePartType === 'pt')
+                            {
+                                if(petHasVisibleSit && figurePart.type !== 'pt') continue;
+                                if(!petHasVisibleSit) continue;
+                            }
                             if(visiblePartTypes.indexOf(figurePart.type) > -1)
                             {
                                 if(animationAction)
