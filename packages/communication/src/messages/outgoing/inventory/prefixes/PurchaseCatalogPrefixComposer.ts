@@ -1,4 +1,4 @@
-import { IMessageComposer } from '../../../../../api';
+import { IMessageComposer } from '@nitrots/api';
 
 export class PurchaseCatalogPrefixComposer implements IMessageComposer<ConstructorParameters<typeof PurchaseCatalogPrefixComposer>>
 {

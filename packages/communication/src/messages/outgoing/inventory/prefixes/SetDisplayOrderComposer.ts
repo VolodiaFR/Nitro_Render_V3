@@ -1,4 +1,4 @@
-import { IMessageComposer } from '../../../../../api';
+import { IMessageComposer } from '@nitrots/api';
 
 export class SetDisplayOrderComposer implements IMessageComposer<ConstructorParameters<typeof SetDisplayOrderComposer>>
 {
