@@ -278,6 +278,8 @@ export class OutgoingHeader
     public static WIRED_USER_VARIABLE_UPDATE = 10025;
     public static WIRED_USER_VARIABLE_MANAGE = 10026;
     public static WIRED_USER_INSPECT_MOVE = 10027;
+    public static TRANSLATION_LANGUAGES_REQUEST = 10032;
+    public static TRANSLATION_TEXT_REQUEST = 10033;
     public static WIRED_OPEN = 768;
     public static WIRED_TRIGGER_SAVE = 1520;
     public static GET_ITEM_DATA = 3964;
@@ -510,4 +512,9 @@ export class OutgoingHeader
     public static SET_ACTIVE_PREFIX = 7012;
     public static DELETE_PREFIX = 7013;
     public static PURCHASE_PREFIX = 7014;
+    public static REQUEST_NICK_ICONS = 7015;
+    public static PURCHASE_NICK_ICON = 7016;
+    public static SET_ACTIVE_NICK_ICON = 7017;
+    public static PURCHASE_CATALOG_PREFIX = 7018;
+    public static SET_DISPLAY_ORDER = 7019;
 }

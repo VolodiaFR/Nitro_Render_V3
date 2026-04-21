@@ -75,6 +75,13 @@ export class RoomUnitParser implements IMessageParser
                 user.figure = figure;
                 user.activityPoints = wrapper.readInt();
                 user.isModerator = wrapper.readBoolean();
+                user.nickIcon = wrapper.readString();
+                user.prefixText = wrapper.readString();
+                user.prefixColor = wrapper.readString();
+                user.prefixIcon = wrapper.readString();
+                user.prefixEffect = wrapper.readString();
+                user.prefixFont = wrapper.readString();
+                user.displayOrder = wrapper.readString();
             }
 
             else if(type === 2)

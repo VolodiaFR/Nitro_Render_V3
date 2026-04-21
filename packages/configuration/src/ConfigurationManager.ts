@@ -129,6 +129,11 @@ export class ConfigurationManager implements IConfigurationManager
             }
         }
 
+        if(value.indexOf('%timestamp%') >= 0)
+        {
+            value = value.replace(/%timestamp%/gi, Date.now().toString());
+        }
+
         return value;
     }
 

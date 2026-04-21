@@ -7,6 +7,7 @@ export class PrefixReceivedParser implements IMessageParser
     private _color: string;
     private _icon: string;
     private _effect: string;
+    private _font: string;
 
     public flush(): boolean
     {
@@ -15,6 +16,7 @@ export class PrefixReceivedParser implements IMessageParser
         this._color = '';
         this._icon = '';
         this._effect = '';
+        this._font = '';
         return true;
     }
 
@@ -27,6 +29,7 @@ export class PrefixReceivedParser implements IMessageParser
         this._color = wrapper.readString();
         this._icon = wrapper.readString();
         this._effect = wrapper.readString();
+        this._font = wrapper.readString();
 
         return true;
     }
@@ -36,4 +39,5 @@ export class PrefixReceivedParser implements IMessageParser
     public get color(): string { return this._color; }
     public get icon(): string { return this._icon; }
     public get effect(): string { return this._effect; }
+    public get font(): string { return this._font; }
 }

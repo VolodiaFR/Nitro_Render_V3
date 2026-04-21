@@ -19,6 +19,13 @@ export class UserProfileParser implements IMessageParser
     private _backgroundId: number;
     private _standId: number;
     private _overlayId: number;
+    private _nickIcon: string;
+    private _prefixText: string;
+    private _prefixColor: string;
+    private _prefixIcon: string;
+    private _prefixEffect: string;
+    private _prefixFont: string;
+    private _displayOrder: string;
 
     public flush(): boolean
     {
@@ -38,6 +45,13 @@ export class UserProfileParser implements IMessageParser
         this._backgroundId = 0;
         this._standId = 0;
         this._overlayId = 0;
+        this._nickIcon = '';
+        this._prefixText = '';
+        this._prefixColor = '';
+        this._prefixIcon = '';
+        this._prefixEffect = '';
+        this._prefixFont = '';
+        this._displayOrder = 'icon-prefix-name';
 
         return true;
     }
@@ -71,6 +85,21 @@ export class UserProfileParser implements IMessageParser
             this._backgroundId = wrapper.readInt();
             this._standId = wrapper.readInt();
             this._overlayId = wrapper.readInt();
+
+            if(wrapper.bytesAvailable)
+            {
+                this._nickIcon = wrapper.readString();
+
+                if(wrapper.bytesAvailable)
+                {
+                    this._prefixText = wrapper.readString();
+                    this._prefixColor = wrapper.readString();
+                    this._prefixIcon = wrapper.readString();
+                    this._prefixEffect = wrapper.readString();
+                    this._prefixFont = wrapper.readString();
+                    this._displayOrder = wrapper.readString();
+                }
+            }
         }
 
         return true;
@@ -154,5 +183,40 @@ export class UserProfileParser implements IMessageParser
     public get overlayId(): number
     {
         return this._overlayId;
+    }
+
+    public get nickIcon(): string
+    {
+        return this._nickIcon;
+    }
+
+    public get prefixText(): string
+    {
+        return this._prefixText;
+    }
+
+    public get prefixColor(): string
+    {
+        return this._prefixColor;
+    }
+
+    public get prefixIcon(): string
+    {
+        return this._prefixIcon;
+    }
+
+    public get prefixEffect(): string
+    {
+        return this._prefixEffect;
+    }
+
+    public get prefixFont(): string
+    {
+        return this._prefixFont;
+    }
+
+    public get displayOrder(): string
+    {
+        return this._displayOrder;
     }
 }
