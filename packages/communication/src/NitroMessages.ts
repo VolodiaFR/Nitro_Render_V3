@@ -6,6 +6,7 @@ import { WiredMovementsEvent } from './messages';
 import { ConfInvisStateMessageEvent } from './messages';
 import { HanditemBlockStateMessageEvent } from './messages';
 import { TranslationLanguagesEvent, TranslationLanguagesRequestComposer, TranslationResultEvent, TranslationTextRequestComposer } from './messages';
+import { YouTubeRoomBroadcastEvent, YouTubeRoomPlayComposer, YouTubeRoomSettingsComposer, YouTubeRoomSettingsEvent, YouTubeRoomWatchersEvent, YouTubeRoomWatchingComposer } from './messages';
 export class NitroMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -501,6 +502,9 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.HANDITEM_BLOCK_STATE, HanditemBlockStateMessageEvent);
         this._events.set(IncomingHeader.TRANSLATION_LANGUAGES, TranslationLanguagesEvent);
         this._events.set(IncomingHeader.TRANSLATION_RESULT, TranslationResultEvent);
+        this._events.set(IncomingHeader.YOUTUBE_ROOM_BROADCAST, YouTubeRoomBroadcastEvent);
+        this._events.set(IncomingHeader.YOUTUBE_ROOM_SETTINGS, YouTubeRoomSettingsEvent);
+        this._events.set(IncomingHeader.YOUTUBE_ROOM_WATCHERS, YouTubeRoomWatchersEvent);
         this._events.set(IncomingHeader.WIRED_REWARD, WiredRewardResultMessageEvent);
         this._events.set(IncomingHeader.WIRED_SAVE, WiredSaveSuccessEvent);
         this._events.set(IncomingHeader.WIRED_ERROR, WiredValidationErrorEvent);
@@ -1248,6 +1252,9 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.PURCHASE_PREFIX, PurchasePrefixComposer);
         this._composers.set(OutgoingHeader.PURCHASE_CATALOG_PREFIX, PurchaseCatalogPrefixComposer);
         this._composers.set(OutgoingHeader.SET_DISPLAY_ORDER, SetDisplayOrderComposer);
+        this._composers.set(OutgoingHeader.YOUTUBE_ROOM_PLAY, YouTubeRoomPlayComposer);
+        this._composers.set(OutgoingHeader.YOUTUBE_ROOM_SETTINGS, YouTubeRoomSettingsComposer);
+        this._composers.set(OutgoingHeader.YOUTUBE_ROOM_WATCHING, YouTubeRoomWatchingComposer);
     }
 
     public get events(): Map<number, Function>

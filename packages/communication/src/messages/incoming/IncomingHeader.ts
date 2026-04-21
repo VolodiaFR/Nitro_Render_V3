@@ -498,4 +498,9 @@ export class IncomingHeader
     public static PREFIX_RECEIVED = 7002;
     public static ACTIVE_PREFIX_UPDATED = 7003;
     public static USER_NICK_ICONS = 7004;
+
+    // YouTube Room Broadcast
+    public static YOUTUBE_ROOM_BROADCAST = 8001;
+    public static YOUTUBE_ROOM_WATCHERS = 8002;
+    public static YOUTUBE_ROOM_SETTINGS = 8003;
 }
