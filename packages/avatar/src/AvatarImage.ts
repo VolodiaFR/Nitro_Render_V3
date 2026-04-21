@@ -158,6 +158,11 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         return this._canvasOffsets;
     }
 
+    public getMainAction(): IActiveActionData
+    {
+        return this._mainAction;
+    }
+
     public getLayerData(k: ISpriteDataContainer): IAnimationLayerData
     {
         return this._structure.getBodyPartData(k.animation.id, this._frameCounter, k.id);
@@ -314,6 +319,9 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         const canvas = GetRenderer().texture.generateCanvas(texture);
 
         const url = canvas.toDataURL('image/png');
+		
+		canvas.width = 0;
+        canvas.height = 0;
 
         return url;
     }

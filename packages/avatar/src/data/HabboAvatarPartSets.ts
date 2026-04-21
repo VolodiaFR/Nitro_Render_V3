@@ -114,6 +114,17 @@ export const HabboAvatarPartSets = {
             {
                 'setType': 'ptr',
                 'flippedSetType': 'ptl'
+            },
+            {
+                'setType': 'mc'
+            },
+            {
+                'setType': 'mcl',
+                'flippedSetType': 'mcr'
+            },
+            {
+                'setType': 'mcr',
+                'flippedSetType': 'mcl'
             }
         ],
         'activePartSets': [
@@ -212,6 +223,15 @@ export const HabboAvatarPartSets = {
                     },
                     {
                         'setType': 'ptr'
+                    },
+                    {
+                        'setType': 'mc'
+                    },
+                    {
+                        'setType': 'mcl'
+                    },
+                    {
+                        'setType': 'mcr'
                     }
                 ]
             },

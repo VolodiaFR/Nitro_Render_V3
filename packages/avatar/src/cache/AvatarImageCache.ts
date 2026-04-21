@@ -139,6 +139,8 @@ export class AvatarImageCache
 
         if((((this._geometryType === GeometryType.SITTING) && (k === GeometryType.VERTICAL)) || ((this._geometryType === GeometryType.VERTICAL) && (k === GeometryType.SITTING)) || ((this._geometryType === GeometryType.SNOWWARS_HORIZONTAL) && (k = GeometryType.SNOWWARS_HORIZONTAL))))
         {
+            this.disposeInactiveActions(0);
+
             this._geometryType = k;
             this._canvas = null;
 			this._defaultAction = (k === GeometryType.HORIZONTAL) ? 'lay' : 'std';
