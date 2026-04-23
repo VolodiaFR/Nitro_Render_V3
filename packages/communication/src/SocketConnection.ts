@@ -1,8 +1,24 @@
 import { ICodec, IConnection, IMessageComposer, IMessageConfiguration, IMessageDataWrapper, IMessageEvent, WebSocketEventEnum } from '@nitrots/api';
+import { GetConfiguration } from '@nitrots/configuration';
 import { GetEventDispatcher, NitroEvent, NitroEventType, ReconnectEvent } from '@nitrots/events';
 import { NitroLogger } from '@nitrots/utils';
 import { EvaWireFormat } from './codec';
+import {
+    aesGcmDecrypt,
+    aesGcmEncrypt,
+    buildClientHello,
+    deriveAesKey,
+    deriveSharedSecret,
+    exportPublicKeySpki,
+    generateEphemeralKeyPair,
+    importPublicKeySpki,
+    NONCE_LEN,
+    parseServerHello,
+    randomNonce
+} from './crypto';
 import { MessageClassManager } from './messages';
+
+type CryptoState = 'disabled' | 'awaiting_server_hello' | 'ready' | 'error';
 
 export class SocketConnection implements IConnection
 {
@@ -29,6 +45,10 @@ export class SocketConnection implements IConnection
     public static readonly BASE_RECONNECT_DELAY_MS: number = 1000;
     public static readonly MAX_RECONNECT_DELAY_MS: number = 30000;
 
+    private _cryptoState: CryptoState = 'disabled';
+    private _sessionKey: CryptoKey = null;
+    private _pendingEncryptedSends: ArrayBuffer[] = [];
+
     public init(socketUrl: string): void
     {
         if(!socketUrl || !socketUrl.length) return;
@@ -43,21 +63,123 @@ export class SocketConnection implements IConnection
     {
         this._dataBuffer = new ArrayBuffer(0);
 
+        const cryptoEnabled = !!GetConfiguration().getValue<boolean>('crypto.ws.enabled', false);
+        if(cryptoEnabled && !this.subtleCryptoAvailable())
+        {
+            NitroLogger.error('[ws-crypto] crypto.ws.enabled=true but window.crypto.subtle is unavailable. '
+                + 'This page must be served from a secure context - HTTPS, localhost, or 127.0.0.1. '
+                + 'Current origin: ' + (typeof window !== 'undefined' ? window.location.origin : 'unknown'));
+            this._cryptoState = 'error';
+        }
+        else
+        {
+            this._cryptoState = cryptoEnabled ? 'awaiting_server_hello' : 'disabled';
+        }
+        this._sessionKey = null;
+        this._pendingEncryptedSends = [];
+
         this._socket = new WebSocket(socketUrl);
         this._socket.binaryType = 'arraybuffer';
         this._onOpenCallback = () => this.onSocketOpened();
         this._onCloseCallback = (event: Event) => this.onSocketClosed(event as CloseEvent);
         this._onErrorCallback = () => this.onSocketError();
-        this._onMessageCallback = (event: MessageEvent) =>
-        {
-            this._dataBuffer = this.concatArrayBuffers(this._dataBuffer, event.data);
-            this.processReceivedData();
-        };
+        this._onMessageCallback = (event: MessageEvent) => this.onSocketMessage(event.data as ArrayBuffer);
 
         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_OPENED, this._onOpenCallback);
         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_CLOSED, this._onCloseCallback);
         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_ERROR, this._onErrorCallback);
         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, this._onMessageCallback);
+    }
+
+    private subtleCryptoAvailable(): boolean
+    {
+        return typeof window !== 'undefined'
+            && typeof window.crypto !== 'undefined'
+            && typeof window.crypto.subtle !== 'undefined';
+    }
+
+    private onSocketMessage(data: ArrayBuffer): void
+    {
+        if(this._cryptoState === 'error')
+        {
+            this._intentionalClose = true;
+            if(this._socket) this._socket.close();
+            return;
+        }
+
+        if(this._cryptoState === 'awaiting_server_hello')
+        {
+            this.handleServerHello(data)
+                .catch(err =>
+                {
+                    NitroLogger.error('[ws-crypto] handshake failed', err);
+                    this._cryptoState = 'error';
+                    this._intentionalClose = true;
+                    if(this._socket) this._socket.close();
+                });
+            return;
+        }
+
+        if(this._cryptoState === 'ready')
+        {
+            this.decryptFrame(data)
+                .then(plain =>
+                {
+                    this._dataBuffer = this.concatArrayBuffers(this._dataBuffer, plain);
+                    this.processReceivedData();
+                })
+                .catch(err =>
+                {
+                    NitroLogger.error('[ws-crypto] decrypt failed', err);
+                    this._cryptoState = 'error';
+                    this._intentionalClose = true;
+                    if(this._socket) this._socket.close();
+                });
+            return;
+        }
+
+        if(this._cryptoState === 'error') return;
+
+        this._dataBuffer = this.concatArrayBuffers(this._dataBuffer, data);
+        this.processReceivedData();
+    }
+
+    private async handleServerHello(frame: ArrayBuffer): Promise<void>
+    {
+        const serverPubkeySpki = parseServerHello(frame);
+        const serverPubkey = await importPublicKeySpki(serverPubkeySpki);
+        const ourKeys = await generateEphemeralKeyPair();
+        const ourPubkeySpki = await exportPublicKeySpki(ourKeys.publicKey);
+        const shared = await deriveSharedSecret(ourKeys.privateKey, serverPubkey);
+        this._sessionKey = await deriveAesKey(shared);
+        this._socket.send(buildClientHello(ourPubkeySpki));
+        this._cryptoState = 'ready';
+
+        if(this._pendingEncryptedSends.length)
+        {
+            const queued = this._pendingEncryptedSends;
+            this._pendingEncryptedSends = [];
+            for(const buf of queued) await this.encryptAndSend(buf);
+        }
+    }
+
+    private async decryptFrame(frame: ArrayBuffer): Promise<ArrayBuffer>
+    {
+        if(frame.byteLength < NONCE_LEN + 16) throw new Error('encrypted frame too short');
+        const nonce = new Uint8Array(frame, 0, NONCE_LEN);
+        const ct = frame.slice(NONCE_LEN);
+        return aesGcmDecrypt(this._sessionKey, nonce, ct);
+    }
+
+    private async encryptAndSend(plaintext: ArrayBuffer): Promise<void>
+    {
+        if(!this._sessionKey) return;
+        const nonce = randomNonce();
+        const ct = await aesGcmEncrypt(this._sessionKey, nonce, plaintext);
+        const framed = new Uint8Array(NONCE_LEN + ct.byteLength);
+        framed.set(nonce, 0);
+        framed.set(new Uint8Array(ct), NONCE_LEN);
+        if(this._socket && this._socket.readyState === WebSocket.OPEN) this._socket.send(framed.buffer);
     }
 
     private onSocketOpened(): void
@@ -270,7 +392,23 @@ export class SocketConnection implements IConnection
     {
         if(!this._socket || this._socket.readyState !== WebSocket.OPEN) return;
 
-        this._socket.send(buffer);
+        if(this._cryptoState === 'disabled')
+        {
+            this._socket.send(buffer);
+            return;
+        }
+
+        if(this._cryptoState === 'ready')
+        {
+            this.encryptAndSend(buffer).catch(err => NitroLogger.error('[ws-crypto] encrypt failed', err));
+            return;
+        }
+
+        if(this._cryptoState === 'awaiting_server_hello')
+        {
+            this._pendingEncryptedSends.push(buffer);
+            return;
+        }
     }
 
     public processReceivedData(): void
@@ -354,7 +492,6 @@ export class SocketConnection implements IConnection
 
         try
         {
-            //@ts-ignore
             const parser = new events[0].parserClass();
 
             if(!parser || !parser.flush() || !parser.parse(wrapper)) return null;
