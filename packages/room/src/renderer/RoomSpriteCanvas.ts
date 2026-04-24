@@ -378,49 +378,20 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
         let leftIdx = 0;
         let rightIdx = 0;
+        let maxY = hull[0].y;
 
         for(let i = 1; i < hull.length; i++)
         {
             if(hull[i].x < hull[leftIdx].x) leftIdx = i;
             if(hull[i].x > hull[rightIdx].x) rightIdx = i;
+            if(hull[i].y > maxY) maxY = hull[i].y;
         }
 
-        const n = hull.length;
-
-        // Collect arc going CCW: leftIdx → rightIdx via increasing indices
-        const arcCCW: { x: number; y: number }[] = [];
-        let idx = leftIdx;
-
-        while(idx !== rightIdx)
-        {
-            arcCCW.push(hull[idx]);
-            idx = (idx + 1) % n;
-        }
-
-        arcCCW.push(hull[rightIdx]);
-
-        // Collect arc going CW: leftIdx → rightIdx via decreasing indices
-        const arcCW: { x: number; y: number }[] = [];
-        idx = leftIdx;
-
-        while(idx !== rightIdx)
-        {
-            arcCW.push(hull[idx]);
-            idx = (idx - 1 + n) % n;
-        }
-
-        arcCW.push(hull[rightIdx]);
-
-        // Bottom arc = the arc with larger average Y (floor/front tiles)
-        const avgCCW = arcCCW.reduce((s, p) => s + p.y, 0) / arcCCW.length;
-        const avgCW = arcCW.reduce((s, p) => s + p.y, 0) / arcCW.length;
-        const bottomArc = avgCCW >= avgCW ? arcCCW : arcCW;
-
-        // Build polygon: extend upward far above walls, then trace bottom boundary
         return [
-            { x: hull[leftIdx].x, y: -extension },
-            { x: hull[rightIdx].x, y: -extension },
-            ...bottomArc.slice().reverse()
+            { x: hull[leftIdx].x - extension,  y: -extension },
+            { x: hull[rightIdx].x + extension, y: -extension },
+            { x: hull[rightIdx].x + extension, y: maxY + extension },
+            { x: hull[leftIdx].x - extension,  y: maxY + extension }
         ];
     }
 
