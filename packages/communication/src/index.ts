@@ -4,6 +4,7 @@ export * from './NitroMessages';
 export * from './SocketConnection';
 export * from './codec';
 export * from './codec/evawire';
+export * from './crypto';
 export * from './messages';
 export * from './messages/incoming';
 export * from './messages/incoming/advertisement';
