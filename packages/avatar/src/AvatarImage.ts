@@ -399,6 +399,11 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         return this._mainDirection;
     }
 
+    public getDirectionOffset(): number
+    {
+        return this._directionOffset;
+    }
+
     public initActionAppends(): void
     {
         this._actions = [];

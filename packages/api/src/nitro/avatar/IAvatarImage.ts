@@ -17,6 +17,7 @@ export interface IAvatarImage
     processAsImageUrl(setType: string): string;
     processAsContainer(setType: string): Container;
     getDirection(): number;
+    getDirectionOffset(): number;
     getFigure(): IAvatarFigureContainer;
     getPartColor(_arg_1: string): IPartColor;
     getMainAction(): IActiveActionData;
