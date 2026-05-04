@@ -40,7 +40,7 @@ export class RoomUnitInfoParser implements IMessageParser
         this._standId = wrapper.readInt();
         this._overlayId = wrapper.readInt();
 
-        if(wrapper.bytesAvailable >= 4) this._cardBackgroundId = wrapper.readInt();
+        if(wrapper.bytesAvailable) this._cardBackgroundId = wrapper.readInt();
 
         return true;
     }
