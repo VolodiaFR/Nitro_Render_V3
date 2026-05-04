@@ -296,6 +296,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
                 const ls = plane.leftSide;
                 const rs = plane.rightSide;
 
+                if(!loc || !ls || !rs) continue;
+
                 const corners = [
                     new Vector3d(loc.x, loc.y, loc.z),
                     new Vector3d(loc.x + rs.x, loc.y + rs.y, loc.z + rs.z),
