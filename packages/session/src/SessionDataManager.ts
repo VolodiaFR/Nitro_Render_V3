@@ -1,6 +1,7 @@
 import { IFurnitureData, IGroupInformationManager, IMessageComposer, IMessageEvent, IProductData, ISessionDataManager, NoobnessLevelEnum, SecurityLevel } from '@nitrots/api';
 import { AccountSafetyLockStatusChangeMessageEvent, AccountSafetyLockStatusChangeParser, AvailabilityStatusMessageEvent, ChangeUserNameResultMessageEvent, EmailStatusResultEvent, FigureUpdateEvent, GetCommunication, GetUserTagsComposer, InClientLinkEvent, MysteryBoxKeysEvent, NoobnessLevelMessageEvent, PetRespectComposer, PetScratchFailedMessageEvent, RoomReadyMessageEvent, RoomUnitChatComposer, UserInfoEvent, UserNameChangeMessageEvent, UserPermissionsEvent, UserRespectComposer, UserTagsMessageEvent } from '@nitrots/communication';
 import { GetConfiguration } from '@nitrots/configuration';
+import { GetLocalizationManager } from '@nitrots/localization';
 import { GetEventDispatcher, MysteryBoxKeysUpdateEvent, NitroSettingsEvent, SessionDataPreferencesEvent, UserNameUpdateEvent } from '@nitrots/events';
 import { CreateLinkEvent, HabboWebTools } from '@nitrots/utils';
 import { Texture } from 'pixi.js';
@@ -42,6 +43,8 @@ export class SessionDataManager implements ISessionDataManager
 
     private _floorItems: Map<number, IFurnitureData> = new Map();
     private _wallItems: Map<number, IFurnitureData> = new Map();
+    private _floorItemOverrides: Map<string, Partial<IFurnitureData>> = new Map();
+    private _wallItemOverrides: Map<string, Partial<IFurnitureData>> = new Map();
     private _products: Map<string, IProductData> = new Map();
     private _furnitureData: FurnitureDataLoader = new FurnitureDataLoader(this._floorItems, this._wallItems);
     private _productData: ProductDataLoader = new ProductDataLoader(this._products);
@@ -130,7 +133,38 @@ export class SessionDataManager implements ISessionDataManager
 
     public getAllFurnitureData(): IFurnitureData[]
     {
-        return [ ...Array.from(this._floorItems.values()), ...Array.from(this._wallItems.values()) ];
+        return [
+            ...Array.from(this._floorItems.values()).map(item => this.applyFurnitureOverrides(item, this._floorItemOverrides)),
+            ...Array.from(this._wallItems.values()).map(item => this.applyFurnitureOverrides(item, this._wallItemOverrides))
+        ];
+    }
+
+    public async applyFurnitureDataOverrides(url: string): Promise<void>
+    {
+        if(!url || !url.length)
+        {
+            this.clearFurnitureDataOverrides();
+
+            return;
+        }
+
+        const response = await fetch(url);
+
+        if(response.status !== 200) throw new Error(`Unable to load ${ url }`);
+
+        const data = await response.json();
+
+        this._floorItemOverrides = this.parseFurnitureOverrides(data?.roomitemtypes?.furnitype || []);
+        this._wallItemOverrides = this.parseFurnitureOverrides(data?.wallitemtypes?.furnitype || []);
+
+        this.refreshFurnitureLocalizations();
+    }
+
+    public clearFurnitureDataOverrides(): void
+    {
+        this._floorItemOverrides.clear();
+        this._wallItemOverrides.clear();
+        this.refreshFurnitureLocalizations();
     }
 
     private onUserInfoEvent(event: UserInfoEvent): void
@@ -290,7 +324,7 @@ export class SessionDataManager implements ISessionDataManager
 
         if(!existing) return null;
 
-        return existing;
+        return this.applyFurnitureOverrides(existing, this._floorItemOverrides);
     }
 
     public getFloorItemDataByName(name: string): IFurnitureData
@@ -301,7 +335,7 @@ export class SessionDataManager implements ISessionDataManager
         {
             if(!item || (item.className !== name)) continue;
 
-            return item;
+            return this.applyFurnitureOverrides(item, this._floorItemOverrides);
         }
 
         return null;
@@ -313,7 +347,7 @@ export class SessionDataManager implements ISessionDataManager
 
         if(!existing) return null;
 
-        return existing;
+        return this.applyFurnitureOverrides(existing, this._wallItemOverrides);
     }
 
     public getWallItemDataByName(name: string): IFurnitureData
@@ -324,7 +358,7 @@ export class SessionDataManager implements ISessionDataManager
         {
             if(!item || (item.className !== name)) continue;
 
-            return item;
+            return this.applyFurnitureOverrides(item, this._wallItemOverrides);
         }
 
         return null;
@@ -333,6 +367,64 @@ export class SessionDataManager implements ISessionDataManager
     public getProductData(type: string): IProductData
     {
         return this._products.get(type);
+    }
+
+    private parseFurnitureOverrides(items: any[]): Map<string, Partial<IFurnitureData>>
+    {
+        const overrides = new Map<string, Partial<IFurnitureData>>();
+
+        for(const item of items)
+        {
+            if(!item?.classname) continue;
+
+            const className = ((item.classname as string).split('*')[0] || '').trim();
+
+            if(!className.length) continue;
+
+            overrides.set(className, {
+                name: item.name || '',
+                description: item.description || ''
+            });
+        }
+
+        return overrides;
+    }
+
+    private applyFurnitureOverrides(item: IFurnitureData, overrides: Map<string, Partial<IFurnitureData>>): IFurnitureData
+    {
+        if(!item) return null;
+
+        const override = overrides.get(item.className);
+
+        if(!override) return item;
+
+        const clonedItem = Object.assign(Object.create(Object.getPrototypeOf(item)), item) as any;
+
+        if(override.name !== undefined) clonedItem._localizedName = override.name;
+        if(override.description !== undefined) clonedItem._description = override.description;
+
+        return clonedItem as IFurnitureData;
+    }
+
+    private refreshFurnitureLocalizations(): void
+    {
+        const localizationManager = GetLocalizationManager();
+
+        for(const item of this._floorItems.values())
+        {
+            const resolvedItem = this.applyFurnitureOverrides(item, this._floorItemOverrides);
+
+            localizationManager.setValue(('roomItem.name.' + item.id), resolvedItem.name);
+            localizationManager.setValue(('roomItem.desc.' + item.id), resolvedItem.description);
+        }
+
+        for(const item of this._wallItems.values())
+        {
+            const resolvedItem = this.applyFurnitureOverrides(item, this._wallItemOverrides);
+
+            localizationManager.setValue(('wallItem.name.' + item.id), resolvedItem.name);
+            localizationManager.setValue(('wallItem.desc.' + item.id), resolvedItem.description);
+        }
     }
 
     public getBadgeUrl(name: string): string

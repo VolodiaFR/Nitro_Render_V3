@@ -8,6 +8,13 @@ export class RoomUserData implements IRoomUserData
     private _sex: string = '';
     private _figure: string = '';
     private _custom: string = '';
+    private _nickIcon: string = '';
+    private _prefixText: string = '';
+    private _prefixColor: string = '';
+    private _prefixIcon: string = '';
+    private _prefixEffect: string = '';
+    private _prefixFont: string = '';
+    private _displayOrder: string = 'icon-prefix-name';
     private _activityPoints: number;
 	private _background: number;
     private _stand: number;
@@ -295,6 +302,76 @@ export class RoomUserData implements IRoomUserData
     public get isModerator(): boolean
     {
         return this._isModerator;
+    }
+
+    public get nickIcon(): string
+    {
+        return this._nickIcon;
+    }
+
+    public set nickIcon(k: string)
+    {
+        this._nickIcon = k;
+    }
+
+    public get prefixText(): string
+    {
+        return this._prefixText;
+    }
+
+    public set prefixText(k: string)
+    {
+        this._prefixText = k;
+    }
+
+    public get prefixColor(): string
+    {
+        return this._prefixColor;
+    }
+
+    public set prefixColor(k: string)
+    {
+        this._prefixColor = k;
+    }
+
+    public get prefixIcon(): string
+    {
+        return this._prefixIcon;
+    }
+
+    public set prefixIcon(k: string)
+    {
+        this._prefixIcon = k;
+    }
+
+    public get prefixEffect(): string
+    {
+        return this._prefixEffect;
+    }
+
+    public set prefixEffect(k: string)
+    {
+        this._prefixEffect = k;
+    }
+
+    public get prefixFont(): string
+    {
+        return this._prefixFont;
+    }
+
+    public set prefixFont(k: string)
+    {
+        this._prefixFont = k;
+    }
+
+    public get displayOrder(): string
+    {
+        return this._displayOrder;
+    }
+
+    public set displayOrder(k: string)
+    {
+        this._displayOrder = k;
     }
 
     public set isModerator(k: boolean)

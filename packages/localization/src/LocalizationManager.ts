@@ -6,6 +6,7 @@ import { BadgeBaseAndLevel } from './BadgeBaseAndLevel';
 export class LocalizationManager implements ILocalizationManager
 {
     private _definitions: Map<string, string> = new Map();
+    private _overrideDefinitions: Map<string, string> = new Map();
     private _parameters: Map<string, Map<string, string>> = new Map();
     private _badgePointLimits: Map<string, number> = new Map();
     private _romanNumerals: string[] = [ 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV', 'XXV', 'XXVI', 'XXVII', 'XXVIII', 'XXIX', 'XXX' ];
@@ -102,7 +103,7 @@ export class LocalizationManager implements ILocalizationManager
 
     public hasValue(key: string): boolean
     {
-        return this._definitions.has(key);
+        return (this._overrideDefinitions.has(key) || this._definitions.has(key));
     }
 
     public getValue(key: string, doParams: boolean = true): string
@@ -116,7 +117,7 @@ export class LocalizationManager implements ILocalizationManager
             for(const splitKey of keys) key = key.replace(splitKey, this.getValue(splitKey.slice(2, -1), doParams));
         }
 
-        let value = (this._definitions.get(key) || null);
+        let value = (this._overrideDefinitions.get(key) || this._definitions.get(key) || null);
 
         if(!value)
         {
@@ -258,6 +259,16 @@ export class LocalizationManager implements ILocalizationManager
     public setValue(key: string, value: string): void
     {
         this._definitions.set(key, value);
+    }
+
+    public setOverrideValues(values: Map<string, string>): void
+    {
+        this._overrideDefinitions = (values || new Map());
+    }
+
+    public clearOverrideValues(): void
+    {
+        this._overrideDefinitions.clear();
     }
 
     public registerParameter(key: string, parameter: string, value: string): void

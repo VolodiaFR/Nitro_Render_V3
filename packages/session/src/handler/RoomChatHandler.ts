@@ -37,7 +37,7 @@ export class RoomChatHandler extends BaseHandler
         if(event instanceof RoomUnitChatShoutEvent) chatType = RoomSessionChatEvent.CHAT_TYPE_SHOUT;
         else if(event instanceof RoomUnitChatWhisperEvent) chatType = RoomSessionChatEvent.CHAT_TYPE_WHISPER;
 
-        const chatEvent = new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, parser.roomIndex, parser.message, chatType, parser.bubble, parser.chatColours, null, -1, parser.prefixText, parser.prefixColor, parser.prefixIcon, parser.prefixEffect);
+        const chatEvent = new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, parser.roomIndex, parser.message, chatType, parser.bubble, parser.chatColours, null, -1, parser.prefixText, parser.prefixColor, parser.prefixIcon, parser.prefixEffect, parser.prefixFont, parser.nickIcon, parser.displayOrder);
 
         GetEventDispatcher().dispatchEvent(chatEvent);
     }
@@ -54,7 +54,7 @@ export class RoomChatHandler extends BaseHandler
 
         if(!parser) return;
 
-        GetEventDispatcher().dispatchEvent(new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, parser.giverUserId, '', RoomSessionChatEvent.CHAT_TYPE_HAND_ITEM_RECEIVED, SystemChatStyleEnum.GENERIC, [], null, parser.handItemType));
+        GetEventDispatcher().dispatchEvent(new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, parser.giverUserId, '', RoomSessionChatEvent.CHAT_TYPE_HAND_ITEM_RECEIVED, SystemChatStyleEnum.GENERIC, '', null, parser.handItemType));
     }
 
     private onRespectReceivedEvent(event: RespectReceivedEvent): void
@@ -136,7 +136,7 @@ export class RoomChatHandler extends BaseHandler
                 break;
         }
 
-        GetEventDispatcher().dispatchEvent(new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, petData.roomIndex, '', chatType, SystemChatStyleEnum.GENERIC, [], null, userRoomIndex));
+        GetEventDispatcher().dispatchEvent(new RoomSessionChatEvent(RoomSessionChatEvent.CHAT_EVENT, session, petData.roomIndex, '', chatType, SystemChatStyleEnum.GENERIC, '', null, userRoomIndex));
     }
 
     private onFloodControlEvent(event: FloodControlEvent): void

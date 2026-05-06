@@ -7,6 +7,7 @@ export interface IPrefixData
     color: string;
     icon: string;
     effect: string;
+    font: string;
     active: boolean;
 }
 
@@ -36,6 +37,7 @@ export class UserPrefixesParser implements IMessageParser
                 color: wrapper.readString(),
                 icon: wrapper.readString(),
                 effect: wrapper.readString(),
+                font: wrapper.readString(),
                 active: wrapper.readInt() === 1
             });
 
