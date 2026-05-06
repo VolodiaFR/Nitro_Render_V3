@@ -10,6 +10,7 @@ export class RoomUnitInfoParser implements IMessageParser
     private _backgroundId: number;
     private _standId: number;
     private _overlayId: number;
+    private _cardBackgroundId: number;
     private _nickIcon: string;
     private _prefixText: string;
     private _prefixColor: string;
@@ -28,6 +29,7 @@ export class RoomUnitInfoParser implements IMessageParser
         this._backgroundId = 0;
         this._standId = 0;
         this._overlayId = 0;
+        this._cardBackgroundId = 0;
         this._nickIcon = '';
         this._prefixText = '';
         this._prefixColor = '';
@@ -51,6 +53,7 @@ export class RoomUnitInfoParser implements IMessageParser
         this._backgroundId = wrapper.readInt();
         this._standId = wrapper.readInt();
         this._overlayId = wrapper.readInt();
+        this._cardBackgroundId = (wrapper.bytesAvailable ? wrapper.readInt() : 0);
         this._nickIcon = (wrapper.bytesAvailable ? wrapper.readString() : '');
         this._prefixText = (wrapper.bytesAvailable ? wrapper.readString() : '');
         this._prefixColor = (wrapper.bytesAvailable ? wrapper.readString() : '');
@@ -100,6 +103,11 @@ export class RoomUnitInfoParser implements IMessageParser
     public get overlayId(): number
     {
         return this._overlayId;
+    }
+
+    public get cardBackgroundId(): number
+    {
+        return this._cardBackgroundId;
     }
 
     public get nickIcon(): string

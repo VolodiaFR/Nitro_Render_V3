@@ -12,6 +12,7 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
   private _backgroundId: number | null;
   private _standId: number | null;
   private _overlayId: number | null;
+  private _cardBackgroundId: number | null;
   private _nickIcon: string;
   private _prefixText: string;
   private _prefixColor: string;
@@ -30,6 +31,7 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     backgroundId: number | null,
     standId: number | null,
     overlayId: number | null,
+    cardBackgroundId: number | null = 0,
     nickIcon: string = '',
     prefixText: string = '',
     prefixColor: string = '',
@@ -48,6 +50,7 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     this._backgroundId = backgroundId;
     this._standId = standId;
     this._overlayId = overlayId;
+    this._cardBackgroundId = cardBackgroundId;
     this._nickIcon = nickIcon;
     this._prefixText = prefixText;
     this._prefixColor = prefixColor;
@@ -87,6 +90,10 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
 
   public get overlayId(): number | null {
     return this._overlayId;
+  }
+
+  public get cardBackgroundId(): number | null {
+    return this._cardBackgroundId;
   }
 
   public get nickIcon(): string {

@@ -64,7 +64,8 @@ export class RoomUsersHandler extends BaseHandler
                 userData.displayOrder = user.displayOrder;
 				userData.background = user.background;
                 userData.stand = user.stand;
-                userData.overlay = user.overlay;									  
+                userData.overlay = user.overlay;
+                userData.cardBackground = user.cardBackground;
                 userData.activityPoints = user.activityPoints;
                 userData.figure = user.figure;
                 userData.type = user.userType;
@@ -114,9 +115,9 @@ export class RoomUsersHandler extends BaseHandler
         session.userDataManager.updateCustomization(parser.unitId, parser.nickIcon || '', parser.prefixText || '', parser.prefixColor || '', parser.prefixIcon || '', parser.prefixEffect || '', parser.prefixFont || '', parser.displayOrder || 'icon-prefix-name');
         session.userDataManager.updateAchievementScore(parser.unitId, parser.achievementScore);
 		
-		session.userDataManager.updateBackground(parser.unitId, parser.backgroundId, parser.standId, parser.overlayId);
+		session.userDataManager.updateBackground(parser.unitId, parser.backgroundId, parser.standId, parser.overlayId, parser.cardBackgroundId);
 
-        GetEventDispatcher().dispatchEvent(new RoomSessionUserFigureUpdateEvent(session, parser.unitId, parser.figure, parser.gender, parser.motto, parser.achievementScore, parser.backgroundId, parser.standId, parser.overlayId, parser.nickIcon || '', parser.prefixText || '', parser.prefixColor || '', parser.prefixIcon || '', parser.prefixEffect || '', parser.prefixFont || '', parser.displayOrder || 'icon-prefix-name'));
+        GetEventDispatcher().dispatchEvent(new RoomSessionUserFigureUpdateEvent(session, parser.unitId, parser.figure, parser.gender, parser.motto, parser.achievementScore, parser.backgroundId, parser.standId, parser.overlayId, parser.cardBackgroundId, parser.nickIcon || '', parser.prefixText || '', parser.prefixColor || '', parser.prefixIcon || '', parser.prefixEffect || '', parser.prefixFont || '', parser.displayOrder || 'icon-prefix-name'));
 
     }
 

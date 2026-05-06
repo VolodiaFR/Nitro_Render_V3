@@ -812,6 +812,24 @@ export class RoomPlane implements IRoomPlane
         layerContainer.destroy({ children: true });
     }
 
+    private applyPlaneSpriteMasksTo(container: Container): void
+    {
+        if(!this._planeSprite || !this._planeSprite.children) return;
+
+        for(const child of this._planeSprite.children)
+        {
+            if(child instanceof Sprite)
+            {
+                const maskClone = new Sprite(child.texture);
+                maskClone.position.copyFrom(child.position);
+                maskClone.scale.copyFrom(child.scale);
+                container.addChild(maskClone);
+            }
+        }
+
+        if(this._maskFilter && (container.children.length > 1)) container.filters = [this._maskFilter];
+    }
+
     private renderBackgroundColor(): void
     {
         if(!this._planeTexture || this._landscapeBackgroundColor === null) return;
@@ -827,6 +845,8 @@ export class RoomPlane implements IRoomPlane
 
         const colorContainer = new Container();
         colorContainer.addChild(colorGraphics);
+
+        this.applyPlaneSpriteMasksTo(colorContainer);
 
         const transform = this.getMatrixForDimensions(canvasWidth, canvasHeight);
 
@@ -868,6 +888,8 @@ export class RoomPlane implements IRoomPlane
 
         const colorContainer = new Container();
         colorContainer.addChild(colorGraphics);
+
+        this.applyPlaneSpriteMasksTo(colorContainer);
 
         const transform = this.getMatrixForDimensions(canvasWidth, canvasHeight);
 

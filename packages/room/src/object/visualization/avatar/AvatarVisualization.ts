@@ -1100,17 +1100,19 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(sprite?.texture)
         {
-            const currentDirection = this._avatarImage?.getDirection();
+            const displayedDirection = this._avatarImage?.getDirection();
+            const directionOffset = this._avatarImage?.getDirectionOffset() ?? 0;
             let oppositeTexture = sprite.texture;
 
-            if((currentDirection !== undefined) && this._avatarImage)
+            if((displayedDirection !== undefined) && this._avatarImage)
             {
-                const oppositeDirection = ((currentDirection + 4) % 8);
+                const rawCurrent = ((displayedDirection - directionOffset) % 8 + 8) % 8;
+                const rawOpposite = (rawCurrent + 4) % 8;
+                const displayedOpposite = (displayedDirection + 4) % 8;
 
-                if(oppositeDirection !== currentDirection)
+                if(displayedOpposite !== displayedDirection)
                 {
-                    // Reuse the cached opposite texture if direction and base texture haven't changed
-                    if(this._reflectionOppositeTexture && (this._reflectionOppositeDirection === currentDirection) && (this._reflectionOppositeBaseTexture === sprite.texture))
+                    if(this._reflectionOppositeTexture && (this._reflectionOppositeDirection === displayedDirection) && (this._reflectionOppositeBaseTexture === sprite.texture))
                     {
                         oppositeTexture = this._reflectionOppositeTexture;
                     }
@@ -1118,7 +1120,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     {
                         const highlightEnabled = ((this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT_ENABLE) === 1) && (this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT) === 1));
 
-                        this._avatarImage.setDirection(AvatarSetType.FULL, oppositeDirection);
+                        this._avatarImage.setDirection(AvatarSetType.FULL, rawOpposite);
 
                         const renderedOpposite = (this._avatarImage.processAsTexture(AvatarSetType.FULL, highlightEnabled) || sprite.texture);
 
@@ -1129,14 +1131,10 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                         }
 
                         this._reflectionOppositeTexture = this.cloneTexture(renderedOpposite);
-                        this._reflectionOppositeDirection = currentDirection;
+                        this._reflectionOppositeDirection = displayedDirection;
                         this._reflectionOppositeBaseTexture = sprite.texture;
-
                         oppositeTexture = (this._reflectionOppositeTexture || renderedOpposite);
-
-                        // Restore the live avatar direction and refresh the current texture so
-                        // movement updates do not keep showing the opposite-facing texture.
-                        this._avatarImage.setDirection(AvatarSetType.FULL, currentDirection);
+                        this._avatarImage.setDirection(AvatarSetType.FULL, rawCurrent);
 
                         sprite.texture = (this._avatarImage.processAsTexture(AvatarSetType.FULL, highlightEnabled) || sprite.texture);
                     }
