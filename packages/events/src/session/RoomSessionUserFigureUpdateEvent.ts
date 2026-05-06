@@ -13,6 +13,13 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
   private _standId: number | null;
   private _overlayId: number | null;
   private _cardBackgroundId: number | null;
+  private _nickIcon: string;
+  private _prefixText: string;
+  private _prefixColor: string;
+  private _prefixIcon: string;
+  private _prefixEffect: string;
+  private _prefixFont: string;
+  private _displayOrder: string;
 
   constructor(
     session: IRoomSession,
@@ -24,7 +31,14 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     backgroundId: number | null,
     standId: number | null,
     overlayId: number | null,
-    cardBackgroundId: number | null = 0
+    cardBackgroundId: number | null = 0,
+    nickIcon: string = '',
+    prefixText: string = '',
+    prefixColor: string = '',
+    prefixIcon: string = '',
+    prefixEffect: string = '',
+    prefixFont: string = '',
+    displayOrder: string = 'icon-prefix-name'
   ) {
     super(RoomSessionUserFigureUpdateEvent.USER_FIGURE, session);
 
@@ -37,6 +51,13 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     this._standId = standId;
     this._overlayId = overlayId;
     this._cardBackgroundId = cardBackgroundId;
+    this._nickIcon = nickIcon;
+    this._prefixText = prefixText;
+    this._prefixColor = prefixColor;
+    this._prefixIcon = prefixIcon;
+    this._prefixEffect = prefixEffect;
+    this._prefixFont = prefixFont;
+    this._displayOrder = displayOrder;
   }
 
   public get roomIndex(): number {
@@ -73,5 +94,33 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
 
   public get cardBackgroundId(): number | null {
     return this._cardBackgroundId;
+  }
+
+  public get nickIcon(): string {
+    return this._nickIcon;
+  }
+
+  public get prefixText(): string {
+    return this._prefixText;
+  }
+
+  public get prefixColor(): string {
+    return this._prefixColor;
+  }
+
+  public get prefixIcon(): string {
+    return this._prefixIcon;
+  }
+
+  public get prefixEffect(): string {
+    return this._prefixEffect;
+  }
+
+  public get prefixFont(): string {
+    return this._prefixFont;
+  }
+
+  public get displayOrder(): string {
+    return this._displayOrder;
   }
 }

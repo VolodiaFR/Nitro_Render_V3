@@ -4,9 +4,9 @@ export class PurchasePrefixComposer implements IMessageComposer<ConstructorParam
 {
     private _data: ConstructorParameters<typeof PurchasePrefixComposer>;
 
-    constructor(text: string, color: string, icon: string = '', effect: string = '')
+    constructor(text: string, color: string, icon: string = '', effect: string = '', font: string = '')
     {
-        this._data = [ text, color, icon, effect ];
+        this._data = [ text, color, icon, effect, font ];
     }
 
     public getMessageArray()

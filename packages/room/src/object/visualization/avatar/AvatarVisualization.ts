@@ -326,10 +326,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                         //     })
                         // ];
                     }
-                    else
-                    {
-                        sprite.filters = [];
-                    }
                 }
 
                 if(sprite.texture)

@@ -11,6 +11,13 @@ export interface IRoomUserData
     sex: string;
     figure: string;
     custom: string;
+    nickIcon: string;
+    prefixText: string;
+    prefixColor: string;
+    prefixIcon: string;
+    prefixEffect: string;
+    prefixFont: string;
+    displayOrder: string;
     webID: number;
     groupId: number;
     groupName: string;

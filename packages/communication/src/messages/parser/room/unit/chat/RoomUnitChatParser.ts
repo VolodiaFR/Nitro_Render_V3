@@ -13,6 +13,9 @@ export class RoomUnitChatParser implements IMessageParser
     private _prefixColor: string;
     private _prefixIcon: string;
     private _prefixEffect: string;
+    private _prefixFont: string;
+    private _nickIcon: string;
+    private _displayOrder: string;
 
     public flush(): boolean
     {
@@ -27,6 +30,9 @@ export class RoomUnitChatParser implements IMessageParser
         this._prefixColor = '';
         this._prefixIcon = '';
         this._prefixEffect = '';
+        this._prefixFont = '';
+        this._nickIcon = '';
+        this._displayOrder = 'icon-prefix-name';
 
         return true;
     }
@@ -48,6 +54,9 @@ export class RoomUnitChatParser implements IMessageParser
         this._prefixColor = wrapper.readString();
         this._prefixIcon = wrapper.readString();
         this._prefixEffect = wrapper.readString();
+        this._prefixFont = wrapper.readString();
+        this._nickIcon = wrapper.readString();
+        this._displayOrder = (wrapper.bytesAvailable ? wrapper.readString() : 'icon-prefix-name');
 
         return true;
     }
@@ -123,5 +132,20 @@ export class RoomUnitChatParser implements IMessageParser
     public get prefixEffect(): string
     {
         return this._prefixEffect;
+    }
+
+    public get prefixFont(): string
+    {
+        return this._prefixFont;
+    }
+
+    public get nickIcon(): string
+    {
+        return this._nickIcon;
+    }
+
+    public get displayOrder(): string
+    {
+        return this._displayOrder;
     }
 }

@@ -8,6 +8,8 @@ export interface ISessionDataManager
 {
     init(): Promise<void>;
     getAllFurnitureData(): IFurnitureData[];
+    applyFurnitureDataOverrides(url: string): Promise<void>;
+    clearFurnitureDataOverrides(): void;
     getFloorItemData(id: number): IFurnitureData;
     getFloorItemDataByName(name: string): IFurnitureData;
     getWallItemData(id: number): IFurnitureData;

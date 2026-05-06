@@ -274,6 +274,8 @@ export class IncomingHeader
     public static WIRED_USER_VARIABLES_DATA = 5103;
     public static CONF_INVIS_STATE = 5104;
     public static HANDITEM_BLOCK_STATE = 5105;
+    public static TRANSLATION_LANGUAGES = 5106;
+    public static TRANSLATION_RESULT = 5107;
     public static WIRED_OPEN = 1830;
     public static WIRED_REWARD = 178;
     public static WIRED_SAVE = 1155;
@@ -495,8 +497,9 @@ export class IncomingHeader
     public static USER_PREFIXES = 7001;
     public static PREFIX_RECEIVED = 7002;
     public static ACTIVE_PREFIX_UPDATED = 7003;
-	
-	// YouTube Room Broadcast
+    public static USER_NICK_ICONS = 7004;
+
+    // YouTube Room Broadcast
     public static YOUTUBE_ROOM_BROADCAST = 8001;
     public static YOUTUBE_ROOM_WATCHERS = 8002;
     public static YOUTUBE_ROOM_SETTINGS = 8003;
