@@ -1,4 +1,4 @@
-import { IFurnitureStackingHeightMap, IGetImageListener, IImageResult, ILegacyWallGeometry, IObjectData, IPetColorResult, IPetCustomPart, IRoomAreaSelectionManager, IRoomContentListener, IRoomContentLoader, IRoomCreator, IRoomEngine, IRoomEngineServices, IRoomGeometry, IRoomInstance, IRoomManager, IRoomManagerListener, IRoomObject, IRoomObjectController, IRoomRenderer, IRoomRenderingCanvas, IRoomSessionManager, ISelectedRoomObjectData, ISessionDataManager, ITileObjectMap, IUpdateReceiver, IVector3D, LegacyDataType, MouseEventType, ObjectDataFactory, PetFigureData, RoomControllerLevel, RoomObjectCategory, RoomObjectUserType, RoomObjectVariable, ToolbarIconEnum } from '@nitrots/api';
+import { IFurnitureStackingHeightMap, IGetImageListener, IImageResult, ILegacyWallGeometry, IObjectData, IPetColorResult, IPetCustomPart, IRoomAreaSelectionManager, IRoomContentListener, IRoomContentLoader, IRoomCreator, IRoomEngine, IRoomEngineServices, IRoomGeometry, IRoomInstance, IRoomManager, IRoomManagerListener, IRoomObject, IRoomObjectController, IRoomRenderer, IRoomRenderingCanvas, IRoomSessionManager, ISelectedRoomObjectData, ISessionDataManager, ITileObjectMap, IUpdateReceiver, IVector3D, LegacyDataType, MouseEventType, ObjectDataFactory, PetFigureData, RoomControllerLevel, RoomObjectCategory, RoomObjectOperationType, RoomObjectUserType, RoomObjectVariable, ToolbarIconEnum } from '@nitrots/api';
 import { GetCommunication, RenderRoomMessageComposer, RenderRoomThumbnailMessageComposer } from '@nitrots/communication';
 import { GetConfiguration } from '@nitrots/configuration';
 import { BadgeImageReadyEvent, GetEventDispatcher, NitroToolbarAnimateIconEvent, RoomBackgroundColorEvent, RoomDragEvent, RoomEngineAreaHideStateEvent, RoomEngineEvent, RoomEngineObjectEvent, RoomObjectEvent, RoomObjectFurnitureActionEvent, RoomObjectMouseEvent, RoomSessionEvent, RoomToObjectOwnAvatarMoveEvent } from '@nitrots/events';
@@ -2403,6 +2403,21 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
     private handleRoomDragging(canvas: IRoomRenderingCanvas, x: number, y: number, type: string, altKey: boolean, ctrlKey: boolean, shiftKey: boolean): boolean
     {
+        const selectedData = this.getSelectedRoomObjectData(this._activeRoomId);
+
+        if(selectedData &&
+            ((selectedData.operation === RoomObjectOperationType.OBJECT_PLACE) ||
+            (selectedData.operation === RoomObjectOperationType.OBJECT_MOVE) ||
+            (selectedData.operation === RoomObjectOperationType.OBJECT_MOVE_TO)))
+        {
+            this._activeRoomIsDragged = false;
+            this._activeRoomWasDragged = false;
+            this._activeRoomDragX = 0;
+            this._activeRoomDragY = 0;
+
+            return false;
+        }
+
         if(this._areaSelectionManager.areaSelectionState === RoomAreaSelectionManager.SELECTING)
         {
             this._activeRoomIsDragged = false;
