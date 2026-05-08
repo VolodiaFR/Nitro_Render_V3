@@ -11,6 +11,19 @@ export class TileCursorLogic extends RoomObjectLogicBase
     private _lastEventId: string;
     private _isHidden: boolean;
 
+    private static isMobileTouchDevice(): boolean
+    {
+        try
+        {
+            return (typeof window !== 'undefined')
+                && window.matchMedia('(pointer: coarse), (hover: none)').matches;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     constructor()
     {
         super();
@@ -40,7 +53,7 @@ export class TileCursorLogic extends RoomObjectLogicBase
 
         if(this.object)
         {
-            if(this._isHidden)
+            if(this._isHidden || TileCursorLogic.isMobileTouchDevice())
             {
                 this.object.setState(TileCursorLogic.CURSOR_HIDDEN_STATE, 0);
             }

@@ -396,6 +396,7 @@ export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomOb
             case RoomObjectOperationType.OBJECT_PLACE:
                 if(category === RoomObjectCategory.ROOM)
                 {
+                    this.handleObjectPlace(event, roomId);
                     this.placeObject(roomId, (event instanceof RoomObjectTileMouseEvent), (event instanceof RoomObjectWallMouseEvent));
                 }
 
@@ -405,6 +406,7 @@ export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomOb
                     {
                         case RoomObjectUserType.MONSTER_PLANT:
                         case RoomObjectUserType.RENTABLE_BOT:
+                            this.handleObjectPlace(event, roomId);
                             this.placeObject(roomId, (event instanceof RoomObjectTileMouseEvent), (event instanceof RoomObjectWallMouseEvent));
                             break;
                         default:
