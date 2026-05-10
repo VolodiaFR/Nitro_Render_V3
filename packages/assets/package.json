@@ -14,10 +14,10 @@
   "dependencies": {
     "@nitrots/api": "1.0.0",
     "@nitrots/utils": "1.0.0",
-	"@pixi/gif": "^3.0.1",
-    "pixi.js": "^8.8.1"    
+    "@pixi/gif": "^3.0.1",
+    "pixi.js": "^8.8.1"
   },
   "devDependencies": {
-    "typescript": "~5.8.2"
+    "typescript": "^6.0.3"
   }
 }
