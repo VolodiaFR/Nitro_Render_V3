@@ -138,11 +138,6 @@ export class RoomSession implements IRoomSession
     {
         GetCommunication().connection.send(new RoomAmbassadorAlertComposer(userId));
     }
-	
-	public sendWhisperGroupMessage(userId: number): void
-    {
-        GetCommunication().connection.send(new ChatWhisperGroupComposer(userId));
-    }
 
     public sendKickMessage(userId: number): void
     {

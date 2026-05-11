@@ -21,7 +21,6 @@ export interface IRoomSession
     sendPostureMessage(posture: number): void;
     sendDoorbellApprovalMessage(userName: string, flag: boolean): void;
     sendAmbassadorAlertMessage(userId: number): void;
-	sendWhisperGroupMessage(userId: number): void;
     sendKickMessage(userId: number): void;
     sendMuteMessage(userId: number, minutes: number): void;
     sendBanMessage(userId: number, type: string): void;
