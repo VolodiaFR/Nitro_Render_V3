@@ -38,17 +38,17 @@ export async function deriveAesKey(sharedSecret: ArrayBuffer): Promise<CryptoKey
     );
 }
 
-export async function aesGcmEncrypt(key: CryptoKey, nonce: Uint8Array, plaintext: ArrayBuffer): Promise<ArrayBuffer>
+export async function aesGcmEncrypt(key: CryptoKey, nonce: Uint8Array<ArrayBuffer>, plaintext: ArrayBuffer): Promise<ArrayBuffer>
 {
     return window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce, tagLength: GCM_TAG_LEN * 8 }, key, plaintext);
 }
 
-export async function aesGcmDecrypt(key: CryptoKey, nonce: Uint8Array, ciphertextWithTag: ArrayBuffer): Promise<ArrayBuffer>
+export async function aesGcmDecrypt(key: CryptoKey, nonce: Uint8Array<ArrayBuffer>, ciphertextWithTag: ArrayBuffer): Promise<ArrayBuffer>
 {
     return window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce, tagLength: GCM_TAG_LEN * 8 }, key, ciphertextWithTag);
 }
 
-export function randomNonce(): Uint8Array
+export function randomNonce(): Uint8Array<ArrayBuffer>
 {
     const n = new Uint8Array(NONCE_LEN);
     window.crypto.getRandomValues(n);
