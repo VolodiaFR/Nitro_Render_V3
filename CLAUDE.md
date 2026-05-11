@@ -79,6 +79,74 @@ The interface contracts live in:
 - `packages/api/src/nitro/session/IUserDataSnapshot.ts`
 - `packages/api/src/nitro/session/IRoomSessionSnapshot.ts`
 
+## Recent renderer changes (`feat/react19-event-bus`)
+
+Tracked separately from the v2.1.0 batch above; all are
+non-breaking additions or align-with-Arcturus fixes:
+
+### RoomEnterComposer: optional `spawnX` / `spawnY`
+
+`new RoomEnterComposer(roomId, password?, spawnX?, spawnY?)`. The
+Arcturus `RequestRoomLoadEvent` handler reads the two extra ints only
+when `packet.remaining >= 8`, so the same composer header serves both
+the legacy 2-arg form (door spawn) and the 4-arg form (reconnect /
+respawn at a specific tile). RoomSession + RoomSessionManager use the
+4-arg variant in their `enterRoom` / reconnect paths.
+
+### RoomSettingsData: `allowUnderpass` field
+
+`RoomSettingsData` (and its parser) now exposes `allowUnderpass:
+boolean`. Arcturus' `RoomSettingsComposer` already appends one
+trailing int for this flag, and the new parser reads it via
+`if(wrapper.bytesAvailable) … readInt() === 1` so older servers that
+don't emit the field still parse cleanly. `SaveRoomSettingsComposer`
+accepts an optional `allowUnderpass` arg at the end of its parameter
+list; the server-side `RoomSettingsSaveEvent` reads it under
+`packet.bytesAvailable() > 0`.
+
+### Dropped dead code: `sendWhisperGroupMessage`
+
+`IRoomSession.sendWhisperGroupMessage(userId)` referenced a
+`ChatWhisperGroupComposer` that never existed in the codebase and had
+zero call sites in the React client. Both the interface declaration
+and the broken impl are removed. The real whisper path is
+`RoomUnitChatWhisperComposer(recipientName, message, styleId)` —
+unchanged.
+
+### TS 5.7+ and Pixi v8 alignment
+
+- `ArrayBufferLike` drift handled with explicit casts in `BinaryReader`
+  / `BinaryWriter` / `WsSessionCrypto.randomNonce()` /
+  `ArrayBufferToBase64`. The renderer never uses SharedArrayBuffer, so
+  these are type-level narrowings only.
+- `Container.filters` in Pixi v8 is `Filter[] | readonly Filter[] | null`;
+  the AvatarImage filter-stack mutation always goes through the
+  spread-array branch now (no single-Filter fallback). `Filter` is
+  imported explicitly from pixi.js.
+- `ExtendedSprite` casts the renderer to `WebGLRenderer` inside the
+  `RendererType.WEBGL` branch so `renderer.gl` /
+  `glRenderTarget.resolveTargetFramebuffer` resolve.
+- `FurnitureBadgeDisplayVisualization.updateSprite` signature realigned
+  to the parent's 2-arg `(scale, layerId)` shape (was a custom 4-arg
+  override that broke base-class assignability).
+- `TextureUtils.generateImage` casts the extractor's `ImageLike`
+  union return to `HTMLImageElement` (the default backend produces
+  one).
+- `Window.NitroConfig` declaration in `NitroConfig.ts` realigned to
+  the client's `Record<string, unknown>` type so the merged decls
+  agree.
+- Empty-tuple composers (`WiredRoomSettingsRequestComposer`,
+  `WiredUserVariablesRequestComposer`) annotate the return type
+  `(): []` explicitly so `IMessageComposer<[]>` lines up.
+
+### Bug fix: `PetBreedingMessageParser.bytesAvailable < 12`
+
+`bytesAvailable` is a boolean (the wrapper just answers "is there
+anything left?"). The pet-breeding parser used to compare it against
+`12` as if it were a byte count, which TS 6 caught and which was
+also semantically wrong. Replaced with the standard
+`if(!wrapper || !wrapper.bytesAvailable) return false;` guard.
+
 ## Scripts
 
 ```
@@ -109,6 +177,15 @@ for the React-side bridge code.
 - **`SessionDataManager.getUserData(id)` does NOT exist.** Some legacy
   code in the React client used it under a `getUserData ?` truthy guard;
   the branch was always dead. Only `getUserDataSnapshot()` exists.
+- **`bytesAvailable` is a boolean.** The codebase historically had one
+  parser (`PetBreedingMessageParser`) that compared it against a
+  number — fixed. The wrapper returns "any bytes left?", not a count.
+  Use it as a truthy guard or follow with `try {} catch` if you need
+  optional reads.
+- **Composer `getMessageArray()` return type must match the type
+  argument.** `IMessageComposer<[]>` means the function returns `[]`,
+  not `any[]`. The two `Wired*RequestComposer`s that ship empty
+  payloads each annotate `getMessageArray(): []` explicitly.
 - `IRoomSession.sendChatMessage` / `sendShoutMessage` accept an optional
   `chatColour` 3rd arg (was required pre-2.1.1, now optional to match
   the historical call sites in the React client). The implementation
