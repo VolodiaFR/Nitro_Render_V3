@@ -1,6 +1,6 @@
-import { AvatarAction, AvatarDirectionAngle, AvatarScaleType, AvatarSetType, IActiveActionData, IAnimationLayerData, IAvatarDataContainer, IAvatarEffectListener, IAvatarFigureContainer, IAvatarImage, IPartColor, ISpriteDataContainer } from '@nitrots/api';
+import { AvatarAction, AvatarDirectionAngle, AvatarScaleType, AvatarSetType, IActiveActionData, IAnimationLayerData, IAvatarDataContainer, IAvatarEffectListener, IAvatarFigureContainer, IAvatarImage, IGraphicAsset, IPartColor, ISpriteDataContainer } from '@nitrots/api';
 import { GetRenderer, GetTexturePool, GetTickerTime, PaletteMapFilter, TextureUtils } from '@nitrots/utils';
-import { ColorMatrixFilter, Container, RenderTexture, Sprite, Texture } from 'pixi.js';
+import { ColorMatrixFilter, Container, Filter, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { AvatarFigureContainer } from './AvatarFigureContainer';
 import { AvatarStructure } from './AvatarStructure';
 import { EffectAssetDownloadManager } from './EffectAssetDownloadManager';
@@ -243,8 +243,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
             if(this._avatarSpriteData.colorTransform)
             {
                 if(container.filters === undefined || container.filters === null) container.filters = [ this._avatarSpriteData.colorTransform ];
-                else if(Array.isArray(container.filters)) container.filters = [ ...container.filters, this._avatarSpriteData.colorTransform ];
-                else container.filters = [ container.filters, this._avatarSpriteData.colorTransform ];
+                else container.filters = [ ...(container.filters as readonly Filter[]), this._avatarSpriteData.colorTransform ];
             }
 
             if(this._avatarSpriteData.paletteIsGrayscale)
@@ -257,8 +256,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
                 });
 
                 if(container.filters === undefined || container.filters === null) container.filters = [ paletteMapFilter ];
-                else if(Array.isArray(container.filters)) container.filters = [ ...container.filters, paletteMapFilter ];
-                else container.filters = [ container.filters, paletteMapFilter ];
+                else container.filters = [ ...(container.filters as readonly Filter[]), paletteMapFilter ];
             }
         }
 
@@ -766,8 +764,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         ];
 
         if(container.filters === undefined || container.filters === null) container.filters = [ filter ];
-        else if(Array.isArray(container.filters)) container.filters = [ ...container.filters, filter ];
-        else container.filters = [ container.filters, filter ];
+        else container.filters = [ ...(container.filters as readonly Filter[]), filter ];
 
         return container;
     }

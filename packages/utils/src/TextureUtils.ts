@@ -28,7 +28,7 @@ export class TextureUtils
 
         try
         {
-            return await this.getExtractor().image(options);
+            return await this.getExtractor().image(options) as HTMLImageElement;
         }
         catch(e)
         {

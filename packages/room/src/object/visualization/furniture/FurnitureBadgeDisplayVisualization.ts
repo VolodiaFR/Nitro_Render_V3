@@ -170,14 +170,18 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
         return assetName;
     }
 
-    protected updateSprite(sprite: IRoomObjectSprite, asset: IGraphicAsset, scale: number, layerId: number): void
+    protected updateSprite(scale: number, layerId: number): void
     {
-        super.updateSprite(sprite, asset, scale, layerId);
+        super.updateSprite(scale, layerId);
 
         const tag = this.getLayerTag(scale, this.direction, layerId);
 
         if(tag === FurnitureBadgeDisplayVisualization.BADGE_TAG)
         {
+            const sprite = this.getSprite(layerId);
+
+            if(!sprite) return;
+
             sprite.visible = true;
             sprite.alpha = 255;
             sprite.color = 0xFFFFFF;
