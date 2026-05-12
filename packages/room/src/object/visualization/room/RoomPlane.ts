@@ -765,6 +765,9 @@ export class RoomPlane implements IRoomPlane
 
         const layerHeight = Math.min(texture.height, canvasHeight);
         const layerPositionY = alignBottom ? (canvasHeight - layerHeight) : 0;
+        const verticalCropOffset = (alignBottom && texture.height > layerHeight)
+            ? (texture.height - layerHeight)
+            : 0;
 
         const layerSprite = new TilingSprite({
             texture,
@@ -772,7 +775,7 @@ export class RoomPlane implements IRoomPlane
             height: layerHeight,
             tilePosition: {
                 x: this._landscapeOffsetX,
-                y: this._landscapeOffsetY
+                y: this._landscapeOffsetY - verticalCropOffset
             },
             tint
         });
