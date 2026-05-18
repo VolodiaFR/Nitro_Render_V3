@@ -58,26 +58,35 @@ unsubscriber, no need to juggle callback identity. Implemented in
 Equivalent for packet streams. Implemented in
 `packages/communication/src/CommunicationManager.ts`.
 
-### Snapshot getters on `SessionDataManager` + `RoomSessionManager`
+### Snapshot getters (referentially stable, lazy-frozen, invalidated on mutation)
 
-```ts
-getUserDataSnapshot(): Readonly<IUserDataSnapshot>
-getActiveRoomSessionSnapshot(): Readonly<IRoomSessionSnapshot> | null
-```
+Pattern: `getXxxSnapshot()` returns a frozen value cached internally;
+mutators call `invalidateXxxSnapshot()` which drops the cache AND
+dispatches an invalidation event. The React side reads via
+`useSyncExternalStore`.
 
-Returns **referentially-stable** values: the same object reference is
-returned across reads until invalidated. Invalidation happens via the
-new event types `NitroEventType.SESSION_DATA_UPDATED` and
-`NitroEventType.ROOM_SESSION_UPDATED`.
+| Manager | Getter | Invalidation event |
+|---|---|---|
+| `SessionDataManager` | `getUserDataSnapshot(): Readonly<IUserDataSnapshot>` | `SESSION_DATA_UPDATED` |
+| `RoomSessionManager` | `getActiveRoomSessionSnapshot(): Readonly<IRoomSessionSnapshot> \| null` | `ROOM_SESSION_UPDATED` |
+| `IgnoredUsersManager` | `getIgnoredUsersSnapshot(): ReadonlyArray<string>` | `IGNORED_USERS_UPDATED` |
+| `GroupInformationManager` | `getGroupBadgesSnapshot(): ReadonlyMap<number, string>` | `GROUP_BADGES_UPDATED` (only on real changes — no-op refresh stays quiet) |
+| `UserDataManager` | `getRoomUserListSnapshot(): ReadonlyArray<IRoomUserData>` | `ROOM_USER_LIST_UPDATED` (inner IRoomUserData kept mutable — don't deep-clone) |
+| `SoundManager` | `getVolumesSnapshot(): Readonly<ISoundVolumesSnapshot>` | `SOUND_VOLUMES_UPDATED` (only when a volume actually changes) |
 
-When you mutate any field that the snapshot exposes, call the private
-`invalidateUserDataSnapshot()` / `invalidateRoomSessionSnapshot()` —
-that drops the cached snapshot and dispatches the invalidation event.
-The React side rebuilds via `useSyncExternalStore`.
+Snapshot interface contracts live under `packages/api/src/nitro/session/`
+and `packages/api/src/nitro/sound/`. When adding a new snapshot, the
+checklist is:
+1. Define the `Ixxx Snapshot` interface in `packages/api/src/nitro/...`
+   and export it from the matching `index.ts`.
+2. Add a `XXX_UPDATED` member to `packages/events/src/NitroEventType.ts`.
+3. Add `getXxxSnapshot()` to the interface AND impl; cache + invalidate
+   on every mutation path (don't forget batch operations like queue
+   truncation — invalidate AFTER the full batch, not mid-way).
 
-The interface contracts live in:
-- `packages/api/src/nitro/session/IUserDataSnapshot.ts`
-- `packages/api/src/nitro/session/IRoomSessionSnapshot.ts`
+Adding snapshots here is the preferred way to unblock new React
+widgets — prefer it over exposing raw event-listener APIs on the
+client side.
 
 ## Recent renderer changes (`feat/react19-event-bus`)
 
@@ -138,6 +147,38 @@ unchanged.
 - Empty-tuple composers (`WiredRoomSettingsRequestComposer`,
   `WiredUserVariablesRequestComposer`) annotate the return type
   `(): []` explicitly so `IMessageComposer<[]>` lines up.
+
+### Optional-trailing-field parsers: flat early-return chain
+
+Parsers that read "one tier of optional trailing fields per emulator
+release" (UserProfileParser, GetGuestRoomResultMessageParser,
+RoomSettingsDataParser, ModeratorUserInfoData, UserSubscriptionParser
+…) all use a flat chain:
+
+```ts
+if(!wrapper.bytesAvailable) return true;
+// block N reads
+if(!wrapper.bytesAvailable) return true;
+// block N+1 reads
+…
+```
+
+Defaults come from `flush()`. When the next emulator release ships a
+new trailing block, append `if(!wrapper.bytesAvailable) return true;`
++ the new reads. Do NOT nest with `if(wrapper.bytesAvailable) { … }`
+— the nested form re-indents the whole chain on every new tier and
+is the historical source of brittle reads.
+
+### Bug fix: `SoundManager` volume diff comparison
+
+`onEvent(SETTINGS_UPDATED)` cached `volumeFurniUpdated` /
+`volumeTraxUpdated` by comparing `castedEvent.volumeFurni` (percent,
+e.g. 75) against `this._volumeFurni` (fraction, e.g. 0.75) — so the
+change check almost always reported "updated" for a real settings push
+and only reported "unchanged" if the percent matched the fraction by
+coincidence (0 / 100 only). Fixed: divide first, compare divided
+values, then write. Also tracks `volumeSystemUpdated` for the new
+`SOUND_VOLUMES_UPDATED` snapshot invalidation.
 
 ### Bug fix: `PetBreedingMessageParser.bytesAvailable < 12`
 
