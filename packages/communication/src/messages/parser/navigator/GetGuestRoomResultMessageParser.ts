@@ -45,12 +45,19 @@ export class GetGuestRoomResultMessageParser implements IMessageParser
         this.data.canMute = wrapper.readBoolean();
         this._chat = new RoomChatSettings(wrapper);
 
-        if(wrapper.bytesAvailable)
-        {
-            this._hotelTimeZoneId = wrapper.readString();
-            this._hotelCurrentTimeMs = Number(wrapper.readString()) || 0;
-            if(wrapper.bytesAvailable) this._roomItemLimit = wrapper.readInt();
-        }
+        // Optional trailing blocks, one tier per emulator release:
+        //   block 1: hotel timezone id + current time ms (2 strings)
+        //   block 2: room item limit (1 int)
+        // Flat early-return chain so an older server stops cleanly at
+        // whichever block it doesn't ship. Defaults from flush().
+        if(!wrapper.bytesAvailable) return true;
+
+        this._hotelTimeZoneId = wrapper.readString();
+        this._hotelCurrentTimeMs = Number(wrapper.readString()) || 0;
+
+        if(!wrapper.bytesAvailable) return true;
+
+        this._roomItemLimit = wrapper.readInt();
 
         return true;
     }

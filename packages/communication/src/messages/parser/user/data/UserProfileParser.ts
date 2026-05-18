@@ -82,29 +82,35 @@ export class UserProfileParser implements IMessageParser
         this._secondsSinceLastVisit = wrapper.readInt();
         this._openProfileWindow = wrapper.readBoolean();
 
-        if(wrapper.bytesAvailable)
-        {
-            this._backgroundId = wrapper.readInt();
-            this._standId = wrapper.readInt();
-            this._overlayId = wrapper.readInt();
+        // Optional trailing blocks, one tier per emulator release:
+        //   block 1: background / stand / overlay (3 ints)
+        //   block 2: card background (1 int)
+        //   block 3: nick icon (1 string)
+        //   block 4: prefix decoration set (6 strings)
+        // Each tier early-returns to keep the parser tolerant of older
+        // servers that don't ship the later blocks. Defaults set by flush().
+        if(!wrapper.bytesAvailable) return true;
 
-            this._cardBackgroundId = (wrapper.bytesAvailable ? wrapper.readInt() : 0);
+        this._backgroundId = wrapper.readInt();
+        this._standId = wrapper.readInt();
+        this._overlayId = wrapper.readInt();
 
-            if(wrapper.bytesAvailable)
-            {
-                this._nickIcon = wrapper.readString();
+        if(!wrapper.bytesAvailable) return true;
 
-                if(wrapper.bytesAvailable)
-                {
-                    this._prefixText = wrapper.readString();
-                    this._prefixColor = wrapper.readString();
-                    this._prefixIcon = wrapper.readString();
-                    this._prefixEffect = wrapper.readString();
-                    this._prefixFont = wrapper.readString();
-                    this._displayOrder = wrapper.readString();
-                }
-            }
-        }
+        this._cardBackgroundId = wrapper.readInt();
+
+        if(!wrapper.bytesAvailable) return true;
+
+        this._nickIcon = wrapper.readString();
+
+        if(!wrapper.bytesAvailable) return true;
+
+        this._prefixText = wrapper.readString();
+        this._prefixColor = wrapper.readString();
+        this._prefixIcon = wrapper.readString();
+        this._prefixEffect = wrapper.readString();
+        this._prefixFont = wrapper.readString();
+        this._displayOrder = wrapper.readString();
 
         return true;
     }
