@@ -1,6 +1,7 @@
 ﻿import { ILocalizationManager } from '@nitrots/api';
 import { BadgePointLimitsEvent, GetCommunication } from '@nitrots/communication';
 import { GetConfiguration } from '@nitrots/configuration';
+import { loadGamedata } from '@nitrots/utils';
 import { BadgeBaseAndLevel } from './BadgeBaseAndLevel';
 
 export class LocalizationManager implements ILocalizationManager
@@ -25,28 +26,15 @@ export class LocalizationManager implements ILocalizationManager
 
                 url = GetConfiguration().interpolate(url);
 
-                let response: Response;
-
-                try
-                {
-                    response = await fetch(url);
-                }
-                catch(fetchErr)
-                {
-                    throw new Error(`Could not fetch localization file "${ url }" — check "external.texts.url" in ui-config.json (${ fetchErr.message })`);
-                }
-
-                if(response.status !== 200) throw new Error(`Failed to load localization file "${ url }" — server returned HTTP ${ response.status }. Check "external.texts.url" in ui-config.json`);
-
                 let data: any;
 
                 try
                 {
-                    data = await response.json();
+                    data = await loadGamedata(url);
                 }
-                catch(parseErr)
+                catch(err)
                 {
-                    throw new Error(`Invalid JSON in localization file "${ url }" — the URL may be wrong. Check "external.texts.url" in ui-config.json (${ parseErr.message })`);
+                    throw new Error(`Could not load localization file "${ url }" — check "external.texts.url" in ui-config.json (${ err?.message || err })`);
                 }
 
                 this.parseLocalization(data);

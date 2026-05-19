@@ -1,6 +1,7 @@
 import { FurnitureType, IFurnitureData } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
 import { GetLocalizationManager } from '@nitrots/localization';
+import { loadGamedata } from '@nitrots/utils';
 import { FurnitureData } from './FurnitureData';
 
 export class FurnitureDataLoader
@@ -20,28 +21,15 @@ export class FurnitureDataLoader
 
         if(!url || !url.length) throw new Error('Missing "furnidata.url" in config — add the furniture data URL to your renderer-config.json');
 
-        let response: Response;
-
-        try
-        {
-            response = await fetch(url);
-        }
-        catch(fetchErr)
-        {
-            throw new Error(`Could not fetch furniture data from "${ url }" — check "furnidata.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load furniture data from "${ url }" — server returned HTTP ${ response.status }. Check "furnidata.url" in renderer-config.json`);
-
         let responseData: any;
 
         try
         {
-            responseData = await response.json();
+            responseData = await loadGamedata(url);
         }
-        catch(parseErr)
+        catch(err)
         {
-            throw new Error(`Invalid JSON in furniture data "${ url }" — the URL may be wrong. Check "furnidata.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load furniture data from "${ url }" — check "furnidata.url" in renderer-config.json (${ err?.message || err })`);
         }
 
         if(responseData.roomitemtypes) this.parseFloorItems(responseData.roomitemtypes);

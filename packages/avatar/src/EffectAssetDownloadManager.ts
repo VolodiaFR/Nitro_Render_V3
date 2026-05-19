@@ -1,6 +1,7 @@
 import { IAssetManager, IAvatarEffectListener } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
 import { AvatarRenderEffectLibraryEvent, GetEventDispatcher, NitroEvent, NitroEventType } from '@nitrots/events';
+import { loadGamedata } from '@nitrots/utils';
 import { AvatarStructure } from './AvatarStructure';
 import { EffectAssetDownloadLibrary } from './EffectAssetDownloadLibrary';
 
@@ -31,28 +32,15 @@ export class EffectAssetDownloadManager
 
         if(!url || !url.length) throw new Error('Missing "avatar.effectmap.url" in config — add the effect map URL to your renderer-config.json');
 
-        let response: Response;
-
-        try
-        {
-            response = await fetch(url);
-        }
-        catch(fetchErr)
-        {
-            throw new Error(`Could not fetch effect map from "${ url }" — check "avatar.effectmap.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load effect map from "${ url }" — server returned HTTP ${ response.status }. Check "avatar.effectmap.url" in renderer-config.json`);
-
         let responseData: any;
 
         try
         {
-            responseData = await response.json();
+            responseData = await loadGamedata(url);
         }
-        catch(parseErr)
+        catch(err)
         {
-            throw new Error(`Invalid JSON in effect map "${ url }" — the URL may be wrong. Check "avatar.effectmap.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load effect map from "${ url }" — check "avatar.effectmap.url" in renderer-config.json (${ err?.message || err })`);
         }
 
         this.processEffectMap(responseData.effects);
