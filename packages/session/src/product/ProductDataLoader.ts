@@ -1,6 +1,6 @@
 ﻿import { IProductData } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
-import { parseConfigJsonFromResponse } from '@nitrots/utils';
+import { loadGamedata } from '@nitrots/utils';
 import { ProductData } from './ProductData';
 
 export class ProductDataLoader
@@ -18,28 +18,15 @@ export class ProductDataLoader
 
         if(!url || !url.length) throw new Error('Missing "productdata.url" in config — add the product data URL to your renderer-config.json');
 
-        let response: Response;
-
-        try
-        {
-            response = await fetch(url);
-        }
-        catch(fetchErr)
-        {
-            throw new Error(`Could not fetch product data from "${ url }" — check "productdata.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load product data from "${ url }" — server returned HTTP ${ response.status }. Check "productdata.url" in renderer-config.json`);
-
         let responseData: any;
 
         try
         {
-            responseData = await parseConfigJsonFromResponse(response, url);
+            responseData = await loadGamedata(url);
         }
-        catch(parseErr)
+        catch(err)
         {
-            throw new Error(`Invalid product data "${ url }" — JSON/JSON5 parse failed. Check "productdata.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load product data from "${ url }" — check "productdata.url" in renderer-config.json (${ err?.message || err })`);
         }
 
         this.parseProducts(responseData.productdata);

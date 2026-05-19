@@ -2,7 +2,7 @@ import { AvatarSetType, IAssetManager, IAvatarEffectListener, IAvatarFigureConta
 import { GetAssetManager } from '@nitrots/assets';
 import { GetConfiguration } from '@nitrots/configuration';
 import { GetEventDispatcher, NitroEventType } from '@nitrots/events';
-import { parseConfigJsonFromResponse } from '@nitrots/utils';
+import { loadGamedata } from '@nitrots/utils';
 import { AvatarAssetDownloadManager } from './AvatarAssetDownloadManager';
 import { AvatarFigureContainer } from './AvatarFigureContainer';
 import { AvatarImage } from './AvatarImage';
@@ -73,26 +73,13 @@ export class AvatarRenderManager implements IAvatarRenderManager
 
         if(!url || !url.length) throw new Error('Missing "avatar.actions.url" in config — add the URL to your renderer-config.json');
 
-        let response: Response;
-
         try
         {
-            response = await fetch(url);
+            this._structure.updateActions(await loadGamedata(url));
         }
-        catch(fetchErr)
+        catch(err)
         {
-            throw new Error(`Could not fetch avatar actions from "${ url }" — check "avatar.actions.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load avatar actions from "${ url }" — server returned HTTP ${ response.status }. Check "avatar.actions.url" in renderer-config.json`);
-
-        try
-        {
-            this._structure.updateActions(await parseConfigJsonFromResponse(response, url));
-        }
-        catch(parseErr)
-        {
-            throw new Error(`Invalid avatar actions "${ url }" — JSON/JSON5 parse failed. Check "avatar.actions.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load avatar actions from "${ url }" — check "avatar.actions.url" in renderer-config.json (${ err?.message || err })`);
         }
     }
 
@@ -106,26 +93,13 @@ export class AvatarRenderManager implements IAvatarRenderManager
 
         if(!url || !url.length) throw new Error('Missing "avatar.figuredata.url" in config — add the URL to your renderer-config.json');
 
-        let response: Response;
-
         try
         {
-            response = await fetch(url);
+            this._structure.figureData.appendJSON(await loadGamedata(url));
         }
-        catch(fetchErr)
+        catch(err)
         {
-            throw new Error(`Could not fetch figure data from "${ url }" — check "avatar.figuredata.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load figure data from "${ url }" — server returned HTTP ${ response.status }. Check "avatar.figuredata.url" in renderer-config.json`);
-
-        try
-        {
-            this._structure.figureData.appendJSON(await parseConfigJsonFromResponse(response, url));
-        }
-        catch(parseErr)
-        {
-            throw new Error(`Invalid figure data "${ url }" — JSON/JSON5 parse failed. Check "avatar.figuredata.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load figure data from "${ url }" — check "avatar.figuredata.url" in renderer-config.json (${ err?.message || err })`);
         }
 
         this._structure.init();
