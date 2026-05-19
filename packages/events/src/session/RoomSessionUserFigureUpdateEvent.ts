@@ -20,6 +20,7 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
   private _prefixEffect: string;
   private _prefixFont: string;
   private _displayOrder: string;
+  private _borderId: number | null;
 
   constructor(
     session: IRoomSession,
@@ -38,7 +39,8 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     prefixIcon: string = '',
     prefixEffect: string = '',
     prefixFont: string = '',
-    displayOrder: string = 'icon-prefix-name'
+    displayOrder: string = 'icon-prefix-name',
+    borderId: number | null = 0
   ) {
     super(RoomSessionUserFigureUpdateEvent.USER_FIGURE, session);
 
@@ -58,6 +60,7 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
     this._prefixEffect = prefixEffect;
     this._prefixFont = prefixFont;
     this._displayOrder = displayOrder;
+    this._borderId = borderId;
   }
 
   public get roomIndex(): number {
@@ -122,5 +125,9 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent {
 
   public get displayOrder(): string {
     return this._displayOrder;
+  }
+
+  public get borderId(): number | null {
+    return this._borderId;
   }
 }

@@ -4,9 +4,9 @@ export class RoomUnitBackgroundComposer implements IMessageComposer<ConstructorP
 {
     private _data: ConstructorParameters<typeof RoomUnitBackgroundComposer>;
 
-    constructor(backgroundImage: number, backgroundStand: number, backgroundOverlay: number, backgroundCard: number = 0)
+    constructor(backgroundImage: number, backgroundStand: number, backgroundOverlay: number, backgroundCard: number = 0, backgroundBorder: number = 0)
     {
-        this._data = [ backgroundImage, backgroundStand, backgroundOverlay, backgroundCard ];
+        this._data = [ backgroundImage, backgroundStand, backgroundOverlay, backgroundCard, backgroundBorder ];
     }
 
     public getMessageArray()

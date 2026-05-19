@@ -6,6 +6,7 @@ export interface IRoomUserData
     stand: number;
     overlay: number;
     cardBackground: number;
+    borderId: number;
     name: string;
     type: number;
     sex: string;

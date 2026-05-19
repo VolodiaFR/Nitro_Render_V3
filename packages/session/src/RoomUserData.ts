@@ -20,6 +20,7 @@ export class RoomUserData implements IRoomUserData
     private _stand: number;
     private _overlay: number;
     private _cardBackground: number;
+    private _borderId: number = 0;
     private _webID: number = 0;
     private _groupID: number = 0;
     private _groupStatus: number = 0;
@@ -97,6 +98,16 @@ export class RoomUserData implements IRoomUserData
     public set cardBackground(k: number)
     {
         this._cardBackground = k;
+    }
+
+    public get borderId(): number
+    {
+        return this._borderId;
+    }
+
+    public set borderId(k: number)
+    {
+        this._borderId = k;
     }
 
     public get name(): string

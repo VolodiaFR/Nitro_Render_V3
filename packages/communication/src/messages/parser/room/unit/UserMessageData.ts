@@ -45,6 +45,7 @@ export class UserMessageData
     private _isModerator: boolean = false;
     private _roomEntryMethod: string = 'unknown';
     private _roomEntryTeleportId: number = 0;
+    private _borderId: number = 0;
     private _isReadOnly: boolean = false;
 
     constructor(k: number)
@@ -577,6 +578,19 @@ export class UserMessageData
         if(!this._isReadOnly)
         {
             this._roomEntryTeleportId = k;
+        }
+    }
+
+    public get borderId(): number
+    {
+        return this._borderId;
+    }
+
+    public set borderId(k: number)
+    {
+        if(!this._isReadOnly)
+        {
+            this._borderId = k;
         }
     }
 }
