@@ -7,7 +7,7 @@ import { ConfInvisStateMessageEvent } from './messages';
 import { HanditemBlockStateMessageEvent } from './messages';
 import { TranslationLanguagesEvent, TranslationLanguagesRequestComposer, TranslationResultEvent, TranslationTextRequestComposer } from './messages';
 import { YouTubeRoomBroadcastEvent, YouTubeRoomPlayComposer, YouTubeRoomSettingsComposer, YouTubeRoomSettingsEvent, YouTubeRoomWatchersEvent, YouTubeRoomWatchingComposer } from './messages';
-import { HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingDeleteRoomComposer, HousekeepingFindRoomByIdComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingForceDisconnectUserComposer, HousekeepingKickAllFromRoomComposer, HousekeepingKickUserComposer, HousekeepingMuteRoomComposer, HousekeepingMuteUserComposer, HousekeepingResetUserPasswordComposer, HousekeepingRoomDetailEvent, HousekeepingRoomListEvent, HousekeepingRoomStateComposer, HousekeepingSearchRoomsComposer, HousekeepingSetUserRankComposer, HousekeepingTradeLockUserComposer, HousekeepingTransferRoomOwnershipComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
+import { HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingDeleteRoomComposer, HousekeepingFindRoomByIdComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingForceDisconnectUserComposer, HousekeepingGiveCreditsComposer, HousekeepingGiveCurrencyComposer, HousekeepingGrantItemComposer, HousekeepingKickAllFromRoomComposer, HousekeepingKickUserComposer, HousekeepingMuteRoomComposer, HousekeepingMuteUserComposer, HousekeepingResetUserPasswordComposer, HousekeepingRoomDetailEvent, HousekeepingRoomListEvent, HousekeepingRoomStateComposer, HousekeepingSearchRoomsComposer, HousekeepingSetHcSubscriptionComposer, HousekeepingSetUserRankComposer, HousekeepingTradeLockUserComposer, HousekeepingTransferRoomOwnershipComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
 export class NitroMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -1281,6 +1281,10 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.HOUSEKEEPING_KICK_ALL_FROM_ROOM, HousekeepingKickAllFromRoomComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_TRANSFER_ROOM_OWNERSHIP, HousekeepingTransferRoomOwnershipComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_DELETE_ROOM, HousekeepingDeleteRoomComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_GIVE_CREDITS, HousekeepingGiveCreditsComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_GIVE_CURRENCY, HousekeepingGiveCurrencyComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_GRANT_ITEM, HousekeepingGrantItemComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_SET_HC_SUBSCRIPTION, HousekeepingSetHcSubscriptionComposer);
     }
 
     public get events(): Map<number, Function>

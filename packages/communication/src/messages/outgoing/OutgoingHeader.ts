@@ -541,4 +541,8 @@ export class OutgoingHeader
     public static HOUSEKEEPING_KICK_ALL_FROM_ROOM = 9114;
     public static HOUSEKEEPING_TRANSFER_ROOM_OWNERSHIP = 9115;
     public static HOUSEKEEPING_DELETE_ROOM = 9116;
+    public static HOUSEKEEPING_GIVE_CREDITS = 9117;
+    public static HOUSEKEEPING_GIVE_CURRENCY = 9118;
+    public static HOUSEKEEPING_GRANT_ITEM = 9119;
+    public static HOUSEKEEPING_SET_HC_SUBSCRIPTION = 9120;
 }

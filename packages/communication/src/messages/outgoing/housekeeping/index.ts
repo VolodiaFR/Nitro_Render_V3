@@ -1,6 +1,9 @@
 export * from './HousekeepingBanUserComposer';
 export * from './HousekeepingDeleteRoomComposer';
 export * from './HousekeepingFindRoomByIdComposer';
+export * from './HousekeepingGiveCreditsComposer';
+export * from './HousekeepingGiveCurrencyComposer';
+export * from './HousekeepingGrantItemComposer';
 export * from './HousekeepingFindUserByIdComposer';
 export * from './HousekeepingFindUserByNameComposer';
 export * from './HousekeepingForceDisconnectUserComposer';
@@ -11,6 +14,7 @@ export * from './HousekeepingMuteUserComposer';
 export * from './HousekeepingResetUserPasswordComposer';
 export * from './HousekeepingRoomStateComposer';
 export * from './HousekeepingSearchRoomsComposer';
+export * from './HousekeepingSetHcSubscriptionComposer';
 export * from './HousekeepingSetUserRankComposer';
 export * from './HousekeepingTradeLockUserComposer';
 export * from './HousekeepingTransferRoomOwnershipComposer';
