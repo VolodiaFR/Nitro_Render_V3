@@ -509,4 +509,6 @@ export class IncomingHeader
     public static HOUSEKEEPING_ACTION_RESULT = 9201;
     public static HOUSEKEEPING_ROOM_DETAIL = 9202;
     public static HOUSEKEEPING_ROOM_LIST = 9203;
+    public static HOUSEKEEPING_DASHBOARD = 9204;
+    public static HOUSEKEEPING_ACTION_LOG = 9205;
 }

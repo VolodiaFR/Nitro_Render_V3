@@ -545,4 +545,7 @@ export class OutgoingHeader
     public static HOUSEKEEPING_GIVE_CURRENCY = 9118;
     public static HOUSEKEEPING_GRANT_ITEM = 9119;
     public static HOUSEKEEPING_SET_HC_SUBSCRIPTION = 9120;
+    public static HOUSEKEEPING_SEND_HOTEL_ALERT = 9121;
+    public static HOUSEKEEPING_GET_DASHBOARD = 9122;
+    public static HOUSEKEEPING_LIST_ACTION_LOG = 9123;
 }
