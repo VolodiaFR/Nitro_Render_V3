@@ -7,7 +7,7 @@ import { ConfInvisStateMessageEvent } from './messages';
 import { HanditemBlockStateMessageEvent } from './messages';
 import { TranslationLanguagesEvent, TranslationLanguagesRequestComposer, TranslationResultEvent, TranslationTextRequestComposer } from './messages';
 import { YouTubeRoomBroadcastEvent, YouTubeRoomPlayComposer, YouTubeRoomSettingsComposer, YouTubeRoomSettingsEvent, YouTubeRoomWatchersEvent, YouTubeRoomWatchingComposer } from './messages';
-import { HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
+import { HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingKickUserComposer, HousekeepingMuteUserComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
 export class NitroMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -1266,6 +1266,8 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.HOUSEKEEPING_FIND_USER_BY_ID, HousekeepingFindUserByIdComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_BAN_USER, HousekeepingBanUserComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_UNBAN_USER, HousekeepingUnbanUserComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_MUTE_USER, HousekeepingMuteUserComposer);
+        this._composers.set(OutgoingHeader.HOUSEKEEPING_KICK_USER, HousekeepingKickUserComposer);
     }
 
     public get events(): Map<number, Function>
