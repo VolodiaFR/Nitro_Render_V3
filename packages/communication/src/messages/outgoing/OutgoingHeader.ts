@@ -530,4 +530,5 @@ export class OutgoingHeader
     public static HOUSEKEEPING_UNBAN_USER = 9103;
     public static HOUSEKEEPING_MUTE_USER = 9104;
     public static HOUSEKEEPING_KICK_USER = 9105;
+    public static HOUSEKEEPING_FORCE_DISCONNECT_USER = 9106;
 }
