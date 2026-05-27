@@ -4,9 +4,9 @@ export class UpdateFloorPropertiesMessageComposer implements IMessageComposer<Co
 {
     private _data: ConstructorParameters<typeof UpdateFloorPropertiesMessageComposer>;
 
-    constructor(model: string, doorX: number, doorY: number, doorDirection: number, thicknessWall: number, thicknessFloor: number, wallHeight: number)
+    constructor(model: string, doorX: number, doorY: number, doorDirection: number, thicknessWall: number, thicknessFloor: number, wallHeight: number, autoPickup: boolean = false)
     {
-        this._data = [model, doorX, doorY, doorDirection, thicknessWall, thicknessFloor, wallHeight];
+        this._data = [model, doorX, doorY, doorDirection, thicknessWall, thicknessFloor, wallHeight, autoPickup];
     }
 
     public getMessageArray()

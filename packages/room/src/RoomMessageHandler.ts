@@ -2,10 +2,14 @@ import { AvatarGuideStatus, IConnection, IMessageEvent, IRoomCreator, IRoomObjec
 import { AreaHideMessageEvent, ConfInvisStateMessageEvent, DiceValueMessageEvent, FloorHeightMapEvent, FurnitureAliasesComposer, FurnitureAliasesEvent, FurnitureDataEvent, FurnitureFloorAddEvent, FurnitureFloorDataParser, FurnitureFloorEvent, FurnitureFloorRemoveEvent, FurnitureFloorUpdateEvent, FurnitureWallAddEvent, FurnitureWallDataParser, FurnitureWallEvent, FurnitureWallRemoveEvent, FurnitureWallUpdateEvent, GetCommunication, GetRoomEntryDataMessageComposer, GuideSessionEndedMessageEvent, GuideSessionErrorMessageEvent, GuideSessionStartedMessageEvent, IgnoreResultEvent, ItemDataUpdateMessageEvent, ObjectsDataUpdateEvent, ObjectsRollingEvent, OneWayDoorStatusMessageEvent, PetExperienceEvent, PetFigureUpdateEvent, RoomEntryTileMessageEvent, RoomEntryTileMessageParser, RoomHeightMapEvent, RoomHeightMapUpdateEvent, RoomPaintEvent, RoomReadyMessageEvent, RoomUnitChatEvent, RoomUnitChatShoutEvent, RoomUnitChatWhisperEvent, RoomUnitDanceEvent, RoomUnitEffectEvent, RoomUnitEvent, RoomUnitExpressionEvent, RoomUnitHandItemEvent, RoomUnitIdleEvent, RoomUnitInfoEvent, RoomUnitNumberEvent, RoomUnitRemoveEvent, RoomUnitStatusEvent, RoomUnitStatusMessage, RoomUnitTypingEvent, RoomVisualizationSettingsEvent, UserInfoEvent, WiredFurniMovementData, WiredMovementsEvent, WiredUserDirectionUpdateData, WiredUserMovementData, YouArePlayingGameEvent } from '@nitrots/communication';
 import { GetRoomSessionManager, GetSessionDataManager } from '@nitrots/session';
 import { Vector3d } from '@nitrots/utils';
+import { FloorHeightMapMessageParser } from '@nitrots/communication';
 import { GetRoomEngine } from './GetRoomEngine';
 import { RoomVariableEnum } from './RoomVariableEnum';
+import { ObjectRoomMapUpdateMessage } from './messages';
 import { RoomPlaneParser } from './object/RoomPlaneParser';
 import { FurnitureStackingHeightMap, LegacyWallGeometry } from './utils';
+
+const ROOM_OWN_OBJECT_ID = -1;
 
 type AreaHideControllerState = {
     rootX: number;
@@ -50,8 +54,6 @@ export class RoomMessageHandler
     {
         this._connection = GetCommunication().connection;
         this._roomEngine = GetRoomEngine();
-
-        // Store all message events for cleanup
         this._messageEvents = [
             new UserInfoEvent(this.onUserInfoEvent.bind(this)),
             new RoomReadyMessageEvent(this.onRoomReadyMessageEvent.bind(this)),
@@ -102,7 +104,6 @@ export class RoomMessageHandler
             new GuideSessionErrorMessageEvent(this.onGuideSessionErrorMessageEvent.bind(this))
         ];
 
-        // Register all message events
         for(const event of this._messageEvents)
         {
             this._connection.addMessageEvent(event);
@@ -111,7 +112,6 @@ export class RoomMessageHandler
 
     public dispose(): void
     {
-        // Remove all message events
         if(this._connection)
         {
             for(const event of this._messageEvents)
@@ -232,9 +232,85 @@ export class RoomMessageHandler
 
         if(!parser) return;
 
+        const roomMap = this._rebuildFloorGeometry(parser);
+
+        if(!roomMap) return;
+
+        this._roomEngine.createRoomInstance(this._currentRoomId, roomMap);
+    }
+
+    public applyFloorModelLocally(modelString: string, wallHeight: number, scale: boolean = true): boolean
+    {
+        if(!this._roomEngine || this._currentRoomId <= 0 || !modelString) return false;
+
+        const parser = new FloorHeightMapMessageParser();
+
+        parser.flush();
+
+        if(!parser.parseModel(modelString, wallHeight, scale)) return false;
+
+        const roomMap = this._rebuildFloorGeometry(parser);
+
+        if(!roomMap) return false;
+
+        const roomObject = this._roomEngine.getRoomObject(this._currentRoomId, ROOM_OWN_OBJECT_ID, RoomObjectCategory.ROOM);
+
+        if(!roomObject) return false;
+
+        const currentMap = roomObject.model.getValue<{ holeMap?: { id: number, x: number, y: number, width: number, height: number, invert: boolean }[] }>(RoomObjectVariable.ROOM_MAP_DATA);
+
+        if(currentMap && currentMap.holeMap && currentMap.holeMap.length)
+        {
+            for(const hole of currentMap.holeMap)
+            {
+                if(hole) roomMap.holeMap.push(hole);
+            }
+        }
+
+        roomObject.processUpdateMessage(new ObjectRoomMapUpdateMessage(roomMap));
+        this._rebuildFurnitureStackingMap(parser);
+        return true;
+    }
+
+    private _rebuildFurnitureStackingMap(parser: FloorHeightMapMessageParser): void
+    {
+        if(!this._roomEngine) return;
+
+        const width = parser.width;
+        const height = parser.height;
+        const heightMap = new FurnitureStackingHeightMap(width, height);
+        const BLOCKED = FloorHeightMapMessageParser.TILE_BLOCKED;
+
+        let y = 0;
+
+        while(y < height)
+        {
+            let x = 0;
+
+            while(x < width)
+            {
+                const tileHeight = parser.getHeight(x, y);
+                const isRoomTile = (tileHeight !== BLOCKED);
+
+                heightMap.setTileHeight(x, y, isRoomTile ? tileHeight : 0);
+                heightMap.setStackingBlocked(x, y, false);
+                heightMap.setIsRoomTile(x, y, isRoomTile);
+
+                x++;
+            }
+
+            y++;
+        }
+
+        this._roomEngine.setFurnitureStackingHeightMap(this._currentRoomId, heightMap);
+        this._roomEngine.refreshTileObjectMap(this._currentRoomId, 'RoomMessageHandler.applyFloorModelLocally');
+    }
+
+    private _rebuildFloorGeometry(parser: FloorHeightMapMessageParser)
+    {
         const wallGeometry = this._roomEngine.getLegacyWallGeometry(this._currentRoomId);
 
-        if(!wallGeometry) return;
+        if(!wallGeometry) return null;
 
         this._planeParser.reset();
 
@@ -320,7 +396,7 @@ export class RoomMessageHandler
             dir: doorDirection
         });
 
-        this._roomEngine.createRoomInstance(this._currentRoomId, roomMap);
+        return roomMap;
     }
 
     private onRoomHeightMapEvent(event: RoomHeightMapEvent): void
@@ -1683,44 +1759,6 @@ export class RoomMessageHandler
 
         this._roomEngine.updateRoomObjectUserAction(this._currentRoomId, userData.roomIndex, RoomObjectVariable.FIGURE_GUIDE_STATUS, status);
     }
-
-    // public _SafeStr_10580(event:_SafeStr_2242): void
-    // {
-    //     var arrayIndex: number;
-    //     var discoColours:Array;
-    //     var discoTimer:Timer;
-    //     var eventParser:_SafeStr_4576 = (event.parser as _SafeStr_4576);
-    //     switch (eventParser._SafeStr_7025)
-    //     {
-    //         case 0:
-    //             _SafeStr_4588.init(250, 5000);
-    //             _SafeStr_4588._SafeStr_6766();
-    //             return;
-    //         case 1:
-    //             _SafeStr_4231.init(250, 5000);
-    //             _SafeStr_4231._SafeStr_6766();
-    //             return;
-    //         case 2:
-    //             NitroEventDispatcher.dispatchEvent(new _SafeStr_2821(this._SafeStr_10593, -1, true));
-    //             return;
-    //         case 3:
-    //             arrayIndex = 0;
-    //             discoColours = [29371, 16731195, 16764980, 0x99FF00, 29371, 16731195, 16764980, 0x99FF00, 0];
-    //             discoTimer = new Timer(1000, (discoColours.length + 1));
-    //             discoTimer.addEventListener(TimerEvent.TIMER, function (k:TimerEvent): void
-    //             {
-    //                 if (arrayIndex == discoColours.length)
-    //                 {
-    //                     _SafeStr_10592._SafeStr_21164(_SafeStr_10593, discoColours[arrayIndex++], 176, true);
-    //                 } else
-    //                 {
-    //                     _SafeStr_10592._SafeStr_21164(_SafeStr_10593, discoColours[arrayIndex++], 176, false);
-    //                 };
-    //             });
-    //             discoTimer.start();
-    //             return;
-    //     };
-    // }
 
     public get currentRoomId(): number
     {
