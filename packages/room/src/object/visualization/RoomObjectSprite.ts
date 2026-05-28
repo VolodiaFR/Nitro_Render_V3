@@ -13,6 +13,7 @@ export class RoomObjectSprite implements IRoomObjectSprite
 
     private _width: number = 0;
     private _height: number = 0;
+    private _scale: number = 1;
     private _offsetX: number = 0;
     private _offsetY: number = 0;
     private _flipH: boolean = false;
@@ -119,6 +120,21 @@ export class RoomObjectSprite implements IRoomObjectSprite
     public get height(): number
     {
         return this._height;
+    }
+
+    // Per-sprite zoom multiplier (1 = native). Applied on top of the room zoom.
+    public get scale(): number
+    {
+        return this._scale;
+    }
+
+    public set scale(value: number)
+    {
+        if(this._scale === value) return;
+
+        this._scale = value;
+
+        this._updateCounter++;
     }
 
     public get offsetX(): number

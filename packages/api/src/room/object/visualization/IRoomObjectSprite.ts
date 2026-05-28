@@ -11,6 +11,7 @@ export interface IRoomObjectSprite
     texture: Texture;
     width: number;
     height: number;
+    scale: number;
     offsetX: number;
     offsetY: number;
     flipH: boolean;

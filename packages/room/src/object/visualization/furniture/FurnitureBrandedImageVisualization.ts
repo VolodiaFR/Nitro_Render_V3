@@ -18,6 +18,7 @@ export class FurnitureBrandedImageVisualization extends FurnitureVisualization
     protected _offsetX: number;
     protected _offsetY: number;
     protected _offsetZ: number;
+    protected _imageScale: number;
     protected _currentFrame: number;
     protected _totalFrames: number;
 
@@ -32,6 +33,7 @@ export class FurnitureBrandedImageVisualization extends FurnitureVisualization
         this._offsetX = 0;
         this._offsetY = 0;
         this._offsetZ = 0;
+        this._imageScale = 100;
         this._currentFrame = -1;
         this._totalFrames = -1;
     }
@@ -65,6 +67,7 @@ export class FurnitureBrandedImageVisualization extends FurnitureVisualization
             this._offsetX = (this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BRANDING_OFFSET_X) || 0);
             this._offsetY = (this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BRANDING_OFFSET_Y) || 0);
             this._offsetZ = (this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BRANDING_OFFSET_Z) || 0);
+            this._imageScale = (this.object.model.getValue<number>(RoomObjectVariable.FURNITURE_BRANDING_SCALE) || 100);
         }
 
         if(!this._imageReady)
@@ -206,5 +209,50 @@ export class FurnitureBrandedImageVisualization extends FurnitureVisualization
         }
 
         return super.getSpriteAssetName(scale, layerId);
+    }
+
+    private isBrandedImageLayer(scale: number, layerId: number): boolean
+    {
+        return this.getLayerTag(scale, this._direction, layerId) === FurnitureBrandedImageVisualization.BRANDED_IMAGE;
+    }
+
+    // offsetX/Y move ONLY the branded image layer (the furni frame stays put).
+    // Authored at full scale (64) and scaled with the room zoom.
+    protected getLayerXOffset(scale: number, direction: number, layerId: number): number
+    {
+        const offset = super.getLayerXOffset(scale, direction, layerId);
+
+        return this.isBrandedImageLayer(scale, layerId) ? offset + ((this._offsetX || 0) * (scale / 64)) : offset;
+    }
+
+    protected getLayerYOffset(scale: number, direction: number, layerId: number): number
+    {
+        const offset = super.getLayerYOffset(scale, direction, layerId);
+
+        return this.isBrandedImageLayer(scale, layerId) ? offset + ((this._offsetY || 0) * (scale / 64)) : offset;
+    }
+
+    // offsetZ is the z-index / depth (overlap order, like CSS z-index).
+    protected getLayerZOffset(scale: number, direction: number, layerId: number): number
+    {
+        const offset = super.getLayerZOffset(scale, direction, layerId);
+
+        return this.isBrandedImageLayer(scale, layerId) ? offset + (this._offsetZ || 0) : offset;
+    }
+
+    // `scale` zooms the branded image (percent, 100 = 1x). Applied via the
+    // sprite's scale (a real Pixi sprite scale) — NOT by writing width/height,
+    // which are read-only on RoomObjectSprite and would throw every frame.
+    protected updateSprite(scale: number, layerId: number): void
+    {
+        super.updateSprite(scale, layerId);
+
+        const sprite = this.getSprite(layerId);
+
+        if(!sprite) return;
+
+        sprite.scale = this.isBrandedImageLayer(scale, layerId)
+            ? Math.max(0.1, (this._imageScale || 100) / 100)
+            : 1;
     }
 }

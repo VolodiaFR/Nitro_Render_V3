@@ -702,11 +702,13 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             if(extendedSprite.texture !== objectSprite.texture) extendedSprite.setTexture(objectSprite.texture);
 			
 			
-            const sx = Math.abs(extendedSprite.scale.x) || 1;
-            const sy = Math.abs(extendedSprite.scale.y) || 1;
+            // Per-sprite zoom (objectSprite.scale, default 1) combined with flip.
+            // Setting the magnitude directly (instead of reading the previous
+            // scale) avoids compounding across frames.
+            const magnitude = (objectSprite.scale && (objectSprite.scale > 0)) ? objectSprite.scale : 1;
 
-            extendedSprite.scale.x = objectSprite.flipH ? -sx : sx;
-            extendedSprite.scale.y = objectSprite.flipV ? -sy : sy;
+            extendedSprite.scale.x = objectSprite.flipH ? -magnitude : magnitude;
+            extendedSprite.scale.y = objectSprite.flipV ? -magnitude : magnitude;
         }
 	
         extendedSprite.x = Math.round(sprite.x);

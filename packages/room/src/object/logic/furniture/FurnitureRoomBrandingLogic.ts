@@ -12,6 +12,7 @@ export class FurnitureRoomBrandingLogic extends FurnitureLogic
     public static OFFSETX_KEY: string = 'offsetX';
     public static OFFSETY_KEY: string = 'offsetY';
     public static OFFSETZ_KEY: string = 'offsetZ';
+    public static SCALE_KEY: string = 'scale';
 
     protected _disableFurnitureSelection: boolean;
     protected _hasClickUrl: boolean;
@@ -93,6 +94,10 @@ export class FurnitureRoomBrandingLogic extends FurnitureLogic
         if(!isNaN(offsetY)) this.object.model.setValue(RoomObjectVariable.FURNITURE_BRANDING_OFFSET_Y, offsetY);
         if(!isNaN(offsetZ)) this.object.model.setValue(RoomObjectVariable.FURNITURE_BRANDING_OFFSET_Z, offsetZ);
 
+        const scaleRaw = parseInt(objectData.getValue(FurnitureRoomBrandingLogic.SCALE_KEY));
+        const scale = isNaN(scaleRaw) ? 100 : scaleRaw;
+        this.object.model.setValue(RoomObjectVariable.FURNITURE_BRANDING_SCALE, scale);
+
         let options = (((FurnitureRoomBrandingLogic.IMAGEURL_KEY + '=') + ((imageUrl !== null) ? imageUrl : '')) + '\t');
 
         if(this._hasClickUrl) options = (options + (((FurnitureRoomBrandingLogic.CLICKURL_KEY + '=') + ((clickUrl !== null) ? clickUrl : '')) + '\t'));
@@ -100,6 +105,7 @@ export class FurnitureRoomBrandingLogic extends FurnitureLogic
         options = (options + (((FurnitureRoomBrandingLogic.OFFSETX_KEY + '=') + offsetX) + '\t'));
         options = (options + (((FurnitureRoomBrandingLogic.OFFSETY_KEY + '=') + offsetY) + '\t'));
         options = (options + (((FurnitureRoomBrandingLogic.OFFSETZ_KEY + '=') + offsetZ) + '\t'));
+        options = (options + (((FurnitureRoomBrandingLogic.SCALE_KEY + '=') + scale) + '\t'));
 
         this.object.model.setValue(RoomWidgetEnumItemExtradataParameter.INFOSTAND_EXTRA_PARAM, (RoomWidgetEnumItemExtradataParameter.BRANDING_OPTIONS + options));
     }
@@ -147,10 +153,25 @@ export class FurnitureRoomBrandingLogic extends FurnitureLogic
 
         if(!texture)
         {
-            const status = await asset.downloadAsset(imageUrl);
-
-            if(!status)
+            // downloadAsset THROWS on failure (it doesn't return false), and this
+            // method is fire-and-forget — so without this try/catch a failed image
+            // download just vanishes and the furni keeps showing its default. Catch
+            // it, surface the real reason, and flag the failed state.
+            try
             {
+                const status = await asset.downloadAsset(imageUrl);
+
+                if(!status)
+                {
+                    this.processUpdateMessage(new ObjectAdUpdateMessage(ObjectAdUpdateMessage.IMAGE_LOADING_FAILED));
+
+                    return;
+                }
+            }
+            catch(error)
+            {
+                console.error(`[Soundboard/Branding] failed to load branding image "${ imageUrl }":`, error);
+
                 this.processUpdateMessage(new ObjectAdUpdateMessage(ObjectAdUpdateMessage.IMAGE_LOADING_FAILED));
 
                 return;

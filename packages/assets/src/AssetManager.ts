@@ -200,7 +200,11 @@ export class AssetManager implements IAssetManager
             }
             else
             {
-                const texture = await Assets.load<Texture>(url);
+                // External raster images (png/jpg/webp/…). Pixi's Assets.load does
+                // not reliably load arbitrary cross-origin images in this setup, so
+                // load them through a CORS-enabled <img> + Texture.from — the same
+                // approach the badge / dynamic-thumbnail visualizations use.
+                const texture = await this.loadExternalImageTexture(url);
 
                 if(texture) this.setTexture(url, texture);
             }
@@ -211,6 +215,47 @@ export class AssetManager implements IAssetManager
         {
             throw new Error(`Asset loading failed for "${ url }": ${ err.message || err }`);
         }
+    }
+
+    private loadExternalImageTexture(url: string): Promise<Texture>
+    {
+        return new Promise<Texture>((resolve, reject) =>
+        {
+            const image = new Image();
+
+            // crossOrigin must be set BEFORE src so the request is made with CORS
+            // and the resulting texture isn't tainted (WebGL would refuse it).
+            image.crossOrigin = 'anonymous';
+
+            image.onload = () =>
+            {
+                image.onload = null;
+                image.onerror = null;
+
+                if(image.complete && (image.width > 0) && (image.height > 0))
+                {
+                    const texture = Texture.from(image);
+
+                    if(texture.source) texture.source.scaleMode = 'linear';
+
+                    resolve(texture);
+                }
+                else
+                {
+                    reject(new Error(`image had no dimensions`));
+                }
+            };
+
+            image.onerror = () =>
+            {
+                image.onload = null;
+                image.onerror = null;
+
+                reject(new Error(`image element failed to load (CORS / network / 404)`));
+            };
+
+            image.src = url;
+        });
     }
 
     private async loadLocalRoom(): Promise<void>
