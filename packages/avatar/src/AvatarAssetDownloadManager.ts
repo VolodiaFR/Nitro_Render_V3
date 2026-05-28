@@ -1,7 +1,7 @@
 import { IAssetManager, IAvatarFigureContainer, IAvatarImageListener } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
 import { AvatarRenderLibraryEvent, GetEventDispatcher, NitroEvent, NitroEventType } from '@nitrots/events';
-import { parseConfigJsonFromResponse } from '@nitrots/utils';
+import { loadGamedata } from '@nitrots/utils';
 import { AvatarAssetDownloadLibrary } from './AvatarAssetDownloadLibrary';
 import { AvatarStructure } from './AvatarStructure';
 
@@ -41,28 +41,19 @@ export class AvatarAssetDownloadManager
 
         if(!url || !url.length) throw new Error('Missing "avatar.figuremap.url" in config — add the figure map URL to your renderer-config.json');
 
-        let response: Response;
-
-        try
-        {
-            response = await fetch(url);
-        }
-        catch(fetchErr)
-        {
-            throw new Error(`Could not fetch figure map from "${ url }" — check "avatar.figuremap.url" in renderer-config.json (${ fetchErr.message })`);
-        }
-
-        if(response.status !== 200) throw new Error(`Failed to load figure map from "${ url }" — server returned HTTP ${ response.status }. Check "avatar.figuremap.url" in renderer-config.json`);
-
         let responseData: any;
 
         try
         {
-            responseData = await parseConfigJsonFromResponse(response, url);
+            // Split-aware loader (tier manifest -> per-tier files -> merged).
+            // The figuremap URL is a directory manifest, not a single JSON, so a
+            // raw fetch yields { tiers: [...] } with no `libraries` and avatars
+            // silently render empty. loadGamedata handles both split + single.
+            responseData = await loadGamedata(url);
         }
-        catch(parseErr)
+        catch(fetchErr)
         {
-            throw new Error(`Invalid figure map "${ url }" — JSON/JSON5 parse failed. Check "avatar.figuremap.url" in renderer-config.json (${ parseErr.message })`);
+            throw new Error(`Could not load figure map from "${ url }" — check "avatar.figuremap.url" in renderer-config.json (${ fetchErr.message })`);
         }
 
         this.processFigureMap(responseData.libraries);
