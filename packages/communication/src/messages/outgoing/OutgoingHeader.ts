@@ -548,4 +548,14 @@ export class OutgoingHeader
     public static HOUSEKEEPING_SEND_HOTEL_ALERT = 9121;
     public static HOUSEKEEPING_GET_DASHBOARD = 9122;
     public static HOUSEKEEPING_LIST_ACTION_LOG = 9123;
+
+    // Custom features — IDs 9300+ reserved
+    public static REQUEST_RARE_VALUES = 9300;
+    public static WHEEL_OPEN = 9301;
+    public static WHEEL_SPIN = 9302;
+    public static WHEEL_BUY_SPIN = 9303;
+    public static WHEEL_ADMIN_GET_PRIZES = 9304;
+    public static WHEEL_ADMIN_SAVE_PRIZES = 9305;
+    public static SOUNDBOARD_PLAY = 9306;
+    public static SOUNDBOARD_SET_ENABLED = 9307;
 }

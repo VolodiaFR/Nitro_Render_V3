@@ -511,4 +511,13 @@ export class IncomingHeader
     public static HOUSEKEEPING_ROOM_LIST = 9203;
     public static HOUSEKEEPING_DASHBOARD = 9204;
     public static HOUSEKEEPING_ACTION_LOG = 9205;
+
+    // Custom features — IDs 9400+ reserved
+    public static RARE_VALUES = 9400;
+    public static WHEEL_DATA = 9401;
+    public static WHEEL_RESULT = 9402;
+    public static WHEEL_RECENT_WINS = 9403;
+    public static WHEEL_ADMIN_PRIZES = 9404;
+    public static SOUNDBOARD_SETTINGS = 9405;
+    public static SOUNDBOARD_PLAY = 9406;
 }

@@ -8,6 +8,10 @@ import { HanditemBlockStateMessageEvent } from './messages';
 import { TranslationLanguagesEvent, TranslationLanguagesRequestComposer, TranslationResultEvent, TranslationTextRequestComposer } from './messages';
 import { YouTubeRoomBroadcastEvent, YouTubeRoomPlayComposer, YouTubeRoomSettingsComposer, YouTubeRoomSettingsEvent, YouTubeRoomWatchersEvent, YouTubeRoomWatchingComposer } from './messages';
 import { HousekeepingActionLogEvent, HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingDashboardEvent, HousekeepingDeleteRoomComposer, HousekeepingFindRoomByIdComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingForceDisconnectUserComposer, HousekeepingGetDashboardComposer, HousekeepingGiveCreditsComposer, HousekeepingGiveCurrencyComposer, HousekeepingGrantItemComposer, HousekeepingKickAllFromRoomComposer, HousekeepingKickUserComposer, HousekeepingListActionLogComposer, HousekeepingMuteRoomComposer, HousekeepingMuteUserComposer, HousekeepingResetUserPasswordComposer, HousekeepingRoomDetailEvent, HousekeepingRoomListEvent, HousekeepingRoomStateComposer, HousekeepingSearchRoomsComposer, HousekeepingSendHotelAlertComposer, HousekeepingSetHcSubscriptionComposer, HousekeepingSetUserRankComposer, HousekeepingTradeLockUserComposer, HousekeepingTransferRoomOwnershipComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
+import { RareValuesEvent, RequestRareValuesComposer } from './messages';
+import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
+import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
+import { SoundboardPlayEvent, SoundboardSettingsEvent, SoundboardPlayComposer, SoundboardSetEnabledComposer } from './messages';
 export class NitroMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -514,6 +518,15 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.HOUSEKEEPING_ROOM_LIST, HousekeepingRoomListEvent);
         this._events.set(IncomingHeader.HOUSEKEEPING_DASHBOARD, HousekeepingDashboardEvent);
         this._events.set(IncomingHeader.HOUSEKEEPING_ACTION_LOG, HousekeepingActionLogEvent);
+
+        // Custom features
+        this._events.set(IncomingHeader.RARE_VALUES, RareValuesEvent);
+        this._events.set(IncomingHeader.WHEEL_DATA, WheelDataEvent);
+        this._events.set(IncomingHeader.WHEEL_RESULT, WheelResultEvent);
+        this._events.set(IncomingHeader.WHEEL_RECENT_WINS, WheelRecentWinsEvent);
+        this._events.set(IncomingHeader.WHEEL_ADMIN_PRIZES, WheelAdminPrizesEvent);
+        this._events.set(IncomingHeader.SOUNDBOARD_SETTINGS, SoundboardSettingsEvent);
+        this._events.set(IncomingHeader.SOUNDBOARD_PLAY, SoundboardPlayEvent);
         this._events.set(IncomingHeader.WIRED_REWARD, WiredRewardResultMessageEvent);
         this._events.set(IncomingHeader.WIRED_SAVE, WiredSaveSuccessEvent);
         this._events.set(IncomingHeader.WIRED_ERROR, WiredValidationErrorEvent);
@@ -1290,6 +1303,16 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.HOUSEKEEPING_SEND_HOTEL_ALERT, HousekeepingSendHotelAlertComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_GET_DASHBOARD, HousekeepingGetDashboardComposer);
         this._composers.set(OutgoingHeader.HOUSEKEEPING_LIST_ACTION_LOG, HousekeepingListActionLogComposer);
+
+        // Custom features
+        this._composers.set(OutgoingHeader.REQUEST_RARE_VALUES, RequestRareValuesComposer);
+        this._composers.set(OutgoingHeader.WHEEL_OPEN, WheelOpenComposer);
+        this._composers.set(OutgoingHeader.WHEEL_SPIN, WheelSpinComposer);
+        this._composers.set(OutgoingHeader.WHEEL_BUY_SPIN, WheelBuySpinComposer);
+        this._composers.set(OutgoingHeader.WHEEL_ADMIN_GET_PRIZES, WheelAdminGetPrizesComposer);
+        this._composers.set(OutgoingHeader.WHEEL_ADMIN_SAVE_PRIZES, WheelAdminSavePrizesComposer);
+        this._composers.set(OutgoingHeader.SOUNDBOARD_PLAY, SoundboardPlayComposer);
+        this._composers.set(OutgoingHeader.SOUNDBOARD_SET_ENABLED, SoundboardSetEnabledComposer);
     }
 
     public get events(): Map<number, Function>
