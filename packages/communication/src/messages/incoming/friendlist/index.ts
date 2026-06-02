@@ -1,5 +1,6 @@
 export * from './AcceptFriendResultEvent';
 export * from './ConsoleReadReceiptEvent';
+export * from './FriendIsTypingEvent';
 export * from './FindFriendsProcessResultEvent';
 export * from './FollowFriendFailedEvent';
 export * from './FriendListFragmentEvent';

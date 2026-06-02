@@ -130,6 +130,7 @@ export class OutgoingHeader
     public static REMOVE_FRIEND_CATEGORY = 4083;
     public static MOVE_FRIEND_TO_CATEGORY = 4084;
     public static MARK_CONSOLE_READ = 4085;
+    public static CONSOLE_TYPING = 4087;
     public static MOD_TOOL_USER_INFO = 3295;
     public static GET_USER_FLAT_CATS = 3027;
     public static NAVIGATOR_INIT = 2110;
