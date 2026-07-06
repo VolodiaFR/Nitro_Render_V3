@@ -10,7 +10,7 @@ import { HousekeepingActionLogEvent, HousekeepingActionResultEvent, Housekeeping
 import { RareValuesEvent, RequestRareValuesComposer } from './messages';
 import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
 import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
-import { ChestDataEvent, ChestDepositComposer, ChestDepositFurniComposer, ChestDepositInventoryItemComposer, ChestFurniChunkEvent, ChestFurniDeltaEvent, ChestStartDepositComposer, ChestWithdrawComposer, ChestWithdrawFurniComposer, ChestLogEvent, ChestSaveSettingsComposer, ChestSaveNotificationsComposer, ChestUpgradeCapacityComposer, ChestRequestLogComposer } from './messages';
+import { ChestDataEvent, ChestDepositComposer, ChestDepositFurniComposer, ChestDepositInventoryItemComposer, ChestFurniChunkEvent, ChestFurniDeltaEvent, ChestStartDepositComposer, ChestWithdrawAllFurniComposer, ChestWithdrawComposer, ChestWithdrawFurniComposer, ChestLogEvent, ChestSaveSettingsComposer, ChestSaveNotificationsComposer, ChestUpgradeCapacityComposer, ChestRequestLogComposer } from './messages';
 import { SoundboardPlayEvent, SoundboardSettingsEvent, SoundboardPlayComposer, SoundboardSetEnabledComposer } from './messages';
 import { PressKeybindComposer } from './messages';
 import { EarningsCenterEvent, EarningsClaimResultEvent, RequestEarningsCenterComposer, ClaimEarningsRewardComposer, ClaimAllEarningsRewardsComposer } from './messages';
@@ -1093,6 +1093,7 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.CHEST_DEPOSIT_FURNI, ChestDepositFurniComposer);
         this._composers.set(OutgoingHeader.CHEST_START_DEPOSIT, ChestStartDepositComposer);
         this._composers.set(OutgoingHeader.CHEST_DEPOSIT_INVENTORY_ITEM, ChestDepositInventoryItemComposer);
+        this._composers.set(OutgoingHeader.CHEST_WITHDRAW_ALL_FURNI, ChestWithdrawAllFurniComposer);
         this._composers.set(OutgoingHeader.CHEST_SAVE_SETTINGS, ChestSaveSettingsComposer);
         this._composers.set(OutgoingHeader.CHEST_SAVE_NOTIFICATIONS, ChestSaveNotificationsComposer);
         this._composers.set(OutgoingHeader.CHEST_UPGRADE_CAPACITY, ChestUpgradeCapacityComposer);
