@@ -528,6 +528,8 @@ export class OutgoingHeader
     public static CATALOG_ADMIN_MOVE_OFFER = 10056;
     public static CATALOG_ADMIN_MOVE_PAGE = 10057;
     public static CATALOG_ADMIN_PUBLISH = 10058;
+    public static CATALOG_ADMIN_SAVE_PAGE_IMAGES = 10060;
+    public static CATALOG_ADMIN_SAVE_PAGE_ICON = 10061;
     public static CATALOG_ADMIN_LOAD_OFFER = 10062;
     public static CATALOG_ADMIN_LOAD_PAGE = 10063;
 
@@ -590,4 +592,8 @@ export class OutgoingHeader
     public static EARNINGS_CLAIM = 9309;
     public static EARNINGS_CLAIM_ALL = 9310;
     public static PRESS_KEYBIND = 9311;
+    public static REQUEST_MESSENGER_CONVERSATIONS = 4900;
+    public static REQUEST_MESSENGER_HISTORY = 4901;
+    public static SEND_MESSENGER_MESSAGE = 4902;
+    public static MARK_MESSENGER_READ = 4903;
 }
