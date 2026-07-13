@@ -3,3 +3,4 @@ export * from './MessageEvent';
 export * from './NitroEvent';
 export * from './ReconnectEvent';
 export * from './SocketConnectionEvent';
+export * from './SocketReauthenticatedEvent';

@@ -1,6 +1,6 @@
 import { ICommunicationManager, IConnection, IMessageConfiguration, IMessageEvent } from '@nitrots/api';
 import { GetConfiguration } from '@nitrots/configuration';
-import { GetEventDispatcher, NitroEvent, NitroEventType } from '@nitrots/events';
+import { GetEventDispatcher, NitroEventType, SocketReauthenticatedEvent } from '@nitrots/events';
 import { GetTickerTime, NitroLogger } from '@nitrots/utils';
 import { NitroMessages } from './NitroMessages';
 import { SocketConnection } from './SocketConnection';
@@ -120,7 +120,11 @@ export class CommunicationManager implements ICommunicationManager
                 if(isReconnect)
                 {
                     NitroLogger.log('[CommunicationManager] Dispatching SOCKET_REAUTHENTICATED');
-                    GetEventDispatcher().dispatchEvent(new NitroEvent(NitroEventType.SOCKET_REAUTHENTICATED));
+                    const parser = event.getParser();
+                    GetEventDispatcher().dispatchEvent(new SocketReauthenticatedEvent(
+                        NitroEventType.SOCKET_REAUTHENTICATED,
+                        parser.sessionResumed,
+                        parser.roomId));
                 }
             });
 

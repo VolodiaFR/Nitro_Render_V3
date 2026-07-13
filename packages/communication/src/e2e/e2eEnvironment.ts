@@ -3,10 +3,11 @@ export interface E2eEnvironment
     wsUrl: string;
     ssoTicket: string;
     userId: number;
+    roomId: number;
     probeUrl: string;
 }
 
-const REQUIRED = ['E2E_WS_URL', 'E2E_SSO_TICKET', 'E2E_USER_ID', 'E2E_PROBE_URL'] as const;
+const REQUIRED = ['E2E_WS_URL', 'E2E_SSO_TICKET', 'E2E_USER_ID', 'E2E_ROOM_ID', 'E2E_PROBE_URL'] as const;
 
 export const readE2eEnvironment = (environment: Record<string, string | undefined>): E2eEnvironment =>
 {
@@ -22,11 +23,14 @@ export const readE2eEnvironment = (environment: Record<string, string | undefine
 
     const userId = Number(environment.E2E_USER_ID);
     if(!Number.isSafeInteger(userId) || userId <= 0) throw new Error('E2E_USER_ID must be a positive integer');
+    const roomId = Number(environment.E2E_ROOM_ID);
+    if(!Number.isSafeInteger(roomId) || roomId <= 0) throw new Error('E2E_ROOM_ID must be a positive integer');
 
     return {
         wsUrl: wsUrl.toString().replace(/\/$/, ''),
         ssoTicket: environment.E2E_SSO_TICKET,
         userId,
+        roomId,
         probeUrl: probeUrl.toString().replace(/\/$/, '')
     };
 };
