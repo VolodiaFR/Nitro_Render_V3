@@ -4,11 +4,11 @@ export interface WaitForOptions
     description: string;
 }
 
-export const waitFor = async (predicate: () => boolean, options: WaitForOptions): Promise<void> =>
+export const waitFor = async (predicate: () => boolean | Promise<boolean>, options: WaitForOptions): Promise<void> =>
 {
     const startedAt = Date.now();
 
-    while(!predicate())
+    while(!(await predicate()))
     {
         if((Date.now() - startedAt) >= options.timeoutMs)
         {
