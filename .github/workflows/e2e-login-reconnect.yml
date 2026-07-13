@@ -37,7 +37,7 @@ jobs:
       E2E_RCON_PORT: "32000"
       E2E_WS_URL: ws://127.0.0.1:31999
       E2E_PROBE_URL: http://127.0.0.1:31999/__e2e
-      E2E_RUNTIME_DIR: ${{ runner.temp }}/polaris-e2e
+      E2E_RUNTIME_DIR: /tmp/polaris-e2e
     steps:
       - name: Checkout renderer
         uses: actions/checkout@v7
