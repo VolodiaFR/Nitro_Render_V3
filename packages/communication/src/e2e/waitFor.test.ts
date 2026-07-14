@@ -21,4 +21,16 @@ describe('waitFor', () =>
             description: 'renderer to reauthenticate'
         })).rejects.toThrow('Timed out after 10ms waiting for renderer to reauthenticate');
     });
+
+    it('awaits asynchronous predicates', async () =>
+    {
+        let attempts = 0;
+
+        await waitFor(async () => ++attempts === 3, {
+            timeoutMs: 100,
+            description: 'async condition'
+        });
+
+        expect(attempts).toBe(3);
+    });
 });
