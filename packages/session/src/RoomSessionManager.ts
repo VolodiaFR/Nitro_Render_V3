@@ -1,6 +1,6 @@
 import { IRoomHandlerListener, IRoomSession, IRoomSessionManager, IRoomSessionSnapshot } from '@nitrots/api';
 import { GetCommunication, RoomEnterComposer, RoomUnitWalkComposer } from '@nitrots/communication';
-import { GetEventDispatcher, NitroEvent, NitroEventType, RoomSessionEvent } from '@nitrots/events';
+import { GetEventDispatcher, NitroEvent, NitroEventType, RoomSessionEvent, SocketReauthenticatedEvent } from '@nitrots/events';
 import { NitroLogger } from '@nitrots/utils';
 import { RoomSession } from './RoomSession';
 import { BaseHandler, GenericErrorHandler, PetPackageHandler, PollHandler, RoomChatHandler, RoomDataHandler, RoomDimmerPresetsHandler, RoomPermissionsHandler, RoomPresentHandler, RoomSessionHandler, RoomUsersHandler, WordQuizHandler } from './handler';
@@ -131,12 +131,21 @@ export class RoomSessionManager implements IRoomSessionManager, IRoomHandlerList
             if(shouldAttemptRoomReEntry(NitroEventType.SOCKET_RECONNECTED)) this.attemptRoomReEntry();
         });
 
-        GetEventDispatcher().addEventListener(NitroEventType.SOCKET_REAUTHENTICATED, () =>
+        GetEventDispatcher().addEventListener<SocketReauthenticatedEvent>(NitroEventType.SOCKET_REAUTHENTICATED, event =>
         {
             this.snapshotSavedPosition();
             this.clearGuardTimer();
 
-            if(shouldAttemptRoomReEntry(NitroEventType.SOCKET_REAUTHENTICATED)) this.attemptRoomReEntry();
+            if(shouldAttemptRoomReEntry(event.type, event, this._lastRoomId))
+            {
+                this.attemptRoomReEntry();
+            }
+            else
+            {
+                this._isReconnecting = false;
+                this._savedPosX = -1;
+                this._savedPosY = -1;
+            }
         });
 
         GetEventDispatcher().addEventListener(NitroEventType.SOCKET_RECONNECT_FAILED, () =>
