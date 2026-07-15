@@ -19,6 +19,21 @@ describe('TypeScript packet signature extractor', () =>
         expect(types(result.fields)).toEqual(['int', 'string', 'short', 'boolean']);
     });
 
+    it('extracts fields guarded by bytesAvailable as an optional trailing block', () =>
+    {
+        const result = extractTypeScriptPacketSignature(fixture('OptionalTrailingIncomingFixture.ts'), 'incoming');
+
+        expect(result.unsupportedReason).toBeUndefined();
+        expect(result.fields).toEqual([
+            { type: 'int', name: 'id' },
+            {
+                type: 'optional',
+                controller: 'bytesAvailable',
+                fields: [{ type: 'string', name: 'figure' }]
+            }
+        ]);
+    });
+
     it('extracts outgoing tuple values using their encoded wire widths', () =>
     {
         const result = extractTypeScriptPacketSignature(fixture('OutgoingFixture.ts'), 'outgoing');

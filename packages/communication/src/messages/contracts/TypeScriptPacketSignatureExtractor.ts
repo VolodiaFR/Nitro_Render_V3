@@ -61,12 +61,17 @@ const extractIncomingMethod = (
     visit(method.body, node => { if(ts.isCallExpression(node)) calls.push(node); });
     calls.sort((left, right) => left.getStart() - right.getStart());
     const fields: WireSchema[] = [];
+    const optionalGuard = trailingOptionalGuard(method);
+    const optionalFields: WireSchema[] = [];
     for(const call of calls)
     {
+        const destination = optionalGuard && call.getStart() > optionalGuard.position
+            ? optionalFields
+            : fields;
         const read = readCall(call);
         if(read)
         {
-            fields.push({ type: read, name: inferredName(call) });
+            destination.push({ type: read, name: inferredName(call) });
             continue;
         }
         const helperName = localHelperName(call);
@@ -79,8 +84,10 @@ const extractIncomingMethod = (
         if(overloaded.has(helperName)) return unsupported(`Overloaded packet helper ${ helperName } cannot be resolved safely`);
         const helper = extractIncomingMethod(methods.get(helperName), methods, overloaded, [...stack, name]);
         if(helper.unsupportedReason) return helper;
-        fields.push(...helper.fields);
+        destination.push(...helper.fields);
     }
+    if(optionalGuard && optionalFields.length)
+        fields.push({ type: 'optional', controller: optionalGuard.controller, fields: optionalFields });
     const wrapperNames = new Set(method.parameters.map(parameter => parameter.name.getText()));
     let delegatedConstructor: string | undefined;
     visit(method.body, node =>
@@ -93,6 +100,27 @@ const extractIncomingMethod = (
     if(delegatedConstructor)
         return unsupported(`Packet fields delegated to external constructor ${ delegatedConstructor } inside ${ name }`);
     return { fields };
+};
+
+const trailingOptionalGuard = (
+    method: ts.MethodDeclaration): { controller: string; position: number } | undefined =>
+{
+    for(const statement of method.body?.statements ?? [])
+    {
+        if(!ts.isIfStatement(statement)) continue;
+        const expression = unwrap(statement.expression);
+        if(!ts.isPrefixUnaryExpression(expression)
+            || expression.operator !== ts.SyntaxKind.ExclamationToken
+            || !ts.isPropertyAccessExpression(unwrap(expression.operand))) continue;
+        const property = unwrap(expression.operand) as ts.PropertyAccessExpression;
+        if(property.name.text !== 'bytesAvailable') continue;
+        const guarded = ts.isBlock(statement.thenStatement)
+            ? statement.thenStatement.statements
+            : [statement.thenStatement];
+        if(!guarded.some(ts.isReturnStatement)) continue;
+        return { controller: property.name.text, position: statement.getEnd() };
+    }
+    return undefined;
 };
 
 const extractOutgoing = (packetClass: ts.ClassDeclaration): TypeScriptExtractionResult =>
