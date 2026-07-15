@@ -78,4 +78,11 @@ describe('TypeScript packet signature extractor', () =>
 
         expect(result.unsupportedReason).toContain('external constructor Payload');
     });
+
+    it('rejects outgoing arrays mutated after their initial assignment', () =>
+    {
+        const result = extractTypeScriptPacketSignature(fixture('MutatedOutgoingFixture.ts'), 'outgoing');
+
+        expect(result.unsupportedReason).toContain('message array _data is mutated with push');
+    });
 });

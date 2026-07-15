@@ -103,10 +103,10 @@ const extractOutgoing = (packetClass: ts.ClassDeclaration): TypeScriptExtraction
     if(!method?.body) return unsupported('Outgoing composer has no getMessageArray method');
     const returnStatement = method.body.statements.find(ts.isReturnStatement);
     if(!returnStatement?.expression) return unsupported('Outgoing composer getMessageArray has no returned value');
+    const returnedName = propertyName(returnStatement.expression);
     let array = unwrapArray(returnStatement.expression);
     if(!array && constructor?.body)
     {
-        const returnedName = propertyName(returnStatement.expression);
         if(returnedName)
         {
             for(const statement of constructor.body.statements)
@@ -121,6 +121,18 @@ const extractOutgoing = (packetClass: ts.ClassDeclaration): TypeScriptExtraction
         }
     }
     if(!array) return unsupported('Outgoing composer message array cannot be resolved statically');
+    if(returnedName)
+    {
+        let mutator: string | undefined;
+        visit(packetClass, node =>
+        {
+            if(mutator || !ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) return;
+            const methodName = node.expression.name.text;
+            if(!['push', 'unshift', 'splice'].includes(methodName)) return;
+            if(propertyName(node.expression.expression) === returnedName) mutator = methodName;
+        });
+        if(mutator) return unsupported(`Outgoing message array ${ returnedName } is mutated with ${ mutator }`);
+    }
 
     const parameters = new Map<string, ts.ParameterDeclaration>();
     constructor?.parameters.forEach(parameter => parameters.set(parameter.name.getText(), parameter));
