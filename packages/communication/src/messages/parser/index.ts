@@ -29,6 +29,7 @@ export * from './help';
 export * from './housekeeping';
 export * from './rarevalues';
 export * from './soundboard';
+export * from './traxeditor';
 export * from './wheel';
 export * from './inventory';
 export * from './inventory/achievements';

@@ -592,6 +592,10 @@ export class OutgoingHeader
     public static EARNINGS_CLAIM = 9309;
     public static EARNINGS_CLAIM_ALL = 9310;
     public static PRESS_KEYBIND = 9311;
+    public static GET_TRAX_EDITOR_SONGS = 9330;
+    public static TRAX_EDITOR_BUY_SONG = 9331;
+    public static TRAX_EDITOR_SAVE_SONG = 9332;
+    public static TRAX_EDITOR_DELETE_SONG = 9333;
     public static REQUEST_MESSENGER_CONVERSATIONS = 4900;
     public static REQUEST_MESSENGER_HISTORY = 4901;
     public static SEND_MESSENGER_MESSAGE = 4902;

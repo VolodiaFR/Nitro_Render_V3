@@ -12,6 +12,8 @@ export interface IMusicController
     getSongIdPlayingAtPriority(priority: number): number;
     playSong(songId: number, priority: number, startPos?: number, playLength?: number, fadeInSeconds?: number, fadeOutSeconds?: number): boolean;
     stop(priority: number): void;
+    previewTraxData(songData: string): Promise<void>;
+    stopPreview(): void;
     addSongInfoRequest(songId: number): void;
     requestSongInfoWithoutSamples(songId: number): void;
     requestUserSongDisks(): void;

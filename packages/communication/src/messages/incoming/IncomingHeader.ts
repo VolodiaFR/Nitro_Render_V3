@@ -538,6 +538,8 @@ export class IncomingHeader
     public static SOUNDBOARD_PLAY = 9406;
     public static EARNINGS_CENTER = 9407;
     public static EARNINGS_CLAIM_RESULT = 9408;
+    public static TRAX_EDITOR_SONGS = 9430;
+    public static TRAX_EDITOR_ERROR = 9431;
     public static MESSENGER_CONVERSATIONS = 4900;
     public static MESSENGER_HISTORY = 4901;
     public static MESSENGER_MESSAGE_ACK = 4902;
