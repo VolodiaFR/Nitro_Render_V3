@@ -27,7 +27,6 @@ export class MusicController implements IMusicController
     private _requestNumberPlaying: number = -1;
     private _roomItemPlaylist: IPlaylistController;
     private _musicPlayer: MusicPlayer;
-
     private _songIdPlaying: number = 1;
     private _previousNotifiedSongId: number = -1;
     private _previousNotificationTime: number = -1;
@@ -45,7 +44,6 @@ export class MusicController implements IMusicController
 
     public init(): void
     {
-        // Store message events for cleanup
         this._messageEvents.push(
             GetCommunication().registerMessageEvent(new TraxSongInfoMessageEvent(this.onTraxSongInfoMessageEvent.bind(this))),
             GetCommunication().registerMessageEvent(new UserSongDisksInventoryMessageEvent(this.onSongDiskInventoryMessage.bind(this)))
@@ -130,6 +128,19 @@ export class MusicController implements IMusicController
                 this.reRequestSongAtPriority(this._priorityPlaying);
             }
         }
+    }
+
+    public async previewTraxData(songData: string): Promise<void>
+    {
+        this.stop(MusicPriorities.PRIORITY_PURCHASE_PREVIEW);
+        this._musicPlayer.setVolume(GetSoundManager().traxVolume);
+        await this._musicPlayer.preloadSamplesForSong(songData);
+        await this._musicPlayer.play(songData, -1, 0, -1);
+    }
+
+    public stopPreview(): void
+    {
+        this._musicPlayer.stop();
     }
 
     public addSongInfoRequest(songId: number): void
@@ -290,10 +301,8 @@ export class MusicController implements IMusicController
                 this.requestSongInfoWithoutSamples(songId);
             }
         }
-        if(this._diskInventoryMissingData.length === 0)
-        {
-            GetEventDispatcher().dispatchEvent(new SongDiskInventoryReceivedEvent(SongDiskInventoryReceivedEvent.SDIR_SONG_DISK_INVENTORY_RECEIVENT_EVENT));
-        }
+
+        GetEventDispatcher().dispatchEvent(new SongDiskInventoryReceivedEvent(SongDiskInventoryReceivedEvent.SDIR_SONG_DISK_INVENTORY_RECEIVENT_EVENT));
     }
 
     private onTick(): void
