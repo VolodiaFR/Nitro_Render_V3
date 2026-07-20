@@ -27,6 +27,7 @@ export class MusicController implements IMusicController
     private _requestNumberPlaying: number = -1;
     private _roomItemPlaylist: IPlaylistController;
     private _musicPlayer: MusicPlayer;
+
     private _songIdPlaying: number = 1;
     private _previousNotifiedSongId: number = -1;
     private _previousNotificationTime: number = -1;
@@ -130,17 +131,28 @@ export class MusicController implements IMusicController
         }
     }
 
-    public async previewTraxData(songData: string): Promise<void>
+    public async previewTraxData(songData: string, startPosSeconds: number = 0): Promise<void>
     {
         this.stop(MusicPriorities.PRIORITY_PURCHASE_PREVIEW);
         this._musicPlayer.setVolume(GetSoundManager().traxVolume);
         await this._musicPlayer.preloadSamplesForSong(songData);
-        await this._musicPlayer.play(songData, -1, 0, -1);
+        await this._musicPlayer.play(songData, -1, Math.max(0, startPosSeconds), -1);
     }
 
     public stopPreview(): void
     {
         this._musicPlayer.stop();
+    }
+
+    public async previewSample(sampleId: number): Promise<void>
+    {
+        this._musicPlayer.setVolume(GetSoundManager().traxVolume);
+        await this._musicPlayer.playSampleOnce(sampleId);
+    }
+
+    public stopSamplePreview(): void
+    {
+        this._musicPlayer.stopSampleOnce();
     }
 
     public addSongInfoRequest(songId: number): void
@@ -171,7 +183,6 @@ export class MusicController implements IMusicController
             this._timerInstance = undefined;
         }
 
-        // Remove message events
         for(const event of this._messageEvents)
         {
             GetCommunication().removeMessageEvent(event);
@@ -301,7 +312,6 @@ export class MusicController implements IMusicController
                 this.requestSongInfoWithoutSamples(songId);
             }
         }
-
         GetEventDispatcher().dispatchEvent(new SongDiskInventoryReceivedEvent(SongDiskInventoryReceivedEvent.SDIR_SONG_DISK_INVENTORY_RECEIVENT_EVENT));
     }
 

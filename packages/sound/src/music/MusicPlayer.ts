@@ -16,6 +16,8 @@ export class MusicPlayer
 
     private _tickerInterval: number | undefined;
     private _sequence: ISequenceEntry[][];
+    private _auditionHowl: Howl | null = null;
+    private _auditionPlayId: number = -1;
 
     constructor(sampleUrl: string)
     {
@@ -39,6 +41,7 @@ export class MusicPlayer
         this._currentSongId = currentSongId;
         //this.emit('loading');
         await this.preload();
+        await this.unlockAudio();
         this._isPlaying = true;
         //this.emit('playing', this._currentPos, this._playLength - 1);
         this.tick(); // to evade initial 1 sec delay
@@ -112,6 +115,43 @@ export class MusicPlayer
         if(!sample) sample = await this.loadSong(id);
 
         return Promise.resolve(sample);
+    }
+
+    public async playSampleOnce(sampleId: number): Promise<void>
+    {
+        this.stopSampleOnce();
+
+        const sample = await this.getSample(sampleId);
+
+        await this.unlockAudio();
+
+        this._auditionHowl = sample;
+        this._auditionPlayId = sample.play();
+    }
+
+    public stopSampleOnce(): void
+    {
+        if(this._auditionHowl && (this._auditionPlayId !== -1)) this._auditionHowl.stop(this._auditionPlayId);
+
+        this._auditionHowl = null;
+        this._auditionPlayId = -1;
+    }
+
+    private async unlockAudio(): Promise<void>
+    {
+        if(Howler._audioUnlocked) return;
+
+        const ctx = Howler.ctx;
+
+        if(!ctx) return;
+
+        try
+        {
+            if(ctx.state !== 'running') await ctx.resume();
+            if(ctx.state === 'running') Howler._audioUnlocked = true;
+        }
+        catch
+        { }
     }
 
     private async preload(): Promise<void>
