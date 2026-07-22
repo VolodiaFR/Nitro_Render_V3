@@ -2,7 +2,7 @@
 import { AvatarAction, IRoomGeometry, IRoomObjectModel, IVector3D, MouseEventType, RoomObjectVariable } from '@nitrots/api';
 import { RoomObjectFurnitureActionEvent, RoomObjectMouseEvent, RoomObjectMoveEvent, RoomSpriteMouseEvent } from '@nitrots/events';
 import { GetTickerTime, Vector3d } from '@nitrots/utils';
-import { ObjectAvatarCarryObjectUpdateMessage, ObjectAvatarChatUpdateMessage, ObjectAvatarDanceUpdateMessage, ObjectAvatarEffectUpdateMessage, ObjectAvatarExpressionUpdateMessage, ObjectAvatarFigureUpdateMessage, ObjectAvatarFlatControlUpdateMessage, ObjectAvatarGestureUpdateMessage, ObjectAvatarMutedUpdateMessage, ObjectAvatarOwnMessage, ObjectAvatarPlayerValueUpdateMessage, ObjectAvatarPlayingGameUpdateMessage, ObjectAvatarPostureUpdateMessage, ObjectAvatarSelectedMessage, ObjectAvatarSignUpdateMessage, ObjectAvatarSleepUpdateMessage, ObjectAvatarTypingUpdateMessage, ObjectAvatarUpdateMessage, ObjectAvatarUseObjectUpdateMessage, RoomObjectUpdateMessage } from '../../messages';
+import { ObjectAvatarCarryObjectUpdateMessage, ObjectAvatarChatUpdateMessage, ObjectAvatarDanceUpdateMessage, ObjectAvatarEffectUpdateMessage, ObjectAvatarExpressionUpdateMessage, ObjectAvatarFigureUpdateMessage, ObjectAvatarFlatControlUpdateMessage, ObjectAvatarGestureUpdateMessage, ObjectAvatarHabbiconUpdateMessage, ObjectAvatarMutedUpdateMessage, ObjectAvatarOwnMessage, ObjectAvatarPlayerValueUpdateMessage, ObjectAvatarPlayingGameUpdateMessage, ObjectAvatarPostureUpdateMessage, ObjectAvatarSelectedMessage, ObjectAvatarSignUpdateMessage, ObjectAvatarSleepUpdateMessage, ObjectAvatarTypingUpdateMessage, ObjectAvatarUpdateMessage, ObjectAvatarUseObjectUpdateMessage, RoomObjectUpdateMessage } from '../../messages';
 import { MovingObjectLogic } from './MovingObjectLogic';
 
 export class AvatarLogic extends MovingObjectLogic
@@ -317,6 +317,17 @@ export class AvatarLogic extends MovingObjectLogic
             model.setValue(RoomObjectVariable.FIGURE_NUMBER_VALUE, message.value);
 
             this._numberValueEndTimestamp = (this.time + 3000);
+
+            return;
+        }
+
+        if(message instanceof ObjectAvatarHabbiconUpdateMessage)
+        {
+            const sequence = (model.getValue<number>(RoomObjectVariable.FIGURE_HABBICON_TRIGGER_SEQUENCE) || 0) + 1;
+
+            model.setValue(RoomObjectVariable.FIGURE_HABBICON, message.habbiconId);
+            model.setValue(RoomObjectVariable.FIGURE_HABBICON_TRIGGER_SEQUENCE, sequence);
+            model.setValue(RoomObjectVariable.FIGURE_HABBICON_SPIN_OFFSET, 0);
 
             return;
         }

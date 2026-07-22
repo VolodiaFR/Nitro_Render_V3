@@ -10,6 +10,9 @@ export class UserSettingsParser implements IMessageParser
     private _cameraFollow: boolean;
     private _flags: number;
     private _chatType: number;
+    private _onlineStatusVisible: boolean;
+    private _friendsCanFollow: boolean;
+    private _friendRequestsAllowed: boolean;
 
     public flush(): boolean
     {
@@ -21,6 +24,9 @@ export class UserSettingsParser implements IMessageParser
         this._cameraFollow = false;
         this._flags = 0;
         this._chatType = 0;
+        this._onlineStatusVisible = true;
+        this._friendsCanFollow = true;
+        this._friendRequestsAllowed = true;
 
         return true;
     }
@@ -37,6 +43,9 @@ export class UserSettingsParser implements IMessageParser
         this._cameraFollow = wrapper.readBoolean();
         this._flags = wrapper.readInt();
         this._chatType = wrapper.readInt();
+        this._onlineStatusVisible = wrapper.readBoolean();
+        this._friendsCanFollow = wrapper.readBoolean();
+        this._friendRequestsAllowed = wrapper.readBoolean();
 
         return true;
     }
@@ -79,5 +88,20 @@ export class UserSettingsParser implements IMessageParser
     public get chatType(): number
     {
         return this._chatType;
+    }
+
+    public get onlineStatusVisible(): boolean
+    {
+        return this._onlineStatusVisible;
+    }
+
+    public get friendsCanFollow(): boolean
+    {
+        return this._friendsCanFollow;
+    }
+
+    public get friendRequestsAllowed(): boolean
+    {
+        return this._friendRequestsAllowed;
     }
 }

@@ -5,7 +5,7 @@ import { Container, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
 import { RoomWindowReflectionState } from '../RoomWindowReflectionState';
 import { AvatarVisualizationData } from './AvatarVisualizationData';
-import { ExpressionAdditionFactory, FloatingIdleZAddition, GameClickTargetAddition, GuideStatusBubbleAddition, IAvatarAddition, MutedBubbleAddition, NumberBubbleAddition, TypingBubbleAddition } from './additions';
+import { ExpressionAdditionFactory, FloatingIdleZAddition, GameClickTargetAddition, GuideStatusBubbleAddition, HabbiconBubbleAddition, IAvatarAddition, MutedBubbleAddition, NumberBubbleAddition, TypingBubbleAddition } from './additions';
 
 export class AvatarVisualization extends RoomObjectSpriteVisualization implements IAvatarImageListener, IAvatarEffectListener
 {
@@ -17,6 +17,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private static GAME_CLICK_TARGET_ID: number = 5;
     private static MUTED_BUBBLE_ID: number = 6;
     private static GUIDE_BUBBLE_ID: number = 7;
+    private static HABBICON_BUBBLE_ID: number = 8;
     private static OWN_USER_ID: number = 4;
     private static UPDATE_TIME_INCREASER: number = 41;
     private static AVATAR_LAYER_ID: number = 0;
@@ -65,6 +66,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _carryObject: number;
     private _useObject: number;
     private _ownUser: boolean;
+    private _habbiconTriggerSequence: number;
 
     private _isLaying: boolean;
     private _layInside: boolean;
@@ -123,6 +125,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._carryObject = 0;
         this._useObject = 0;
         this._ownUser = false;
+        this._habbiconTriggerSequence = 0;
 
         this._isLaying = false;
         this._layInside = false;
@@ -857,6 +860,30 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         else
         {
             if(numberAddition) this.removeAddition(AvatarVisualization.NUMBER_BUBBLE_ID);
+        }
+
+        const habbiconId = (model.getValue<number>(RoomObjectVariable.FIGURE_HABBICON) || 0);
+        const habbiconTriggerSequence = (model.getValue<number>(RoomObjectVariable.FIGURE_HABBICON_TRIGGER_SEQUENCE) || 0);
+        const habbiconAddition = this.getAddition(AvatarVisualization.HABBICON_BUBBLE_ID);
+
+        if(habbiconId > 0)
+        {
+            if(!habbiconAddition || (habbiconTriggerSequence !== this._habbiconTriggerSequence))
+            {
+                this.removeAddition(AvatarVisualization.HABBICON_BUBBLE_ID);
+                this.addAddition(new HabbiconBubbleAddition(AvatarVisualization.HABBICON_BUBBLE_ID, habbiconId, this));
+
+                this._habbiconTriggerSequence = habbiconTriggerSequence;
+                needsUpdate = true;
+            }
+        }
+        else
+        {
+            if(habbiconAddition)
+            {
+                this.removeAddition(AvatarVisualization.HABBICON_BUBBLE_ID);
+                needsUpdate = true;
+            }
         }
 
         let expressionAddition = this.getAddition(AvatarVisualization.EXPRESSION_ID);

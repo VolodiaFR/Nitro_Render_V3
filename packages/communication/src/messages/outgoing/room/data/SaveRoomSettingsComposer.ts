@@ -33,7 +33,13 @@ implements
         chatBubbleSpeed: number,
         chatDistance: number,
         chatFloodProtection: number,
-        allowUnderpass?: boolean
+        allowUnderpass?: boolean,
+        muteAllPets?: boolean,
+        leaveOnDoorTileEnabled?: boolean,
+        idleSleepEnabled?: boolean,
+        idleSleepTimeoutSeconds?: number,
+        idleAutokickEnabled?: boolean,
+        idleAutokickTimeoutSeconds?: number
     )
     {
         //@ts-ignore
@@ -70,6 +76,15 @@ implements
         );
 
         if(allowUnderpass !== undefined) this._data.push(allowUnderpass);
+
+        if(muteAllPets !== undefined) this._data.push(
+            muteAllPets,
+            leaveOnDoorTileEnabled ?? true,
+            idleSleepEnabled ?? false,
+            idleSleepTimeoutSeconds ?? 0,
+            idleAutokickEnabled ?? false,
+            idleAutokickTimeoutSeconds ?? 0
+        );
     }
 
     public getMessageArray()

@@ -14,6 +14,7 @@ export * from './RemoveFriendCategoryComposer';
 export * from './RemoveFriendComposer';
 export * from './RenameFriendCategoryComposer';
 export * from './RequestFriendComposer';
+export * from './RequestOfflineMessagesComposer';
 export * from './SendMessageComposer';
 export * from './SendRoomInviteComposer';
 export * from './SetRelationshipStatusComposer';

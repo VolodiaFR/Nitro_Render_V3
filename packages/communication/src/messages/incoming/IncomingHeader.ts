@@ -2,6 +2,7 @@ export class IncomingHeader
 {
     // These packets do not belong to this revision, so these are custom packet ids
     public static AREA_HIDE = 6001;
+    public static UNIT_HABBICON = 6011;
 
     // MENTIONS
     public static MENTION_RECEIVED = 4801;
@@ -538,4 +539,5 @@ export class IncomingHeader
     public static SOUNDBOARD_PLAY = 9406;
     public static EARNINGS_CENTER = 9407;
     public static EARNINGS_CLAIM_RESULT = 9408;
+    public static HOTEL_VIEW_LANDING = 9409;
 }

@@ -2,6 +2,7 @@ export class OutgoingHeader
 {
     public static CLICK_FURNI = 6002;
     public static CLICK_USER = 10020;
+    public static USE_HABBICON = 6010;
 
     // MENTIONS
     public static REQUEST_MENTIONS = 4803;
@@ -590,4 +591,11 @@ export class OutgoingHeader
     public static EARNINGS_CLAIM = 9309;
     public static EARNINGS_CLAIM_ALL = 9310;
     public static PRESS_KEYBIND = 9311;
+    public static HOTEL_VIEW_LANDING_REQUEST = 9410;
+    public static HOTEL_VIEW_LANDING_SAVE = 9411;
+    public static HOTEL_VIEW_LANDING_SAVE_SCENE = 9412;
+    public static HOTEL_VIEW_LANDING_VOTE = 9413;
+    public static HOTEL_VIEW_LANDING_RESET_VOTES = 9414;
+    public static USER_SETTINGS_PRIVACY = 9415;
+    public static REQUEST_OFFLINE_MESSAGES = 9416;
 }

@@ -12,6 +12,9 @@ export class NitroSettingsEvent extends NitroEvent
     private _cameraFollow: boolean;
     private _flags: number;
     private _chatType: number;
+    private _onlineStatusVisible: boolean;
+    private _friendsCanFollow: boolean;
+    private _friendRequestsAllowed: boolean;
 
     constructor()
     {
@@ -30,6 +33,9 @@ export class NitroSettingsEvent extends NitroEvent
         clone._cameraFollow = this._cameraFollow;
         clone._flags = this._flags;
         clone._chatType = this._chatType;
+        clone._onlineStatusVisible = this._onlineStatusVisible;
+        clone._friendsCanFollow = this._friendsCanFollow;
+        clone._friendRequestsAllowed = this._friendRequestsAllowed;
 
         return clone;
     }
@@ -112,5 +118,35 @@ export class NitroSettingsEvent extends NitroEvent
     public set chatType(type: number)
     {
         this._chatType = type;
+    }
+
+    public get onlineStatusVisible(): boolean
+    {
+        return this._onlineStatusVisible;
+    }
+
+    public set onlineStatusVisible(value: boolean)
+    {
+        this._onlineStatusVisible = value;
+    }
+
+    public get friendsCanFollow(): boolean
+    {
+        return this._friendsCanFollow;
+    }
+
+    public set friendsCanFollow(value: boolean)
+    {
+        this._friendsCanFollow = value;
+    }
+
+    public get friendRequestsAllowed(): boolean
+    {
+        return this._friendRequestsAllowed;
+    }
+
+    public set friendRequestsAllowed(value: boolean)
+    {
+        this._friendRequestsAllowed = value;
     }
 }

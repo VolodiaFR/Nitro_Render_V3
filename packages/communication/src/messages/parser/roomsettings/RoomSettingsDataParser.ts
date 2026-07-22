@@ -53,6 +53,16 @@ export class RoomSettingsDataParser implements IMessageParser
         // Older servers may not emit it; default stays false when absent.
         if(wrapper.bytesAvailable) this._roomSettingsData.allowUnderpass = (wrapper.readInt() === 1);
 
+        if(wrapper.bytesAvailable)
+        {
+            this._roomSettingsData.muteAllPets = (wrapper.readInt() === 1);
+            this._roomSettingsData.leaveOnDoorTileEnabled = (wrapper.readInt() === 1);
+            this._roomSettingsData.idleSleepEnabled = (wrapper.readInt() === 1);
+            this._roomSettingsData.idleSleepTimeoutSeconds = wrapper.readInt();
+            this._roomSettingsData.idleAutokickEnabled = (wrapper.readInt() === 1);
+            this._roomSettingsData.idleAutokickTimeoutSeconds = wrapper.readInt();
+        }
+
         return true;
     }
 
