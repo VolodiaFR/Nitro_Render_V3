@@ -4,6 +4,7 @@ export * from './RoomUnitEffectParser';
 export * from './RoomUnitExpressionParser';
 export * from './RoomUnitHandItemParser';
 export * from './RoomUnitHandItemReceivedParser';
+export * from './RoomUnitHabbiconParser';
 export * from './RoomUnitIdleParser';
 export * from './RoomUnitInfoParser';
 export * from './RoomUnitNumberParser';

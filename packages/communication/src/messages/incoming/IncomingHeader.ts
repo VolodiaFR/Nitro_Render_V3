@@ -2,6 +2,7 @@ export class IncomingHeader
 {
     // These packets do not belong to this revision, so these are custom packet ids
     public static AREA_HIDE = 6001;
+    public static UNIT_HABBICON = 6011;
 
     // MENTIONS
     public static MENTION_RECEIVED = 4801;
@@ -538,30 +539,5 @@ export class IncomingHeader
     public static SOUNDBOARD_PLAY = 9406;
     public static EARNINGS_CENTER = 9407;
     public static EARNINGS_CLAIM_RESULT = 9408;
-    public static TRAX_EDITOR_SONGS = 9430;
-    public static TRAX_EDITOR_ERROR = 9431;
-    public static MESSENGER_CONVERSATIONS = 4900;
-    public static MESSENGER_HISTORY = 4901;
-    public static MESSENGER_MESSAGE_ACK = 4902;
-    public static MESSENGER_MESSAGE_FAILED = 4903;
-    public static MESSENGER_MESSAGE = 4904;
-    public static MESSENGER_READ_CURSOR = 4905;
-    public static SNOWWAR_QUEUE_POSITION = 5001;
-    public static SNOWWAR_START_LOBBY_COUNTER = 5003;
-    public static SNOWWAR_GAME_ENDED = 5006;
-    public static SNOWWAR_GAMES_LEFT = 5010;
-    public static SNOWWAR_GAMES_INFORMATION = 5012;
-    public static SNOWWAR_GAME_STATUS = 5015;
-    public static SNOWWAR_FULL_GAME_STATUS = 5016;
-    public static SNOWWAR_ON_STAGE_START = 5017;
-    public static SNOWWAR_INIT_ARENA = 5018;
-    public static SNOWWAR_REJOIN_PREVIOUS_ROOM = 5019;
-    public static SNOWWAR_LEVEL_DATA = 5021;
-    public static SNOWWAR_ON_GAME_ENDING = 5022;
-    public static SNOWWAR_USER_CHAT = 5023;
-    public static SNOWWAR_ON_STAGE_RUNNING = 5024;
-    public static SNOWWAR_ON_STAGE_ENDING = 5025;
-    public static SNOWWAR_PLAYER_EXITED_ARENA = 5027;
-    public static SNOWWAR_GENERIC_ERROR = 5028;
-    public static SNOWWAR_USER_REMATCHED = 5029;
+    public static HOTEL_VIEW_LANDING = 9409;
 }

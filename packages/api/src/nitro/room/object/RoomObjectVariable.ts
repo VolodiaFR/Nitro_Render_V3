@@ -34,6 +34,9 @@ export class RoomObjectVariable
     public static FIGURE_IS_PLAYING_GAME: string = 'figure_is_playing_game';
     public static FIGURE_GUIDE_STATUS: string = 'figure_guide_status';
     public static FIGURE_EXPRESSION: string = 'figure_expression';
+    public static FIGURE_HABBICON: string = 'figure_habbicon';
+    public static FIGURE_HABBICON_TRIGGER_SEQUENCE: string = 'figure_habbicon_trigger_sequence';
+    public static FIGURE_HABBICON_SPIN_OFFSET: string = 'figure_habbicon_spin_offset';
     public static HEAD_DIRECTION: string = 'head_direction';
     public static FURNITURE_CUSTOM_VARIABLES: string = 'furniture_custom_variables';
     public static FURNITURE_AUTOMATIC_STATE_INDEX: string = 'furniture_automatic_state_index';

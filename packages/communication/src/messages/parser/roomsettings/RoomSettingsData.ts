@@ -38,6 +38,12 @@ export class RoomSettingsData
     private _chatSettings: RoomChatSettings = null;
     private _allowNavigatorDynamicCats: boolean = false;
     private _allowUnderpass: boolean = false;
+    private _muteAllPets: boolean = false;
+    private _leaveOnDoorTileEnabled: boolean = true;
+    private _idleSleepEnabled: boolean = false;
+    private _idleSleepTimeoutSeconds: number = 0;
+    private _idleAutokickEnabled: boolean = false;
+    private _idleAutokickTimeoutSeconds: number = 0;
 
     public static from(settings: RoomSettingsData)
     {
@@ -67,6 +73,12 @@ export class RoomSettingsData
         instance._chatSettings = settings._chatSettings;
         instance._allowNavigatorDynamicCats = settings._allowNavigatorDynamicCats;
         instance._allowUnderpass = settings._allowUnderpass;
+        instance._muteAllPets = settings._muteAllPets;
+        instance._leaveOnDoorTileEnabled = settings._leaveOnDoorTileEnabled;
+        instance._idleSleepEnabled = settings._idleSleepEnabled;
+        instance._idleSleepTimeoutSeconds = settings._idleSleepTimeoutSeconds;
+        instance._idleAutokickEnabled = settings._idleAutokickEnabled;
+        instance._idleAutokickTimeoutSeconds = settings._idleAutokickTimeoutSeconds;
 
         return instance;
     }
@@ -340,5 +352,65 @@ export class RoomSettingsData
     public set allowUnderpass(flag: boolean)
     {
         this._allowUnderpass = flag;
+    }
+
+    public get muteAllPets(): boolean
+    {
+        return this._muteAllPets;
+    }
+
+    public set muteAllPets(flag: boolean)
+    {
+        this._muteAllPets = flag;
+    }
+
+    public get leaveOnDoorTileEnabled(): boolean
+    {
+        return this._leaveOnDoorTileEnabled;
+    }
+
+    public set leaveOnDoorTileEnabled(flag: boolean)
+    {
+        this._leaveOnDoorTileEnabled = flag;
+    }
+
+    public get idleSleepEnabled(): boolean
+    {
+        return this._idleSleepEnabled;
+    }
+
+    public set idleSleepEnabled(flag: boolean)
+    {
+        this._idleSleepEnabled = flag;
+    }
+
+    public get idleSleepTimeoutSeconds(): number
+    {
+        return this._idleSleepTimeoutSeconds;
+    }
+
+    public set idleSleepTimeoutSeconds(value: number)
+    {
+        this._idleSleepTimeoutSeconds = value;
+    }
+
+    public get idleAutokickEnabled(): boolean
+    {
+        return this._idleAutokickEnabled;
+    }
+
+    public set idleAutokickEnabled(flag: boolean)
+    {
+        this._idleAutokickEnabled = flag;
+    }
+
+    public get idleAutokickTimeoutSeconds(): number
+    {
+        return this._idleAutokickTimeoutSeconds;
+    }
+
+    public set idleAutokickTimeoutSeconds(value: number)
+    {
+        this._idleAutokickTimeoutSeconds = value;
     }
 }

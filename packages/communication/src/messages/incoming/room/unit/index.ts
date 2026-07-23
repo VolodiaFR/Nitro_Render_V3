@@ -5,6 +5,7 @@ export * from './RoomUnitEvent';
 export * from './RoomUnitExpressionEvent';
 export * from './RoomUnitHandItemEvent';
 export * from './RoomUnitHandItemReceivedEvent';
+export * from './RoomUnitHabbiconEvent';
 export * from './RoomUnitIdleEvent';
 export * from './RoomUnitInfoEvent';
 export * from './RoomUnitNumberEvent';
