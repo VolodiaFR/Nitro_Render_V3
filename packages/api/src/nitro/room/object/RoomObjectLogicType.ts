@@ -44,6 +44,7 @@ export class RoomObjectLogicType
     public static FURNITURE_MONSTERPLANT_SEED = 'furniture_monsterplant_seed';
     public static FURNITURE_PURCHASABLE_CLOTHING = 'furniture_purchasable_clothing';
     public static FURNITURE_BACKGROUND_COLOR = 'furniture_background_color';
+    public static FURNITURE_BRANDED_IMAGE = 'furniture_branded_image';
     public static FURNITURE_MYSTERYBOX = 'furniture_mysterybox';
     public static FURNITURE_EFFECTBOX = 'furniture_effectbox';
     public static FURNITURE_MYSTERYTROPHY = 'furniture_mysterytrophy';

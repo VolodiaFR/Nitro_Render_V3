@@ -65,6 +65,7 @@ export class SnowWarLevelDataParser implements IMessageParser
             totalMachines--;
         }
 
+        // Optional trailing per-recipient flag (server >= snowwar editor).
         if(!wrapper.bytesAvailable) return true;
 
         this._canEditRoom = wrapper.readBoolean();

@@ -2,7 +2,6 @@ export class OutgoingHeader
 {
     public static CLICK_FURNI = 6002;
     public static CLICK_USER = 10020;
-    public static USE_HABBICON = 6010;
 
     // MENTIONS
     public static REQUEST_MENTIONS = 4803;
@@ -593,6 +592,29 @@ export class OutgoingHeader
     public static EARNINGS_CLAIM = 9309;
     public static EARNINGS_CLAIM_ALL = 9310;
     public static PRESS_KEYBIND = 9311;
+    public static GET_TRAX_EDITOR_SONGS = 9330;
+    public static TRAX_EDITOR_BUY_SONG = 9331;
+    public static TRAX_EDITOR_SAVE_SONG = 9332;
+    public static TRAX_EDITOR_DELETE_SONG = 9333;
+    public static REQUEST_MESSENGER_CONVERSATIONS = 4900;
+    public static REQUEST_MESSENGER_HISTORY = 4901;
+    public static SEND_MESSENGER_MESSAGE = 4902;
+    public static MARK_MESSENGER_READ = 4903;
+    public static SNOWWAR_LOAD_STAGE_READY = 6000;
+    public static SNOWWAR_EXIT_GAME = 6001;
+    public static SNOWWAR_WALK = 6003;
+    public static SNOWWAR_THROW_AT_LOCATION = 6004;
+    public static SNOWWAR_THROW_AT_PLAYER = 6005;
+    public static SNOWWAR_CREATE_SNOWBALL = 6006;
+    public static SNOWWAR_REQUEST_FULL_GAME_STATUS = 6007;
+    public static SNOWWAR_PLAY_AGAIN = 6008;
+    public static SNOWWAR_GAME_CHAT = 6009;
+    public static SNOWWAR_EDIT_ROOM = 6010;
+    public static SNOWWAR_SAVE_EDITOR = 6011;
+    public static SNOWWAR_JOIN_QUEUE = 6012;
+    public static SNOWWAR_LEAVE_QUEUE = 6013;
+
+    // Hotel view landing scene (client -> server)
     public static HOTEL_VIEW_LANDING_REQUEST = 9410;
     public static HOTEL_VIEW_LANDING_SAVE = 9411;
     public static HOTEL_VIEW_LANDING_SAVE_SCENE = 9412;
@@ -600,4 +622,7 @@ export class OutgoingHeader
     public static HOTEL_VIEW_LANDING_RESET_VOTES = 9414;
     public static USER_SETTINGS_PRIVACY = 9415;
     public static REQUEST_OFFLINE_MESSAGES = 9416;
+    // Use habbicon (client -> server). 9417 to match emulator RoomUserHabbiconEvent;
+    // 6010 is reserved by SnowWar EDIT_ROOM.
+    public static USE_HABBICON = 9417;
 }
