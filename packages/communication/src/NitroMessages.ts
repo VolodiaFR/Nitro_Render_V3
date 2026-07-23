@@ -9,6 +9,7 @@ import { HanditemBlockStateMessageEvent } from './messages';
 import { TranslationLanguagesEvent, TranslationLanguagesRequestComposer, TranslationResultEvent, TranslationTextRequestComposer } from './messages';
 import { YouTubeRoomBroadcastEvent, YouTubeRoomPlayComposer, YouTubeRoomSettingsComposer, YouTubeRoomSettingsEvent, YouTubeRoomWatchersEvent, YouTubeRoomWatchingComposer } from './messages';
 import { HousekeepingActionLogEvent, HousekeepingActionResultEvent, HousekeepingBanUserComposer, HousekeepingDashboardEvent, HousekeepingDeleteRoomComposer, HousekeepingFindRoomByIdComposer, HousekeepingFindUserByIdComposer, HousekeepingFindUserByNameComposer, HousekeepingForceDisconnectUserComposer, HousekeepingGetDashboardComposer, HousekeepingGiveCreditsComposer, HousekeepingGiveCurrencyComposer, HousekeepingGrantItemComposer, HousekeepingKickAllFromRoomComposer, HousekeepingKickUserComposer, HousekeepingListActionLogComposer, HousekeepingMuteRoomComposer, HousekeepingMuteUserComposer, HousekeepingResetUserPasswordComposer, HousekeepingRoomDetailEvent, HousekeepingRoomListEvent, HousekeepingRoomStateComposer, HousekeepingSearchRoomsComposer, HousekeepingSendHotelAlertComposer, HousekeepingSetHcSubscriptionComposer, HousekeepingSetUserRankComposer, HousekeepingTradeLockUserComposer, HousekeepingTransferRoomOwnershipComposer, HousekeepingUnbanUserComposer, HousekeepingUserDetailEvent } from './messages';
+import { CatalogAdminSavePageIconComposer, CatalogAdminSavePageImagesComposer } from './messages/outgoing/catalog';
 import { RareValuesEvent, RequestRareValuesComposer } from './messages';
 import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
 import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
@@ -51,7 +52,6 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.USER_CHANGE_NAME, ChangeUserNameResultMessageEvent);
         this._events.set(IncomingHeader.CHECK_USER_NAME, CheckUserNameResultMessageEvent);
         this._events.set(IncomingHeader.USER_FIGURE, FigureUpdateEvent);
-        this._events.set(IncomingHeader.USER_OUTFITS, WardrobeMessageEvent);
 
         // BOTS
         this._events.set(IncomingHeader.ADD_BOT_TO_INVENTORY, BotAddedToInventoryEvent);
@@ -132,7 +132,6 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.COMPETITION_VOTING_INFO, CompetitionVotingInfoMessageEvent);
         this._events.set(IncomingHeader.COMPETITION_TIMING_CODE, CurrentTimingCodeMessageEvent);
         this._events.set(IncomingHeader.COMPETITION_USER_PART_OF, IsUserPartOfCompetitionMessageEvent);
-        this._events.set(IncomingHeader.COMPETITION_NO_OWNED_ROOMS, NoOwnedRoomsAlertMessageEvent);
         this._events.set(IncomingHeader.COMPETITION_SECONDS_UNTIL, SecondsUntilMessageEvent);
 
         // CRAFTING
@@ -161,6 +160,12 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.MESSENGER_CHAT, NewConsoleMessageEvent);
         this._events.set(IncomingHeader.CONSOLE_READ_RECEIPT, ConsoleReadReceiptEvent);
         this._events.set(IncomingHeader.FRIEND_TYPING, FriendIsTypingEvent);
+        this._events.set(IncomingHeader.MESSENGER_CONVERSATIONS, MessengerConversationsEvent);
+        this._events.set(IncomingHeader.MESSENGER_HISTORY, MessengerHistoryEvent);
+        this._events.set(IncomingHeader.MESSENGER_MESSAGE_ACK, MessengerMessageAckEvent);
+        this._events.set(IncomingHeader.MESSENGER_MESSAGE_FAILED, MessengerMessageFailedEvent);
+        this._events.set(IncomingHeader.MESSENGER_MESSAGE, MessengerMessageEvent);
+        this._events.set(IncomingHeader.MESSENGER_READ_CURSOR, MessengerReadCursorEvent);
         this._events.set(IncomingHeader.MESSENGER_REQUEST, NewFriendRequestEvent);
         this._events.set(IncomingHeader.MESSENGER_INVITE_ERROR, RoomInviteErrorEvent);
         this._events.set(IncomingHeader.MESSENGER_INVITE, RoomInviteEvent);
@@ -191,6 +196,24 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.GAME_CENTER_DIRECTORY_STATUS, Game2GameDirectoryStatusMessageEvent);
         this._events.set(IncomingHeader.GAME_CENTER_STARTING_GAME_FAILED, Game2StartingGameFailedMessageEvent);
         this._events.set(IncomingHeader.GAME_CENTER_JOINING_FAILED, Game2JoiningGameFailedMessageEvent);
+        this._events.set(IncomingHeader.SNOWWAR_QUEUE_POSITION, SnowWarQueuePositionEvent);
+        this._events.set(IncomingHeader.SNOWWAR_START_LOBBY_COUNTER, SnowWarStartLobbyCounterEvent);
+        this._events.set(IncomingHeader.SNOWWAR_GAME_ENDED, SnowWarGameEndedEvent);
+        this._events.set(IncomingHeader.SNOWWAR_GAMES_LEFT, SnowWarGamesLeftEvent);
+        this._events.set(IncomingHeader.SNOWWAR_GAMES_INFORMATION, SnowWarGamesInformationEvent);
+        this._events.set(IncomingHeader.SNOWWAR_GAME_STATUS, SnowWarGameStatusEvent);
+        this._events.set(IncomingHeader.SNOWWAR_FULL_GAME_STATUS, SnowWarFullGameStatusEvent);
+        this._events.set(IncomingHeader.SNOWWAR_ON_STAGE_START, SnowWarOnStageStartEvent);
+        this._events.set(IncomingHeader.SNOWWAR_INIT_ARENA, SnowWarInitArenaEvent);
+        this._events.set(IncomingHeader.SNOWWAR_REJOIN_PREVIOUS_ROOM, SnowWarRejoinPreviousRoomEvent);
+        this._events.set(IncomingHeader.SNOWWAR_LEVEL_DATA, SnowWarLevelDataEvent);
+        this._events.set(IncomingHeader.SNOWWAR_ON_GAME_ENDING, SnowWarOnGameEndingEvent);
+        this._events.set(IncomingHeader.SNOWWAR_USER_CHAT, SnowWarUserChatEvent);
+        this._events.set(IncomingHeader.SNOWWAR_ON_STAGE_RUNNING, SnowWarOnStageRunningEvent);
+        this._events.set(IncomingHeader.SNOWWAR_ON_STAGE_ENDING, SnowWarOnStageEndingEvent);
+        this._events.set(IncomingHeader.SNOWWAR_PLAYER_EXITED_ARENA, SnowWarPlayerExitedArenaEvent);
+        this._events.set(IncomingHeader.SNOWWAR_GENERIC_ERROR, SnowWarGenericErrorEvent);
+        this._events.set(IncomingHeader.SNOWWAR_USER_REMATCHED, SnowWarUserRematchedEvent);
         this._events.set(IncomingHeader.GAMEACHIEVEMENTS, GameAchievementsMessageEvent);
         this._events.set(IncomingHeader.GAMEINVITE, GameInviteMessageEvent);
         this._events.set(IncomingHeader.JOINEDQUEUEMESSAGE, JoinedQueueMessageEvent);
@@ -550,6 +573,8 @@ export class NitroMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.WHEEL_ADMIN_PRIZES, WheelAdminPrizesEvent);
         this._events.set(IncomingHeader.SOUNDBOARD_SETTINGS, SoundboardSettingsEvent);
         this._events.set(IncomingHeader.SOUNDBOARD_PLAY, SoundboardPlayEvent);
+        this._events.set(IncomingHeader.TRAX_EDITOR_SONGS, TraxEditorSongsEvent);
+        this._events.set(IncomingHeader.TRAX_EDITOR_ERROR, TraxEditorErrorEvent);
         this._events.set(IncomingHeader.EARNINGS_CENTER, EarningsCenterEvent);
         this._events.set(IncomingHeader.EARNINGS_CLAIM_RESULT, EarningsClaimResultEvent);
         this._events.set(IncomingHeader.HOTEL_VIEW_LANDING, HotelViewLandingEvent);
@@ -695,6 +720,8 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.BUILDERS_CLUB_PLACE_WALL_ITEM, BuildersClubPlaceWallItemMessageComposer);
         this._composers.set(OutgoingHeader.BUILDERS_CLUB_QUERY_FURNI_COUNT, BuildersClubQueryFurniCountMessageComposer);
 		this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_PAGE, CatalogAdminSavePageComposer);
+        this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_PAGE_IMAGES, CatalogAdminSavePageImagesComposer);
+        this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_PAGE_ICON, CatalogAdminSavePageIconComposer);
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_CREATE_PAGE, CatalogAdminCreatePageComposer);
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_DELETE_PAGE, CatalogAdminDeletePageComposer);
         this._composers.set(OutgoingHeader.CATALOG_ADMIN_SAVE_OFFER, CatalogAdminSaveOfferComposer);
@@ -787,6 +814,10 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.MESSENGER_CHAT, SendMessageComposer);
         this._composers.set(OutgoingHeader.MARK_CONSOLE_READ, MarkConsoleReadComposer);
         this._composers.set(OutgoingHeader.CONSOLE_TYPING, ConsoleTypingComposer);
+        this._composers.set(OutgoingHeader.REQUEST_MESSENGER_CONVERSATIONS, RequestMessengerConversationsComposer);
+        this._composers.set(OutgoingHeader.REQUEST_MESSENGER_HISTORY, RequestMessengerHistoryComposer);
+        this._composers.set(OutgoingHeader.SEND_MESSENGER_MESSAGE, SendMessengerMessageComposer);
+        this._composers.set(OutgoingHeader.MARK_MESSENGER_READ, MarkMessengerReadComposer);
         this._composers.set(OutgoingHeader.SEND_ROOM_INVITE, SendRoomInviteComposer);
         this._composers.set(OutgoingHeader.SET_RELATIONSHIP_STATUS, SetRelationshipStatusComposer);
         this._composers.set(OutgoingHeader.ADD_FRIEND_CATEGORY, AddFriendCategoryComposer);
@@ -817,6 +848,18 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.GAME2REQUESTFULLSTATUSUPDATEMESSAGE, Game2RequestFullStatusUpdateMessageComposer);
         this._composers.set(OutgoingHeader.GAME2GETWEEKLYFRIENDSLEADERBOARD, Game2GetWeeklyFriendsLeaderboardComposer);
         this._composers.set(OutgoingHeader.GAME2GETWEEKLYLEADERBOARD, Game2GetWeeklyLeaderboardComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_LOAD_STAGE_READY, SnowWarLoadStageReadyComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_EXIT_GAME, SnowWarExitGameComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_WALK, SnowWarWalkComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_THROW_AT_LOCATION, SnowWarThrowAtLocationComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_THROW_AT_PLAYER, SnowWarThrowAtPlayerComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_CREATE_SNOWBALL, SnowWarCreateSnowballComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_REQUEST_FULL_GAME_STATUS, SnowWarRequestFullGameStatusComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_PLAY_AGAIN, SnowWarPlayAgainComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_GAME_CHAT, SnowWarGameChatComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_JOIN_QUEUE, SnowWarJoinQueueComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_LEAVE_QUEUE, SnowWarLeaveQueueComposer);
+        this._composers.set(OutgoingHeader.SNOWWAR_EDIT_ROOM, SnowWarEditRoomComposer);
 
         // GIFTS
         this._composers.set(OutgoingHeader.GET_GIFT, GetGiftMessageComposer);
@@ -1378,6 +1421,10 @@ export class NitroMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.WHEEL_ADMIN_SAVE_PRIZES, WheelAdminSavePrizesComposer);
         this._composers.set(OutgoingHeader.SOUNDBOARD_PLAY, SoundboardPlayComposer);
         this._composers.set(OutgoingHeader.SOUNDBOARD_SET_ENABLED, SoundboardSetEnabledComposer);
+        this._composers.set(OutgoingHeader.GET_TRAX_EDITOR_SONGS, GetTraxEditorSongsComposer);
+        this._composers.set(OutgoingHeader.TRAX_EDITOR_BUY_SONG, TraxEditorBuySongComposer);
+        this._composers.set(OutgoingHeader.TRAX_EDITOR_SAVE_SONG, TraxEditorSaveSongComposer);
+        this._composers.set(OutgoingHeader.TRAX_EDITOR_DELETE_SONG, TraxEditorDeleteSongComposer);
         this._composers.set(OutgoingHeader.PRESS_KEYBIND, PressKeybindComposer);
         this._composers.set(OutgoingHeader.EARNINGS_REQUEST, RequestEarningsCenterComposer);
         this._composers.set(OutgoingHeader.EARNINGS_CLAIM, ClaimEarningsRewardComposer);

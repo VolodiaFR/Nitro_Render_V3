@@ -132,6 +132,35 @@ export class MusicController implements IMusicController
         }
     }
 
+    /**
+     * Plays a raw trax song-data string directly, bypassing the song-id
+     * machinery — used by the trax editor to audition unsaved compositions.
+     */
+    public async previewTraxData(songData: string, startPosSeconds: number = 0): Promise<void>
+    {
+        this.stop(MusicPriorities.PRIORITY_PURCHASE_PREVIEW);
+        this._musicPlayer.setVolume(GetSoundManager().traxVolume);
+        await this._musicPlayer.preloadSamplesForSong(songData);
+        await this._musicPlayer.play(songData, -1, Math.max(0, startPosSeconds), -1);
+    }
+
+    public stopPreview(): void
+    {
+        this._musicPlayer.stop();
+    }
+
+    /** Auditions a single sample once (trax editor sample buttons). */
+    public async previewSample(sampleId: number): Promise<void>
+    {
+        this._musicPlayer.setVolume(GetSoundManager().traxVolume);
+        await this._musicPlayer.playSampleOnce(sampleId);
+    }
+
+    public stopSamplePreview(): void
+    {
+        this._musicPlayer.stopSampleOnce();
+    }
+
     public addSongInfoRequest(songId: number): void
     {
         this.requestSong(songId, true);
@@ -290,10 +319,13 @@ export class MusicController implements IMusicController
                 this.requestSongInfoWithoutSamples(songId);
             }
         }
-        if(this._diskInventoryMissingData.length === 0)
-        {
-            GetEventDispatcher().dispatchEvent(new SongDiskInventoryReceivedEvent(SongDiskInventoryReceivedEvent.SDIR_SONG_DISK_INVENTORY_RECEIVENT_EVENT));
-        }
+        // Always announce the refreshed list right away. Waiting for every
+        // song's info deadlocked the UI whenever a disk referenced a song the
+        // server can no longer resolve (e.g. a deleted composition) — that id
+        // never arrives, the missing-data list never drains, and no disks show
+        // at all. Names for songs still in flight fill in when their
+        // TraxSongInfo lands, which re-dispatches this event.
+        GetEventDispatcher().dispatchEvent(new SongDiskInventoryReceivedEvent(SongDiskInventoryReceivedEvent.SDIR_SONG_DISK_INVENTORY_RECEIVENT_EVENT));
     }
 
     private onTick(): void

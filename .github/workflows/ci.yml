@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ Dev, main ]
+  push:
+    branches: [ Dev, main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Test
+        run: yarn test
+
+      - name: Compile
+        run: yarn compile
+
+      - name: Build
+        run: yarn build

@@ -16,6 +16,8 @@ export class MusicPlayer
 
     private _tickerInterval: number | undefined;
     private _sequence: ISequenceEntry[][];
+    private _auditionHowl: Howl | null = null;
+    private _auditionPlayId: number = -1;
 
     constructor(sampleUrl: string)
     {
@@ -39,6 +41,7 @@ export class MusicPlayer
         this._currentSongId = currentSongId;
         //this.emit('loading');
         await this.preload();
+        await this.unlockAudio();
         this._isPlaying = true;
         //this.emit('playing', this._currentPos, this._playLength - 1);
         this.tick(); // to evade initial 1 sec delay
@@ -112,6 +115,60 @@ export class MusicPlayer
         if(!sample) sample = await this.loadSong(id);
 
         return Promise.resolve(sample);
+    }
+
+    /**
+     * Plays a single sample once (trax-editor audition). Reuses the same
+     * howler cache as full playback, so auditioned samples are already
+     * warm when the preview starts.
+     */
+    public async playSampleOnce(sampleId: number): Promise<void>
+    {
+        this.stopSampleOnce();
+
+        const sample = await this.getSample(sampleId);
+
+        await this.unlockAudio();
+
+        this._auditionHowl = sample;
+        this._auditionPlayId = sample.play();
+    }
+
+    public stopSampleOnce(): void
+    {
+        if(this._auditionHowl && (this._auditionPlayId !== -1)) this._auditionHowl.stop(this._auditionPlayId);
+
+        this._auditionHowl = null;
+        this._auditionPlayId = -1;
+    }
+
+    /**
+     * Howler only unlocks its AudioContext from a document-level capture
+     * listener that is registered when the first Howl is created — one click
+     * too late for a fresh session, which made the first play/audition after
+     * login silent. Chrome grants Web Audio sticky user activation, so the
+     * gesture that triggered this call is enough to resume the context here.
+     */
+    private async unlockAudio(): Promise<void>
+    {
+        //@ts-ignore
+        if(Howler._audioUnlocked) return;
+
+        const ctx = Howler.ctx;
+
+        if(!ctx) return;
+
+        try
+        {
+            if(ctx.state !== 'running') await ctx.resume();
+
+            //@ts-ignore
+            if(ctx.state === 'running') Howler._audioUnlocked = true;
+        }
+        catch
+        {
+            // Stays locked; howler's own listener unlocks on the next gesture.
+        }
     }
 
     private async preload(): Promise<void>

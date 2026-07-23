@@ -1,9 +1,10 @@
 import { IRoomHandlerListener, IRoomSession, IRoomSessionManager, IRoomSessionSnapshot } from '@nitrots/api';
 import { GetCommunication, RoomEnterComposer, RoomUnitWalkComposer } from '@nitrots/communication';
-import { GetEventDispatcher, NitroEvent, NitroEventType, RoomSessionEvent } from '@nitrots/events';
+import { GetEventDispatcher, NitroEvent, NitroEventType, RoomSessionEvent, SocketReauthenticatedEvent } from '@nitrots/events';
 import { NitroLogger } from '@nitrots/utils';
 import { RoomSession } from './RoomSession';
 import { BaseHandler, GenericErrorHandler, PetPackageHandler, PollHandler, RoomChatHandler, RoomDataHandler, RoomDimmerPresetsHandler, RoomPermissionsHandler, RoomPresentHandler, RoomSessionHandler, RoomUsersHandler, WordQuizHandler } from './handler';
+import { shouldAttemptRoomReEntry } from './reconnectRoomPolicy';
 
 const STORAGE_KEY_ROOM_ID = 'nitro.session.lastRoomId';
 const STORAGE_KEY_ROOM_PASSWORD = 'nitro.session.lastRoomPassword';
@@ -126,20 +127,25 @@ export class RoomSessionManager implements IRoomSessionManager, IRoomHandlerList
         GetEventDispatcher().addEventListener(NitroEventType.SOCKET_RECONNECTED, () =>
         {
             this.clearGuardTimer();
-            this._reconnectGuardTimer = setTimeout(() =>
-            {
-                this._reconnectGuardTimer = null;
 
-                if(!this._isReconnecting) return;
-                this.attemptRoomReEntry();
-            }, 5000);
+            if(shouldAttemptRoomReEntry(NitroEventType.SOCKET_RECONNECTED)) this.attemptRoomReEntry();
         });
 
-        GetEventDispatcher().addEventListener(NitroEventType.SOCKET_REAUTHENTICATED, () =>
+        GetEventDispatcher().addEventListener<SocketReauthenticatedEvent>(NitroEventType.SOCKET_REAUTHENTICATED, event =>
         {
             this.snapshotSavedPosition();
             this.clearGuardTimer();
-            this.attemptRoomReEntry();
+
+            if(shouldAttemptRoomReEntry(event.type, event, this._lastRoomId))
+            {
+                this.attemptRoomReEntry();
+            }
+            else
+            {
+                this._isReconnecting = false;
+                this._savedPosX = -1;
+                this._savedPosY = -1;
+            }
         });
 
         GetEventDispatcher().addEventListener(NitroEventType.SOCKET_RECONNECT_FAILED, () =>
