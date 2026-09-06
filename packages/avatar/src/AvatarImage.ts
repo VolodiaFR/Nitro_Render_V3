@@ -344,7 +344,6 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         return url;
     }
 
-    /** AIR AvatarImage.getCroppedImage: extract the native body-part union bounds. */
     public processAsCroppedImageUrl(setType: string, trimTransparentPixels: boolean = false): string
     {
         if(!this._mainAction) return null;
@@ -644,7 +643,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
     public isAnimating(): boolean
     {
-        return (this._isAnimating) || (this._animationFrameCount > 1);
+        return (this._isAnimating) || (this._animationFrameCount > 1) || (!!this._cache && this._cache.hasAnimatedContent);
     }
 
     private resetActions(): boolean

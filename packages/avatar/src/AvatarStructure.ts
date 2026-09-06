@@ -18,6 +18,7 @@ export class AvatarStructure
     private _mandatorySetTypeIds: { [index: string]: { [index: number]: string[] } };
     private _actionManager: AvatarActionManager;
     private _defaultAction: IActionDefinition;
+    private _figurePartFrameCounts: Map<string, number> = new Map();
 
     constructor(renderManager: AvatarRenderManager)
     {
@@ -447,12 +448,12 @@ export class AvatarStructure
                                     }
                                     else
                                     {
-                                        animationFrames = defaultFrames;
+                                        animationFrames = this.getFigurePartFrames(action.definition.assetPartDefinition, figurePart.type, figurePart.id, direction, defaultFrames);
                                     }
                                 }
                                 else
                                 {
-                                    animationFrames = defaultFrames;
+                                    animationFrames = this.getFigurePartFrames(action.definition.assetPartDefinition, figurePart.type, figurePart.id, direction, defaultFrames);
                                 }
 
                                 actionDefinition = action.definition;
@@ -615,6 +616,31 @@ export class AvatarStructure
         }
 
         return sortedContainers;
+    }
+
+    private getFigurePartFrames(assetPartDefinition: string, partType: string, partId: number, direction: number, defaultFrames: any[]): any[]
+    {
+        if(defaultFrames && (defaultFrames.length > 1)) return defaultFrames;
+
+        const assetDirection = ((direction > 3) && (direction < 7)) ? (6 - direction) : direction;
+        const key = `${ assetPartDefinition }_${ partType }_${ partId }_${ assetDirection }`;
+
+        let count = this._figurePartFrameCounts.get(key);
+
+        if(count === undefined)
+        {
+            const baseName = `h_${ assetPartDefinition }_${ partType }_${ partId }_${ assetDirection }_`;
+
+            if(!this._renderManager.getAssetByName(`${ baseName }0`)) return defaultFrames;
+
+            count = 1;
+
+            while((count < 24) && this._renderManager.getAssetByName(`${ baseName }${ count }`)) count++;
+
+            this._figurePartFrameCounts.set(key, count);
+        }
+
+        return ((count > 1) ? this.getPopulatedArray(count) : defaultFrames);
     }
 
     private getPopulatedArray(count: number): number[]

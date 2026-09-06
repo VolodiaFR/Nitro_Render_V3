@@ -318,6 +318,8 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 const highlightEnabled = ((this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT_ENABLE) === 1) && (this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT) === 1));
                 const avatarImage = this._avatarImage.processAsTexture(AvatarSetType.FULL, highlightEnabled);
 
+                if(!this._isAnimating && this._avatarImage.isAnimating()) this._isAnimating = true;
+
                 if(avatarImage)
                 {
                     sprite.texture = avatarImage;
@@ -340,8 +342,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                     if(this._isLaying)
                     {
-                        // Convert isometric ground-plane offsets to screen pixels
-                        // isoX moves along one diagonal, isoY along the other
                         sprite.offsetX += (this._layXOffset - this._layYOffset);
                         sprite.offsetY += Math.floor((this._layXOffset + this._layYOffset) / 2);
                     }
@@ -349,9 +349,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                 if(this._isLaying)
                 {
-                    // Compensate for avatar Z elevation so it sorts near the bed's depth
-                    // layInside: avatar slightly behind bed (tucked in under blanket)
-                    // !layInside: avatar slightly in front of bed (on top)
                     const laySign = this._layInside ? AvatarVisualization.AVATAR_SPRITE_LAYING_DEPTH : -AvatarVisualization.AVATAR_SPRITE_LAYING_DEPTH;
                     sprite.relativeDepth = (laySign - this._layDepthOffset + canvasOffsets[2]);
                 }

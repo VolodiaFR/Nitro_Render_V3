@@ -25,6 +25,7 @@ export class AvatarImageCache
     private _canvas: AvatarCanvas;
     private _disposed: boolean;
     private _geometryType: string;
+    private _hasAnimatedContent: boolean = false;
     private _defaultAction: string = 'std';
     private _unionImages: ImageData[];
     private _matrix: Matrix;
@@ -247,6 +248,19 @@ export class AvatarImageCache
             actionCache.updateDirectionCache(direction, directionCache);
         }
 
+        if(!this._hasAnimatedContent)
+        {
+            for(const part of directionCache.getPartList())
+            {
+                if(part.hasMultipleStaticFrames)
+                {
+                    this._hasAnimatedContent = true;
+
+                    break;
+                }
+            }
+        }
+
         let imageContainer = directionCache.getImageContainer(adjustedFrameCount);
 
         if(!imageContainer || forceRefresh)
@@ -273,6 +287,11 @@ export class AvatarImageCache
         imageContainer.offset = positionOffset;
 
         return imageContainer;
+    }
+
+    public get hasAnimatedContent(): boolean
+    {
+        return this._hasAnimatedContent;
     }
 
     public getBodyPartCache(key: string): AvatarImageBodyPartCache
