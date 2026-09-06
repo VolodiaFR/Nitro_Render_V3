@@ -93,6 +93,7 @@ export class RoomPlane implements IRoomPlane
     private _windowReflectionFirstSeenAt: Map<number, number> = new Map();
     private _windowReflectionLastVisible: Map<number, { texture: Texture; oppositeTexture: Texture; location: IVector3D; verticalOffset: number; direction: number }> = new Map();
     private _windowReflectionFadeOut: Map<number, { texture: Texture; oppositeTexture: Texture; location: IVector3D; verticalOffset: number; direction: number; startedAt: number }> = new Map();
+    private _reflectionFadeAnimating: boolean = false;
 
     constructor(origin: IVector3D, location: IVector3D, leftSide: IVector3D, rightSide: IVector3D, type: number, usesMask: boolean, secondaryNormals: IVector3D[], randomSeed: number, textureOffsetX: number = 0, textureOffsetY: number = 0, textureMaxX: number = 0, textureMaxY: number = 0)
     {
@@ -647,8 +648,18 @@ export class RoomPlane implements IRoomPlane
             if(reflectionUpdateId !== this._lastWindowReflectionUpdateId)
             {
                 this._lastWindowReflectionUpdateId = reflectionUpdateId;
-                reflectionUpdate = true;
+
+                // The update id bumps for EVERY avatar animation tick in the
+                // room; skip the full landscape re-composite when no avatar is
+                // anywhere near this plane and nothing is drawn or fading.
+                reflectionUpdate = this.hasWindowReflectionWork();
             }
+
+            // Fade alphas are time-based but only advance when the plane
+            // re-renders. Keep re-rendering while a fade is in progress,
+            // otherwise a reflection freezes half-faded the moment its
+            // avatar stops animating in front of the window.
+            if(!reflectionUpdate && this._reflectionFadeAnimating) reflectionUpdate = true;
         }
 
         let animationUpdate = false;
@@ -939,8 +950,31 @@ export class RoomPlane implements IRoomPlane
         colorContainer.destroy({ children: true });
     }
 
+    // Cheap precheck used to gate the expensive landscape re-composite: true
+    // only when a reflection is currently drawn/fading on this plane or an
+    // avatar is close enough to this plane to possibly appear in a window.
+    private hasWindowReflectionWork(): boolean
+    {
+        if(this._windowReflectionFirstSeenAt.size || this._windowReflectionLastVisible.size || this._windowReflectionFadeOut.size) return true;
+
+        if(!this._leftSide || !this._rightSide || !this._normal) return false;
+
+        for(const avatar of RoomWindowReflectionState.getAvatars())
+        {
+            if(!avatar || !avatar.location) continue;
+
+            const relative = Vector3d.dif(avatar.location, this._location);
+
+            if(Math.abs(Vector3d.scalarProjection(relative, this._normal)) <= 0.8) return true;
+        }
+
+        return false;
+    }
+
     private renderWindowReflections(): void
     {
+        this._reflectionFadeAnimating = false;
+
         if(!this._planeTexture || !this._leftSide || !this._rightSide || !this._normal) return;
 
         if(this._leftSide.length <= 0 || this._rightSide.length <= 0) return;
@@ -1072,6 +1106,8 @@ export class RoomPlane implements IRoomPlane
             if(!this._windowReflectionFirstSeenAt.has(avatar.id))
                 this._windowReflectionFirstSeenAt.set(avatar.id, firstSeenAt);
 
+            if(elapsed < fadeDurationMs) this._reflectionFadeAnimating = true;
+
             visibleAvatarIds.add(avatar.id);
             this._windowReflectionFadeOut.delete(avatar.id);
 
@@ -1124,6 +1160,10 @@ export class RoomPlane implements IRoomPlane
                 id))
             {
                 this._windowReflectionFadeOut.delete(id);
+            }
+            else
+            {
+                this._reflectionFadeAnimating = true;
             }
         }
 
