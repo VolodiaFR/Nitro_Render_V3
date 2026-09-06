@@ -1,4 +1,4 @@
-import { Container, Point, Texture } from 'pixi.js';
+import { Container, PointData, Texture } from 'pixi.js';
 import { IRoomGeometry } from '../IRoomGeometry';
 import { RoomObjectSpriteData } from '../RoomObjectSpriteData';
 import { ISortableSprite } from '../object';
@@ -9,7 +9,10 @@ export interface IRoomRenderingCanvas
     dispose(): void;
     initialize(width: number, height: number): void;
     setMask(flag: boolean): void;
-    setScale(scale: number, point?: Point, offsetPoint?: Point, isFlipForced?: boolean): void;
+    // `point` is the screen position that must stay under the cursor across the
+    // transform change; `offsetPoint` is where it should land (defaults to `point`).
+    setScale(scale: number, point?: PointData, offsetPoint?: PointData, isFlipForced?: boolean): void;
+    setFlip(flag: boolean, point?: PointData, offsetPoint?: PointData): void;
     render(time: number, update?: boolean): void;
     update(): void;
     setMouseListener(listener: IRoomCanvasMouseListener): void;
@@ -30,6 +33,7 @@ export interface IRoomRenderingCanvas
     screenOffsetX: number;
     screenOffsetY: number;
     scale: number;
+    isFlipped: boolean;
     width: number;
     height: number;
     canvasUpdated: boolean;

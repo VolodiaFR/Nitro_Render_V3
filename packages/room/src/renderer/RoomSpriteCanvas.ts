@@ -2,7 +2,7 @@ import { IPlaneVisualization, IRoomCanvasMouseListener, IRoomGeometry, IRoomObje
 import { GetConfiguration } from '@octane/configuration';
 import { RoomSpriteMouseEvent } from '@octane/events';
 import { GetTicker, TextureUtils, Vector3d } from '@octane/utils';
-import { Container, Graphics, Matrix, Point, Rectangle, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Matrix, Point, PointData, Rectangle, Sprite, Texture } from 'pixi.js';
 import { RoomEnterEffect, RoomGeometry, RoomRotatingEffect, RoomShakingEffect } from '../utils';
 import { RoomObjectCache, RoomObjectCacheItem } from './cache';
 import { getObjectAltitudeDepth } from './ObjectAltitudeDepth';
@@ -24,6 +24,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     private _lastBoundaryOffsetY: number = NaN;
     private _lastBoundaryGeometryId: number = -1;
     private _lastBoundaryScale: number = NaN;
+    private _lastBoundaryFlipped: boolean = false;
 
     private _sortableSprites: SortableSprite[] = [];
     private _spriteCount: number = 0;
@@ -47,6 +48,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     private _eventCache: Map<string, IRoomSpriteMouseEvent> = new Map();
     private _eventId: number = 0;
     private _scale: number = 1;
+    private _isFlipped: boolean = false;
 
     private _SafeStr_4507: boolean = false;
     private _rotation: number = 0;
@@ -245,20 +247,43 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         }
     }
 
-    public setScale(scale: number, point: Point = null, offsetPoint: Point = null, isFlipForced: boolean = false): void
+    public setScale(scale: number, point: PointData = null, offsetPoint: PointData = null, isFlipForced: boolean = false): void
+    {
+        // The zoom scale is always positive; the flip is a separate flag so it
+        // can be toggled back and zooming keeps working while flipped.
+        this.setTransform(Math.abs(scale), this._isFlipped, point, offsetPoint);
+    }
+
+    public setFlip(flag: boolean, point: PointData = null, offsetPoint: PointData = null): void
+    {
+        this.setTransform(this._scale, flag, point, offsetPoint);
+    }
+
+    private setTransform(scale: number, isFlipped: boolean, point: PointData, offsetPoint: PointData): void
     {
         if(!this._master || !this._display) return;
 
-        if(!point) point = new Point((this._width / 2), (this._height / 2));
+        if(!point) point = { x: (this._width / 2), y: (this._height / 2) };
 
         if(!offsetPoint) offsetPoint = point;
 
-        point = this._display.toLocal(point);
+        // Keep the room content under `point` fixed: convert it to display space
+        // with the old transform, then place it back at `offsetPoint` with the new one.
+        const localX = ((point.x - this._screenOffsetX) / this.displayScale);
+        const localY = ((point.y - this._screenOffsetY) / this.displayScale);
 
         this._scale = scale;
+        this._isFlipped = isFlipped;
 
-        this.screenOffsetX = (offsetPoint.x - (point.x * this._scale));
-        this.screenOffsetY = (offsetPoint.y - (point.y * this._scale));
+        this.screenOffsetX = (offsetPoint.x - (localX * this.displayScale));
+        this.screenOffsetY = (offsetPoint.y - (localY * this.displayScale));
+    }
+
+    // Signed display scale on both axes: the official flip turns the room 180
+    // degrees around the anchor point, it is not a horizontal mirror.
+    private get displayScale(): number
+    {
+        return (this._isFlipped ? -this._scale : this._scale);
     }
 
     private updateBoundaryMask(): void
@@ -269,13 +294,16 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         const offsetX = this._screenOffsetX;
         const offsetY = this._screenOffsetY;
         const scale = this._scale;
+        const displayScale = this.displayScale;
+        const flipped = this._isFlipped;
 
-        if(geometryId === this._lastBoundaryGeometryId && offsetX === this._lastBoundaryOffsetX && offsetY === this._lastBoundaryOffsetY && scale === this._lastBoundaryScale) return;
+        if(geometryId === this._lastBoundaryGeometryId && offsetX === this._lastBoundaryOffsetX && offsetY === this._lastBoundaryOffsetY && scale === this._lastBoundaryScale && flipped === this._lastBoundaryFlipped) return;
 
         this._lastBoundaryGeometryId = geometryId;
         this._lastBoundaryOffsetX = offsetX;
         this._lastBoundaryOffsetY = offsetY;
         this._lastBoundaryScale = scale;
+        this._lastBoundaryFlipped = flipped;
 
         const pts: { x: number; y: number }[] = [];
         const w2 = this._width / 2;
@@ -312,7 +340,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
                     if(!sp) continue;
 
-                    pts.push({ x: (sp.x + w2) * scale + offsetX, y: (sp.y + h2) * scale + offsetY });
+                    pts.push({ x: (sp.x + w2) * displayScale + offsetX, y: (sp.y + h2) * displayScale + offsetY });
                 }
             }
 
@@ -420,9 +448,9 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             update = true;
         }
 
-        if(this._display.scale.x !== this._scale)
+        if((this._display.scale.x !== this.displayScale) || (this._display.scale.y !== this.displayScale))
         {
-            this._display.scale.set(this._scale);
+            this._display.scale.set(this.displayScale);
 
             update = true;
         }
@@ -870,10 +898,26 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     {
         if(this._noSpriteVisibilityChecking) return true;
 
-        x = (((x - this._screenOffsetX) * this._scale) + this._screenOffsetX);
-        y = (((y - this._screenOffsetY) * this._scale) + this._screenOffsetY);
-        width = (width * this._scale);
-        height = (height * this._scale);
+        const displayScale = this.displayScale;
+
+        x = (((x - this._screenOffsetX) * displayScale) + this._screenOffsetX);
+        y = (((y - this._screenOffsetY) * displayScale) + this._screenOffsetY);
+        width = (width * displayScale);
+        height = (height * displayScale);
+
+        // A flipped room projects the sprite behind its origin, so the span is
+        // normalised back to a positive size before the bounds test.
+        if(width < 0)
+        {
+            x += width;
+            width = -width;
+        }
+
+        if(height < 0)
+        {
+            y += height;
+            height = -height;
+        }
 
         if(((x < this._width) && ((x + width) >= 0)) && ((y < this._height) && ((y + height) >= 0)))
         {
@@ -888,12 +932,16 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         x = (x - this._screenOffsetX);
         y = (y - this._screenOffsetY);
 
-        this._mouseLocation.x = (x / this._scale);
-        this._mouseLocation.y = (y / this._scale);
+        // Screen coordinates map back through the signed scale, so a flipped
+        // room still hit-tests the sprite that is actually under the cursor.
+        const displayScale = this.displayScale;
+
+        this._mouseLocation.x = (x / displayScale);
+        this._mouseLocation.y = (y / displayScale);
 
         if((this._mouseCheckCount > 0) && (type == MouseEventType.MOUSE_MOVE)) return this._mouseSpriteWasHit;
 
-        this._mouseSpriteWasHit = this.checkMouseHits(Math.trunc(x / this._scale), Math.trunc(y / this._scale), type, altKey, ctrlKey, shiftKey, buttonDown);
+        this._mouseSpriteWasHit = this.checkMouseHits(Math.trunc(x / displayScale), Math.trunc(y / displayScale), type, altKey, ctrlKey, shiftKey, buttonDown);
 
         this._mouseCheckCount++;
 
@@ -1074,10 +1122,12 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         this._noSpriteVisibilityChecking = true;
 
         const currentScale = this._scale;
+        const currentFlipped = this._isFlipped;
         const currentOffsetX = this._screenOffsetX;
         const currentOffsetY = this._screenOffsetY;
 
-        this.setScale(1);
+        // Captures are always taken unflipped at scale 1.
+        this.setTransform(1, false, null, null);
 
         this._screenOffsetX = 0;
         this._screenOffsetY = 0;
@@ -1093,7 +1143,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
         this._noSpriteVisibilityChecking = false;
 
-        this.setScale(currentScale);
+        this.setTransform(currentScale, currentFlipped, null, null);
 
         this._screenOffsetX = currentOffsetX;
         this._screenOffsetY = currentOffsetY;
@@ -1321,6 +1371,11 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     public get scale(): number
     {
         return this._scale;
+    }
+
+    public get isFlipped(): boolean
+    {
+        return this._isFlipped;
     }
 
     public get width(): number

@@ -4,7 +4,7 @@ import { GetConfiguration } from '@octane/configuration';
 import { BadgeImageReadyEvent, GetEventDispatcher, OctaneToolbarAnimateIconEvent, RoomBackgroundColorEvent, RoomDragEvent, RoomEngineAreaHideStateEvent, RoomEngineEvent, RoomEngineObjectEvent, RoomObjectEvent, RoomObjectFurnitureActionEvent, RoomObjectMouseEvent, RoomSessionEvent, RoomToObjectOwnAvatarMoveEvent } from '@octane/events';
 import { GetRoomSessionManager, GetSessionDataManager } from '@octane/session';
 import { FurniId, GetTickerTime, OctaneLogger, NumberBank, TextureUtils, Vector3d } from '@octane/utils';
-import { Container, Matrix, Point, Rectangle, RenderTexture, Sprite, Texture, Ticker } from 'pixi.js';
+import { Container, Matrix, Point, PointData, Rectangle, RenderTexture, Sprite, Texture, Ticker } from 'pixi.js';
 import { GetRoomContentLoader } from './GetRoomContentLoader';
 import { GetRoomManager } from './GetRoomManager';
 import { GetRoomMessageHandler } from './GetRoomMessageHandler';
@@ -391,17 +391,22 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
         if(roomCanvas) roomCanvas.setMask(flag);
     }
 
-    public setRoomInstanceRenderingCanvasScale(roomId: number, canvasId: number, level: number, point: Point = null, offsetPoint: Point = null, isFlipForced: boolean = false, flag: boolean = false): void
+    public setRoomInstanceRenderingCanvasScale(roomId: number, canvasId: number, level: number, point: PointData = null, offsetPoint: PointData = null, isFlipForced: boolean = false, isAnimated: boolean = false): void
     {
         if(!GetConfiguration().getValue('room.zoom.enabled', true)) return;
 
-        if(!flag) level = ((isFlipForced) ? -1 : ((level) < 1) ? 0.5 : Math.floor(level));
+        // Discrete zoom levels are snapped; an animation frame passes its
+        // fractional scale through untouched.
+        if(!isAnimated && !isFlipForced) level = (((level) < 1) ? 0.5 : Math.floor(level));
 
         const roomCanvas = this.getRoomInstanceRenderingCanvas(roomId, canvasId);
 
         if(!roomCanvas) return;
 
-        roomCanvas.setScale(level, point, offsetPoint, isFlipForced);
+        // A forced flip toggles the 180 degree flip and leaves the zoom scale alone.
+        if(isFlipForced) roomCanvas.setFlip(!roomCanvas.isFlipped, point, offsetPoint);
+        else roomCanvas.setScale(level, point, offsetPoint, false);
+
         this.syncRoomCameraLocationToCanvasOffset(roomId, roomCanvas);
 
         GetEventDispatcher().dispatchEvent(new RoomEngineEvent(RoomEngineEvent.ROOM_ZOOMED, roomId));
@@ -419,7 +424,8 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
     private syncRoomCameraLocationToCanvasOffset(roomId: number, canvas: IRoomRenderingCanvas): void
     {
-        if(!this.useOffsetScrolling || !canvas || (canvas.scale <= 0)) return;
+        // Offset scrolling is suspended while the room is flipped.
+        if(!this.useOffsetScrolling || !canvas || (canvas.scale <= 0) || canvas.isFlipped) return;
 
         const instanceData = this.getRoomInstanceData(roomId);
 
@@ -495,6 +501,25 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
         if(!canvas) return 1;
 
         return canvas.scale;
+    }
+
+    public getRoomInstanceRenderingCanvasIsFlipped(roomId: number = -1000, canvasId: number = -1): boolean
+    {
+        if(roomId === -1000) roomId = this._activeRoomId;
+
+        if(canvasId === -1) canvasId = this._activeRoomActiveCanvas;
+
+        const canvas = this.getRoomInstanceRenderingCanvas(roomId, canvasId);
+
+        return !!(canvas && canvas.isFlipped);
+    }
+
+    // Signed display scale of a canvas: negative on both axes while flipped.
+    private getCanvasTransformScale(canvas: IRoomRenderingCanvas): number
+    {
+        if(!canvas) return 1;
+
+        return (canvas.isFlipped ? -canvas.scale : canvas.scale);
     }
 
     public initializeRoomInstanceRenderingCanvas(roomId: number, canvasId: number, width: number, height: number): void
@@ -1097,7 +1122,8 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
         const renderingCanvas = this.getRoomInstanceRenderingCanvas(roomId, canvasId);
         const instanceData = this.getRoomInstanceData(roomId);
 
-        if(!renderingCanvas || !instanceData || (renderingCanvas.scale !== 1)) return;
+        // The camera never follows while the room is flipped.
+        if(!renderingCanvas || !instanceData || (renderingCanvas.scale !== 1) || renderingCanvas.isFlipped) return;
 
         const roomGeometry = (renderingCanvas.geometry as RoomGeometry);
         const roomCamera = instanceData.roomCamera;
@@ -1403,7 +1429,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         const rectangle = visualization.getBoundingRectangle();
         const canvas = this.getRoomInstanceRenderingCanvas(roomId, canvasId);
-        const scale = ((canvas) ? canvas.scale : 1);
+        const scale = this.getCanvasTransformScale(canvas);
         const screenPoint = geometry.getScreenPoint(roomObject.getLocation());
 
         if(!screenPoint) return null;
@@ -1411,10 +1437,22 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
         screenPoint.x = Math.round(screenPoint.x);
         screenPoint.y = Math.round(screenPoint.y);
 
-        rectangle.x = (rectangle.x * scale);
-        rectangle.y = (rectangle.y * scale);
-        rectangle.width = (rectangle.width * scale);
-        rectangle.height = (rectangle.height * scale);
+        if(scale < 0)
+        {
+            // A flipped room projects the far corner of the rectangle first,
+            // so the far edge becomes the near one and the size stays positive.
+            rectangle.x = ((rectangle.x + rectangle.width) * scale);
+            rectangle.y = ((rectangle.y + rectangle.height) * scale);
+            rectangle.width = (rectangle.width * -scale);
+            rectangle.height = (rectangle.height * -scale);
+        }
+        else
+        {
+            rectangle.x = (rectangle.x * scale);
+            rectangle.y = (rectangle.y * scale);
+            rectangle.width = (rectangle.width * scale);
+            rectangle.height = (rectangle.height * scale);
+        }
 
         screenPoint.x = (screenPoint.x * scale);
         screenPoint.y = (screenPoint.y * scale);
@@ -1424,8 +1462,11 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         if(!canvas) return null;
 
-        rectangle.x += (Math.round(canvas.width / 2) + canvas.screenOffsetX);
-        rectangle.y += (Math.round(canvas.height / 2) + canvas.screenOffsetY);
+        const canvasWidth = (canvas.isFlipped ? -canvas.width : canvas.width);
+        const canvasHeight = (canvas.isFlipped ? -canvas.height : canvas.height);
+
+        rectangle.x += (Math.round(canvasWidth / 2) + canvas.screenOffsetX);
+        rectangle.y += (Math.round(canvasHeight / 2) + canvas.screenOffsetY);
 
         return rectangle;
     }
@@ -2506,7 +2547,9 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
                         if(camera)
                         {
-                            if(this.useOffsetScrolling)
+                            // The camera never follows a flipped room, so its
+                            // location is left alone until the flip is undone.
+                            if(this.useOffsetScrolling && !canvas.isFlipped)
                             {
                                 if(!camera.isMoving)
                                 {
@@ -2616,6 +2659,13 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
         this._roomObjectEventHandler.modifyRoomObject(this._activeRoomId, objectId, category, operation);
     }
 
+    public rotateActiveObjectPreview(positive: boolean): boolean
+    {
+        if(!this._roomObjectEventHandler) return false;
+
+        return this._roomObjectEventHandler.rotateActiveObjectPreview(this._activeRoomId, positive);
+    }
+
     public modifyRoomObjectDataWithMap(objectId: number, category: number, operation: string, data: Map<string, string>): boolean
     {
         if(!this._roomObjectEventHandler) return false;
@@ -2678,11 +2728,16 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         if(!renderingCanvas) return null;
 
-        screenPoint.x = (screenPoint.x * renderingCanvas.scale);
-        screenPoint.y = (screenPoint.y * renderingCanvas.scale);
+        // A flipped canvas projects through the negative scale and size.
+        const scale = this.getCanvasTransformScale(renderingCanvas);
+        const canvasWidth = (renderingCanvas.isFlipped ? -renderingCanvas.width : renderingCanvas.width);
+        const canvasHeight = (renderingCanvas.isFlipped ? -renderingCanvas.height : renderingCanvas.height);
 
-        screenPoint.x += ((renderingCanvas.width / 2) + renderingCanvas.screenOffsetX);
-        screenPoint.y += ((renderingCanvas.height / 2) + renderingCanvas.screenOffsetY);
+        screenPoint.x = (screenPoint.x * scale);
+        screenPoint.y = (screenPoint.y * scale);
+
+        screenPoint.x += ((canvasWidth / 2) + renderingCanvas.screenOffsetX);
+        screenPoint.y += ((canvasHeight / 2) + renderingCanvas.screenOffsetY);
 
         screenPoint.x = Math.round(screenPoint.x);
         screenPoint.y = Math.round(screenPoint.y);
