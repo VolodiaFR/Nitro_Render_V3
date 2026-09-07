@@ -16,6 +16,9 @@ import { ImageData } from './ImageData';
 export class AvatarImageCache
 {
     private static DEFAULT_MAX_CACHE_STORAGE_TIME_MS: number = 60000;
+    // Shared read-only defaults for the per-frame hot path — never mutate.
+    private static EMPTY_REMOVE_DATA: string[] = [];
+    private static EMPTY_ITEMS: Map<string, string> = new Map();
 
     private _structure: AvatarStructure;
     private _avatar: IAvatarImage;
@@ -176,9 +179,7 @@ export class AvatarImageCache
 
     public getImageContainer(key: string, frameNumber: number, forceRefresh: boolean = false): AvatarImageBodyPartContainer
     {
-        const bodyPartCache = this.getBodyPartCache(key) || new AvatarImageBodyPartCache();
-
-        this._cache.set(key, bodyPartCache);
+        const bodyPartCache = this.getBodyPartCache(key);
 
         let direction = bodyPartCache.getDirection();
         let action = bodyPartCache.getAction();
@@ -187,9 +188,11 @@ export class AvatarImageCache
         if(action.definition.startFromFrameZero) adjustedFrameCount -= action.startFrame;
 
         let adjustedAction = action;
-        let removeData: string[] = [];
-        let items: Map<string, string> = new Map();
+        let removeData: string[] = AvatarImageCache.EMPTY_REMOVE_DATA;
+        let items: Map<string, string> = AvatarImageCache.EMPTY_ITEMS;
 
+        // NOT a shared scratch: the (cached) image container stores this
+        // Point by reference via its offset setter.
         const positionOffset = new Point();
 
         if(action.definition.isAnimation)

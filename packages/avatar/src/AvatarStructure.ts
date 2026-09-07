@@ -333,7 +333,8 @@ export class AvatarStructure
 
         if(!action) return [];
 
-        const activePartTypes = this._partSetsData.getActiveParts(action.definition);
+        let activePartTypes = this._partSetsData.getActiveParts(action.definition);
+        let activePartTypesCopied = false;
         const partContainers: AvatarImagePartContainer[] = [];
         let defaultFrames: any[] = [0];
         const animationAction = this._animationData.getAction(action.definition);
@@ -357,6 +358,12 @@ export class AvatarStructure
                         {
                             for(const dynamicPart of geometryBodyPart.getDynamicParts(avatar))
                             {
+                                if(!activePartTypesCopied)
+                                {
+                                    activePartTypes = activePartTypes.slice();
+                                    activePartTypesCopied = true;
+                                }
+
                                 activePartTypes.push(dynamicPart.id);
                             }
                         }
@@ -370,8 +377,6 @@ export class AvatarStructure
         const mainAction = avatar?.getMainAction?.();
         const isSittingPosture = (mainAction?.definition?.assetPartDefinition === 'sit')
             || (action.definition.assetPartDefinition === 'sit');
-        // Effect 77 = "Riding". While in the saddle the companion/buddy ('pt') part
-        // is hidden the same way it is while sitting.
         const isRidingPosture = (avatar?.getEffectId?.() === 77);
         const hidePetPart = isSittingPosture || isRidingPosture;
 

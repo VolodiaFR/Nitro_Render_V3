@@ -43,6 +43,8 @@ export class MusicPlayer
         this._currentSongId = currentSongId;
         await this.preload();
         await this.unlockAudio();
+
+        if(this._tickerInterval !== undefined) window.clearInterval(this._tickerInterval);
         this._isPlaying = true;
         this.tick();
         this._tickerInterval = window.setInterval(() => this.tick(), 1000);

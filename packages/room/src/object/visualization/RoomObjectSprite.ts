@@ -122,7 +122,6 @@ export class RoomObjectSprite implements IRoomObjectSprite
         return this._height;
     }
 
-    // Per-sprite zoom multiplier (1 = native). Applied on top of the room zoom.
     public get scale(): number
     {
         return this._scale;
@@ -360,6 +359,8 @@ export class RoomObjectSprite implements IRoomObjectSprite
 
     public set filters(filters: Filter[])
     {
+        if(this._filters === filters) return;
+
         this._filters = filters;
 
         this._updateCounter++;

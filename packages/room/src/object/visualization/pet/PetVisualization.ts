@@ -104,6 +104,13 @@ export class PetVisualization extends FurnitureAnimatedVisualization
 
             this._animationStates = null;
         }
+
+        if(this._experienceData)
+        {
+            this._experienceData.dispose();
+
+            this._experienceData = null;
+        }
     }
 
     protected getAnimationId(animationData: AnimationStateData): number

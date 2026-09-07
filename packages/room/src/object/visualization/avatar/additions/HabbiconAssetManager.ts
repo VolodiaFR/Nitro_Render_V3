@@ -38,6 +38,7 @@ export type HabbiconRuntimeAsset = {
 export class HabbiconAssetManager
 {
     private static _instance: HabbiconAssetManager = null;
+    private static MAX_COMPOSED_TEXTURES: number = 256;
     private static FRAME_SIZE: number = 40;
     private static OUTLINE_SIZE: number = 2;
     private static SHADOW_PADDING: number = 5;
@@ -153,7 +154,13 @@ export class HabbiconAssetManager
 
         const existing = this._composedTextures.get(cacheKey);
 
-        if(existing) return existing;
+        if(existing)
+        {
+            this._composedTextures.delete(cacheKey);
+            this._composedTextures.set(cacheKey, existing);
+
+            return existing;
+        }
 
         const composed = this.composeBubbleCanvas(source, sourceAlpha, backgroundAlpha, mirrored);
 
@@ -162,6 +169,16 @@ export class HabbiconAssetManager
         const texture = Texture.from(composed);
 
         this._composedTextures.set(cacheKey, texture);
+
+        while(this._composedTextures.size > HabbiconAssetManager.MAX_COMPOSED_TEXTURES)
+        {
+            const oldestKey = this._composedTextures.keys().next().value;
+            const oldest = this._composedTextures.get(oldestKey);
+
+            this._composedTextures.delete(oldestKey);
+
+            if(oldest && !oldest.destroyed) oldest.destroy(true);
+        }
 
         return texture;
     }

@@ -298,6 +298,11 @@ export class HabbiconBubbleAddition implements IAvatarAddition
         return Math.round((1 - progress) * HabbiconBubbleAddition.INTRO_START_OFFSET_Y);
     }
 
+    private quantizeAlpha(alpha: number): number
+    {
+        return Math.min(255, Math.round(alpha / 8) * 8);
+    }
+
     private resolveAlpha(now: number): number
     {
         if(!this._startedAt || this._sourceFadeOutAt <= this._startedAt) return 255;
@@ -307,7 +312,7 @@ export class HabbiconBubbleAddition implements IAvatarAddition
 
         if(this._sourceHideAt > this._startedAt && now >= this._sourceHideAt) return 0;
 
-        return Math.round(255 * Math.min(fadeIn, fadeOut));
+        return this.quantizeAlpha(Math.round(255 * Math.min(fadeIn, fadeOut)));
     }
 
     private resolveBackgroundAlpha(now: number): number
@@ -317,7 +322,7 @@ export class HabbiconBubbleAddition implements IAvatarAddition
         const fadeIn = Math.min(1, Math.max(0, (now - this._startedAt) / HabbiconBubbleAddition.FADE_IN_DURATION_MS));
         const fadeOut = now < this._backgroundFadeOutAt ? 1 : 1 - Math.min(1, Math.max(0, (now - this._backgroundFadeOutAt) / HabbiconBubbleAddition.BACKGROUND_FADE_OUT_DURATION_MS));
 
-        return Math.round(255 * Math.min(fadeIn, fadeOut));
+        return this.quantizeAlpha(Math.round(255 * Math.min(fadeIn, fadeOut)));
     }
 
     private resolveFrameAnchorCompensationX(): number

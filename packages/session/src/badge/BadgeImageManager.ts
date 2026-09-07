@@ -16,8 +16,10 @@ export class BadgeImageManager
     private _groupBases: Map<number, string[]> = new Map();
     private _groupSymbols: Map<number, string[]> = new Map();
     private _groupPartColors: Map<number, string> = new Map();
+    private static MAX_GROUP_BADGE_ATTEMPTS: number = 20;
+
     private _requestedBadges: Map<string, boolean> = new Map();
-    private _groupBadgesQueue: Map<string, boolean> = new Map();
+    private _groupBadgesQueue: Map<string, number> = new Map();
     private _readyToGenerateGroupBadges: boolean = false;
     private _groupBadgeAssetsLoaded: boolean = false;
     private _groupBadgeAssetsLoading: Promise<boolean> | null = null;
@@ -83,7 +85,7 @@ export class BadgeImageManager
 
         else if(type === BadgeImageManager.GROUP_BADGE)
         {
-            this._groupBadgesQueue.set(badgeName, true);
+            if(!this._groupBadgesQueue.has(badgeName)) this._groupBadgesQueue.set(badgeName, 0);
             void this.processGroupBadgeQueue();
         }
 
@@ -162,7 +164,23 @@ export class BadgeImageManager
 
         for(const badgeCode of Array.from(this._groupBadgesQueue.keys()))
         {
-            if(!this.loadGroupBadge(badgeCode)) hasPending = true;
+            if(this.loadGroupBadge(badgeCode)) continue;
+
+            const attempts = ((this._groupBadgesQueue.get(badgeCode) ?? 0) + 1);
+
+            if(attempts >= BadgeImageManager.MAX_GROUP_BADGE_ATTEMPTS)
+            {
+                this._groupBadgesQueue.delete(badgeCode);
+                this._requestedBadges.delete(badgeCode);
+
+                OctaneLogger.warn(`Group badge could not be rendered, giving up: ${badgeCode}`);
+            }
+            else
+            {
+                this._groupBadgesQueue.set(badgeCode, attempts);
+
+                hasPending = true;
+            }
         }
 
         if(hasPending) this.scheduleQueueRetry();
@@ -201,6 +219,13 @@ export class BadgeImageManager
         const tempSprite = new Sprite(Texture.EMPTY);
         let renderedLayers = 0;
 
+        const abort = (): boolean =>
+        {
+            container.destroy({ children: true });
+
+            return false;
+        };
+
         tempSprite.width = GroupBadgePart.IMAGE_WIDTH;
         tempSprite.height = GroupBadgePart.IMAGE_HEIGHT;
 
@@ -213,7 +238,7 @@ export class BadgeImageManager
 
             const partNames = ((part.type === 'b') ? this._groupBases.get(part.key) : this._groupSymbols.get(part.key));
 
-            if(!partNames || !partNames.length) return false;
+            if(!partNames || !partNames.length) return abort();
 
             for(const partName of partNames)
             {
@@ -242,10 +267,10 @@ export class BadgeImageManager
                 container.addChild(sprite);
             }
 
-            if(!renderedPartLayers) return false;
+            if(!renderedPartLayers) return abort();
         }
 
-        if(!renderedLayers) return false;
+        if(!renderedLayers) return abort();
 
         const texture = TextureUtils.generateTexture(container);
         container.destroy({ children: true });
