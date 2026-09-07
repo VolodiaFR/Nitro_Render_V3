@@ -1158,6 +1158,11 @@ export class RoomPlane implements IRoomPlane
             }
 
             const screenSpot = projection.apply(new Point(x, y));
+
+            const avatarPxPerTile = (canvasWidth / this._leftSide.length);
+
+            screenSpot.y += (avatarPxPerTile * 0.35);
+
             const uprightMatrix = projectionInverse.clone().append(new Matrix(1, 0, 0, 1, Math.trunc(screenSpot.x), Math.trunc(screenSpot.y)));
 
             let avatarParent: Container = container;
@@ -1240,6 +1245,7 @@ export class RoomPlane implements IRoomPlane
 
             let boundsMinX = Number.POSITIVE_INFINITY;
             let boundsMaxX = Number.NEGATIVE_INFINITY;
+            let boundsMaxY = Number.NEGATIVE_INFINITY;
 
             for(const layer of layers)
             {
@@ -1247,11 +1253,14 @@ export class RoomPlane implements IRoomPlane
 
                 if(layer.offsetX < boundsMinX) boundsMinX = layer.offsetX;
                 if((layer.offsetX + layer.texture.width) > boundsMaxX) boundsMaxX = (layer.offsetX + layer.texture.width);
+                if((layer.offsetY + layer.texture.height) > boundsMaxY) boundsMaxY = (layer.offsetY + layer.texture.height);
             }
 
             if(boundsMinX > boundsMaxX) return false;
 
             const centerShift = ((boundsMinX + boundsMaxX) / 2);
+
+            const bottomShift = boundsMaxY;
 
             const screenSpot = projection.apply(new Point(x, y));
 
@@ -1264,8 +1273,9 @@ export class RoomPlane implements IRoomPlane
                 const depthY = (-(this._normal.y / normal2DLength) * planeDistance);
 
                 screenSpot.x += ((depthX - depthY) * pxPerTile);
-                screenSpot.y += ((depthX + depthY) * (pxPerTile / 2));
             }
+
+            screenSpot.y += (pxPerTile * 0.35);
 
             const maskX = (canvasWidth - ((canvasWidth * closestMask.mask.leftSideLoc) / this._leftSide.length));
             const clipHalfWidth = (pxPerTile * 1.25);
@@ -1293,7 +1303,7 @@ export class RoomPlane implements IRoomPlane
                 const width = layer.texture.width;
 
                 const screenX = (layer.flipH ? (screenSpot.x + relLeft + width) : (screenSpot.x + relLeft));
-                const screenY = (screenSpot.y + layer.offsetY);
+                const screenY = (screenSpot.y + (layer.offsetY - bottomShift));
 
                 const screenMatrix = new Matrix((layer.flipH ? -1 : 1), 0, 0, 1, Math.trunc(screenX), Math.trunc(screenY));
 
