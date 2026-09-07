@@ -1,6 +1,6 @@
 import { AlphaTolerance, AvatarAction, AvatarGuideStatus, AvatarSetType, IAdvancedMap, IAvatarEffectListener, IAvatarImage, IAvatarImageListener, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObject, IRoomObjectModel, RoomObjectSpriteType, RoomObjectVariable } from '@octane/api';
 import { GetAssetManager } from '@octane/assets';
-import { AdvancedMap, GetRenderer } from '@octane/utils';
+import { AdvancedMap, GetRenderer, Vector3d } from '@octane/utils';
 import { Container, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
 import { RoomWindowReflectionState } from '../RoomWindowReflectionState';
@@ -87,6 +87,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _reflectionOppositeDirection: number;
     private _reflectionOppositeBaseTexture: Texture;
     private _windowReflectionPushed: boolean;
+    private _lastReflectionPushedTexture: Texture;
+    private _lastReflectionPushedDirection: number;
+    private _lastReflectionPushedLocation: Vector3d;
 
     private _additions: Map<number, IAvatarAddition>;
 
@@ -146,6 +149,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._reflectionOppositeDirection = -1;
         this._reflectionOppositeBaseTexture = null;
         this._windowReflectionPushed = false;
+        this._lastReflectionPushedTexture = null;
+        this._lastReflectionPushedDirection = -1;
+        this._lastReflectionPushedLocation = new Vector3d();
 
         this._additions = new Map();
     }
@@ -305,7 +311,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
             }
             else
             {
-                this.updateWindowReflectionSource();
+                this.updateWindowReflectionSource(true);
 
                 return;
             }
@@ -1140,7 +1146,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         return target;
     }
 
-    private updateWindowReflectionSource(): void
+    private updateWindowReflectionSource(skipIfUnchanged: boolean = false): void
     {
         if(!this.object) return;
 
@@ -1148,6 +1154,17 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(sprite?.texture)
         {
+            if(skipIfUnchanged && this._windowReflectionPushed)
+            {
+                const location = this.object.getLocation();
+
+                if((sprite.texture === this._lastReflectionPushedTexture) &&
+                    (this.object.getDirection().x === this._lastReflectionPushedDirection) &&
+                    (location.x === this._lastReflectionPushedLocation.x) &&
+                    (location.y === this._lastReflectionPushedLocation.y) &&
+                    (location.z === this._lastReflectionPushedLocation.z)) return;
+            }
+
             const roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
 
             if(!RoomWindowReflectionState.hasZones || !RoomWindowReflectionState.isNearAnyZone(this.object.getLocation(), roomId))
@@ -1157,6 +1174,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     RoomWindowReflectionState.removeAvatar(this.object.id, roomId);
 
                     this._windowReflectionPushed = false;
+                    this._lastReflectionPushedTexture = null;
                 }
 
                 return;
@@ -1206,6 +1224,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
             RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset, this.object.getDirection().x, oppositeTexture, roomId);
 
             this._windowReflectionPushed = true;
+            this._lastReflectionPushedTexture = sprite.texture;
+            this._lastReflectionPushedDirection = this.object.getDirection().x;
+            this._lastReflectionPushedLocation.assign(this.object.getLocation());
 
             return;
         }
@@ -1213,6 +1234,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
 
         this._windowReflectionPushed = false;
+        this._lastReflectionPushedTexture = null;
     }
 
     private clearAvatar(): void
@@ -1247,6 +1269,8 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
 
         this._windowReflectionPushed = false;
+        this._lastReflectionPushedTexture = null;
+        this._lastReflectionPushedDirection = -1;
     }
 
     private getAddition(id: number): IAvatarAddition

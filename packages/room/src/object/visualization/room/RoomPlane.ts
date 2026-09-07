@@ -74,6 +74,7 @@ export class RoomPlane implements IRoomPlane
     private _animationLayers: PlaneVisualizationAnimationLayer[] = [];
     private _isAnimated: boolean = false;
     private _lastAnimationUpdate: number = 0;
+    private _animationRenderTime: number = -1;
     private _animationCanvasWidth: number = 0;
     private _animationCanvasHeight: number = 0;
     private _landscapeRenderWidth: number = 0;
@@ -680,10 +681,15 @@ export class RoomPlane implements IRoomPlane
         if(this._isAnimated && this._type === RoomPlane.TYPE_LANDSCAPE)
         {
             const timeSinceLastUpdate = timeSinceStartMs - this._lastAnimationUpdate;
-            if(timeSinceLastUpdate >= RoomPlane.ANIMATION_UPDATE_INTERVAL || needsUpdate || reflectionUpdate)
+            if((timeSinceLastUpdate >= RoomPlane.ANIMATION_UPDATE_INTERVAL) || (this._animationRenderTime < 0))
             {
                 animationUpdate = true;
                 this._lastAnimationUpdate = timeSinceStartMs;
+                this._animationRenderTime = timeSinceStartMs;
+            }
+            else if(needsUpdate || reflectionUpdate)
+            {
+                animationUpdate = true;
             }
         }
 
@@ -720,7 +726,7 @@ export class RoomPlane implements IRoomPlane
 
             if(this._isAnimated && this._type === RoomPlane.TYPE_LANDSCAPE && this._animationLayers.length > 0)
             {
-                this.renderAnimationLayers(timeSinceStartMs, geometry);
+                this.renderAnimationLayers(((this._animationRenderTime >= 0) ? this._animationRenderTime : timeSinceStartMs), geometry);
             }
 
             if(this._type === RoomPlane.TYPE_LANDSCAPE && this._landscapeForegroundTexture)
@@ -1161,6 +1167,14 @@ export class RoomPlane implements IRoomPlane
 
             const avatarPxPerTile = (canvasWidth / this._leftSide.length);
 
+            if(normal2DLength > 0.0001)
+            {
+                const depthX = (-normalX * planeDistance);
+                const depthY = (-normalY * planeDistance);
+
+                screenSpot.x += ((depthX - depthY) * avatarPxPerTile);
+            }
+
             screenSpot.y += (avatarPxPerTile * 0.35);
 
             const uprightMatrix = projectionInverse.clone().append(new Matrix(1, 0, 0, 1, Math.trunc(screenSpot.x), Math.trunc(screenSpot.y)));
@@ -1259,7 +1273,6 @@ export class RoomPlane implements IRoomPlane
             if(boundsMinX > boundsMaxX) return false;
 
             const centerShift = ((boundsMinX + boundsMaxX) / 2);
-
             const bottomShift = boundsMaxY;
 
             const screenSpot = projection.apply(new Point(x, y));
