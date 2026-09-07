@@ -1,7 +1,8 @@
-import { AlphaTolerance, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObjectSprite, RoomObjectVariable, RoomObjectVisualizationType } from '@octane/api';
-import { ChooserSelectionFilter } from '@octane/utils';
+import { AlphaTolerance, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObjectSprite, IVector3D, RoomObjectVariable, RoomObjectVisualizationType } from '@octane/api';
+import { ChooserSelectionFilter, Vector3d } from '@octane/utils';
 import { BLEND_MODES, Filter, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
+import { IWindowReflectionUnitLayer, RoomWindowReflectionState } from '../RoomWindowReflectionState';
 import { ColorData, LayerData } from '../data';
 import { FurnitureVisualizationData } from './FurnitureVisualizationData';
 import { composeFurnitureAlphaMultiplier, furnitureAlphaTolerance } from './WiredOpacityVisualizationPolicy';
@@ -43,6 +44,9 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
     protected _filters: Filter[] = [];
 
     private _animationNumber: number;
+    private _windowReflectionPushed: boolean = false;
+    private _windowReflectionLocation: Vector3d = new Vector3d();
+    private _windowReflectionCenter: Vector3d = new Vector3d();
     private _lookThrough: boolean;
     private _needsLookThroughUpdate: boolean;
     private _wiredClickThrough: boolean;
@@ -101,6 +105,13 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
 
     public dispose(): void
     {
+        if(this._windowReflectionPushed && this.object)
+        {
+            RoomWindowReflectionState.removeUnit(this.object.instanceId, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
+
+            this._windowReflectionPushed = false;
+        }
+
         super.dispose();
 
         this._data = null;
@@ -203,7 +214,171 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
             this._scale = scale;
 
             this.updateSpriteCounter++;
+
+            this.updateWindowReflectionSource();
         }
+        else if(this._windowReflectionPushed)
+        {
+            const location = this.object?.getLocation();
+
+            if(location && ((location.x !== this._windowReflectionLocation.x) || (location.y !== this._windowReflectionLocation.y) || (location.z !== this._windowReflectionLocation.z)))
+            {
+                this.updateWindowReflectionSource();
+            }
+        }
+    }
+
+    private updateWindowReflectionSource(): void
+    {
+        if(!this.object) return;
+
+        if(this.object.model?.getValue<number>(RoomObjectVariable.FURNITURE_IS_WALL_ITEM) === 1) return;
+
+        const location = this.object.getLocation();
+        const roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
+
+        let reflectionLocation: IVector3D = location;
+
+        let sizeX = (this.object.model?.getValue<number>(RoomObjectVariable.FURNITURE_SIZE_X) || 1);
+        let sizeY = (this.object.model?.getValue<number>(RoomObjectVariable.FURNITURE_SIZE_Y) || 1);
+
+        if(sizeX < 1) sizeX = 1;
+        if(sizeY < 1) sizeY = 1;
+
+        if((sizeX > 1) || (sizeY > 1))
+        {
+            const angle = (((this.object.getDirection().x % 360) + 360) % 360);
+
+            if((Math.round(angle / 90) % 2) === 1) [sizeX, sizeY] = [sizeY, sizeX];
+
+            this._windowReflectionCenter.assign(location);
+            this._windowReflectionCenter.x += ((sizeX - 1) / 2);
+            this._windowReflectionCenter.y += ((sizeY - 1) / 2);
+
+            reflectionLocation = this._windowReflectionCenter;
+        }
+
+        if(!RoomWindowReflectionState.hasZones || !RoomWindowReflectionState.isNearAnyZone(reflectionLocation, roomId, 1.1))
+        {
+            if(this._windowReflectionPushed)
+            {
+                RoomWindowReflectionState.removeUnit(this.object.instanceId, roomId);
+
+                this._windowReflectionPushed = false;
+            }
+
+            return;
+        }
+
+        let mirrorDirectionX = -1;
+        let mirrorDirectionY = -1;
+
+        if(this._data && (this._scale > 0))
+        {
+            const rawMirrorX = ((((4 - this._direction) % 8) + 8) % 8);
+            const rawMirrorY = ((((8 - this._direction) % 8) + 8) % 8);
+            const validMirrorX = this._data.getValidDirection(this._scale, (rawMirrorX * 45));
+            const validMirrorY = this._data.getValidDirection(this._scale, (rawMirrorY * 45));
+
+            mirrorDirectionX = ((validMirrorX === rawMirrorX) ? validMirrorX : -1);
+            mirrorDirectionY = ((validMirrorY === rawMirrorY) ? validMirrorY : -1);
+        }
+
+        const layers: IWindowReflectionUnitLayer[] = [];
+        const mirrorLayersX: IWindowReflectionUnitLayer[] = [];
+        const mirrorLayersY: IWindowReflectionUnitLayer[] = [];
+        const totalSprites = this.totalSprites;
+
+        let mirrorCompleteX = ((mirrorDirectionX >= 0) && (mirrorDirectionX !== this._direction));
+        let mirrorCompleteY = ((mirrorDirectionY >= 0) && (mirrorDirectionY !== this._direction));
+
+        const buildMirrorLayer = (spriteName: string, layerId: number, direction: number, alpha: number, target: IWindowReflectionUnitLayer[]): boolean =>
+        {
+            const asset = this.getDirectionAsset(spriteName, layerId, direction);
+
+            if(!asset?.texture || asset.texture.destroyed) return false;
+
+            const flipH = !!asset.flipH;
+            const width = asset.texture.width;
+
+            target.push({
+                texture: asset.texture,
+                offsetX: (flipH ? (asset.offsetX - width) : asset.offsetX),
+                offsetY: asset.offsetY,
+                alpha,
+                flipH
+            });
+
+            return true;
+        };
+
+        for(let i = 0; i < totalSprites; i++)
+        {
+            const sprite = this.getSprite(i);
+
+            if(!sprite || !sprite.visible || !sprite.texture || (sprite.texture === Texture.EMPTY)) continue;
+
+            if(sprite.blendMode && (sprite.blendMode !== 'normal')) continue;
+
+            const flipH = !!sprite.flipH;
+            const width = sprite.texture.width;
+            const layerAlpha = (sprite.alpha / 255);
+
+            layers.push({
+                texture: sprite.texture,
+                offsetX: (flipH ? (sprite.offsetX - width) : sprite.offsetX),
+                offsetY: sprite.offsetY,
+                alpha: layerAlpha,
+                flipH
+            });
+
+            if(mirrorCompleteX && !buildMirrorLayer(sprite.name, i, mirrorDirectionX, layerAlpha, mirrorLayersX)) mirrorCompleteX = false;
+            if(mirrorCompleteY && !buildMirrorLayer(sprite.name, i, mirrorDirectionY, layerAlpha, mirrorLayersY)) mirrorCompleteY = false;
+        }
+
+        if(!layers.length)
+        {
+            if(this._windowReflectionPushed)
+            {
+                RoomWindowReflectionState.removeUnit(this.object.instanceId, roomId);
+
+                this._windowReflectionPushed = false;
+            }
+
+            return;
+        }
+
+        const layersX = ((mirrorCompleteX && (mirrorLayersX.length === layers.length)) ? mirrorLayersX : layers);
+        const layersY = ((mirrorCompleteY && (mirrorLayersY.length === layers.length)) ? mirrorLayersY : layers);
+
+        RoomWindowReflectionState.setUnit(this.object.instanceId, layersX, layersY, reflectionLocation, roomId);
+
+        this._windowReflectionPushed = true;
+        this._windowReflectionLocation.assign(location);
+    }
+
+    private getDirectionAsset(assetName: string, layerId: number, direction: number): IGraphicAsset
+    {
+        if(!assetName || (direction < 0)) return null;
+
+        const parts = assetName.split('_');
+
+        if(parts.length < 5) return null;
+
+        if(isNaN(parseInt(parts[parts.length - 2]))) return null;
+
+        parts[parts.length - 2] = direction.toString();
+
+        let asset = this.getAsset(parts.join('_'), layerId);
+
+        if(!asset)
+        {
+            parts[parts.length - 1] = '0';
+
+            asset = this.getAsset(parts.join('_'), layerId);
+        }
+
+        return asset;
     }
 
     protected updateObject(scale: number, direction: number): boolean

@@ -421,6 +421,7 @@ export class RoomVisualization extends RoomObjectSpriteVisualization implements 
                 if(plane)
                 {
                     plane.maskManager = this._data.maskManager;
+                    plane.roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
 
                     let i = 0;
 

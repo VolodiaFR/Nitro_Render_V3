@@ -86,6 +86,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _reflectionOppositeTexture: Texture;
     private _reflectionOppositeDirection: number;
     private _reflectionOppositeBaseTexture: Texture;
+    private _windowReflectionPushed: boolean;
 
     private _additions: Map<number, IAvatarAddition>;
 
@@ -144,6 +145,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._reflectionOppositeTexture = null;
         this._reflectionOppositeDirection = -1;
         this._reflectionOppositeBaseTexture = null;
+        this._windowReflectionPushed = false;
 
         this._additions = new Map();
     }
@@ -187,7 +189,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
             this._reflectionOppositeTexture = null;
         }
 
-        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id);
+        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
 
         this._shadow = null;
         this._disposed = true;
@@ -1015,14 +1017,11 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         {
             this._isLaying = true;
 
-            // Format from server: "height;xOffset;yOffset" or just "height"
             const parts = this._postureParameter ? this._postureParameter.split(';') : [];
             const height = parts.length > 0 ? parseFloat(parts[0]) : 0;
 
             if(height < 0) this._layInside = true;
 
-            // Use the avatar's actual Z position for depth compensation
-            // This makes the renderer independent of what Z offset the emulator sends
             const avatarZ = this.object ? this.object.getLocation().z : 0;
             this._layDepthOffset = avatarZ * Math.sqrt(0.5);
 
@@ -1149,6 +1148,20 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(sprite?.texture)
         {
+            const roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
+
+            if(!RoomWindowReflectionState.hasZones || !RoomWindowReflectionState.isNearAnyZone(this.object.getLocation(), roomId))
+            {
+                if(this._windowReflectionPushed)
+                {
+                    RoomWindowReflectionState.removeAvatar(this.object.id, roomId);
+
+                    this._windowReflectionPushed = false;
+                }
+
+                return;
+            }
+
             const displayedDirection = this._avatarImage?.getDirection();
             const directionOffset = this._avatarImage?.getDirectionOffset() ?? 0;
             let oppositeTexture = sprite.texture;
@@ -1190,12 +1203,16 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 }
             }
 
-            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset, this.object.getDirection().x, oppositeTexture);
+            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset, this.object.getDirection().x, oppositeTexture, roomId);
+
+            this._windowReflectionPushed = true;
 
             return;
         }
 
-        RoomWindowReflectionState.removeAvatar(this.object.id);
+        RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
+
+        this._windowReflectionPushed = false;
     }
 
     private clearAvatar(): void
@@ -1227,7 +1244,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         this._avatarImage = null;
 
-        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id);
+        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
+
+        this._windowReflectionPushed = false;
     }
 
     private getAddition(id: number): IAvatarAddition

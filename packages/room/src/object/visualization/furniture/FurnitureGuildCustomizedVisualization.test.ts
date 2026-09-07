@@ -10,7 +10,20 @@ const { getGroupBadgeImage, loadGroupBadgeImage } = vi.hoisted(() => ({
 vi.mock('@octane/utils', () => ({
     ChooserSelectionFilter: class
     {},
-    TextureUtils: {}
+    TextureUtils: {},
+    Vector3d: class
+    {
+        public x: number = 0;
+        public y: number = 0;
+        public z: number = 0;
+
+        public assign(vector: { x: number; y: number; z: number }): void
+        {
+            this.x = vector.x;
+            this.y = vector.y;
+            this.z = vector.z;
+        }
+    }
 }));
 
 vi.mock('../../../utils', () => ({
