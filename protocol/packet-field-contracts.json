@@ -10448,6 +10448,31 @@
           "kind": "scalar",
           "type": "int",
           "name": ""
+        },
+        {
+          "kind": "scalar",
+          "type": "boolean",
+          "name": "wiredWhisperDisabled"
+        },
+        {
+          "kind": "scalar",
+          "type": "int",
+          "name": "chatMode"
+        },
+        {
+          "kind": "scalar",
+          "type": "int",
+          "name": "chatBubbleWidth"
+        },
+        {
+          "kind": "scalar",
+          "type": "int",
+          "name": "chatScrollSpeed"
+        },
+        {
+          "kind": "scalar",
+          "type": "int",
+          "name": "onlineIndicatorPreference"
         }
       ]
     },
@@ -10549,31 +10574,6 @@
           "kind": "scalar",
           "type": "int",
           "name": ""
-        },
-        {
-          "kind": "scalar",
-          "type": "boolean",
-          "name": "wiredWhisperDisabled"
-        },
-        {
-          "kind": "scalar",
-          "type": "int",
-          "name": "chatMode"
-        },
-        {
-          "kind": "scalar",
-          "type": "int",
-          "name": "chatBubbleWidth"
-        },
-        {
-          "kind": "scalar",
-          "type": "int",
-          "name": "chatScrollSpeed"
-        },
-        {
-          "kind": "scalar",
-          "type": "int",
-          "name": "onlineIndicatorPreference"
         }
       ]
     },
