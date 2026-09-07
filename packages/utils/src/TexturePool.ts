@@ -1,4 +1,4 @@
-import { NitroLogger, TextureUtils } from '@nitrots/utils';
+import { OctaneLogger, TextureUtils } from '@octane/utils';
 import { Texture } from 'pixi.js';
 
 export class TexturePool
@@ -50,12 +50,12 @@ export class TexturePool
 
     public putTexture(texture: Texture)
     {
-        if(!texture) return;
+        if(!texture || texture.destroyed || !texture.source) return;
 
         if(this._totalTextures >= TexturePool.MAX_POOL_SIZE)
         {
-            //@ts-ignore
             delete texture.source.hitMap;
+            delete texture.source.hitMapDirty;
 
             if(!texture.destroyed) texture.destroy(true);
 
@@ -66,8 +66,8 @@ export class TexturePool
 
         if(!this._textures[texture.width][texture.height]) this._textures[texture.width][texture.height] = [];
 
-        //@ts-ignore
         delete texture.source.hitMap;
+        delete texture.source.hitMapDirty;
 
         this._textures[texture.width][texture.height].push(texture);
 
@@ -93,8 +93,8 @@ export class TexturePool
 
                     if((source._touched > -1) && (this._runCount - source._touched) > TexturePool.MAX_IDLE)
                     {
-                        //@ts-ignore
                         delete texture.source.hitMap;
+                        delete texture.source.hitMapDirty;
 
                         if(!source.destroyed) texture.destroy(true);
 

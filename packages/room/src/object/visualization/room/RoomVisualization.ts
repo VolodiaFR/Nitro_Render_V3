@@ -1,5 +1,5 @@
-import { AlphaTolerance, IObjectVisualizationData, IPlaneVisualization, IRoomGeometry, IRoomObjectModel, IRoomObjectSprite, IRoomPlane, RoomObjectSpriteType, RoomObjectVariable } from '@nitrots/api';
-import { ToInt32, Vector3d } from '@nitrots/utils';
+import { AlphaTolerance, IObjectVisualizationData, IPlaneVisualization, IRoomGeometry, IRoomObjectModel, IRoomObjectSprite, IRoomPlane, RoomObjectSpriteType, RoomObjectVariable } from '@octane/api';
+import { ToInt32, Vector3d } from '@octane/utils';
 import { Filter, Rectangle, Texture } from 'pixi.js';
 import { RoomMapData } from '../../RoomMapData';
 import { RoomMapMaskData } from '../../RoomMapMaskData';
@@ -421,6 +421,7 @@ export class RoomVisualization extends RoomObjectSpriteVisualization implements 
                 if(plane)
                 {
                     plane.maskManager = this._data.maskManager;
+                    plane.roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
 
                     let i = 0;
 

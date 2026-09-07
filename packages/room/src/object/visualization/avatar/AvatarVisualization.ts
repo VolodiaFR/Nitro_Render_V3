@@ -1,6 +1,6 @@
-import { AlphaTolerance, AvatarAction, AvatarGuideStatus, AvatarSetType, IAdvancedMap, IAvatarEffectListener, IAvatarImage, IAvatarImageListener, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObject, IRoomObjectModel, RoomObjectSpriteType, RoomObjectVariable } from '@nitrots/api';
-import { GetAssetManager } from '@nitrots/assets';
-import { AdvancedMap, GetRenderer } from '@nitrots/utils';
+import { AlphaTolerance, AvatarAction, AvatarGuideStatus, AvatarSetType, IAdvancedMap, IAvatarEffectListener, IAvatarImage, IAvatarImageListener, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObject, IRoomObjectModel, RoomObjectSpriteType, RoomObjectVariable } from '@octane/api';
+import { GetAssetManager } from '@octane/assets';
+import { AdvancedMap, GetRenderer } from '@octane/utils';
 import { Container, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
 import { RoomWindowReflectionState } from '../RoomWindowReflectionState';
@@ -86,6 +86,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _reflectionOppositeTexture: Texture;
     private _reflectionOppositeDirection: number;
     private _reflectionOppositeBaseTexture: Texture;
+    private _windowReflectionPushed: boolean;
 
     private _additions: Map<number, IAvatarAddition>;
 
@@ -144,6 +145,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._reflectionOppositeTexture = null;
         this._reflectionOppositeDirection = -1;
         this._reflectionOppositeBaseTexture = null;
+        this._windowReflectionPushed = false;
 
         this._additions = new Map();
     }
@@ -187,7 +189,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
             this._reflectionOppositeTexture = null;
         }
 
-        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id);
+        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
 
         this._shadow = null;
         this._disposed = true;
@@ -318,6 +320,8 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 const highlightEnabled = ((this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT_ENABLE) === 1) && (this.object.model.getValue<number>(RoomObjectVariable.FIGURE_HIGHLIGHT) === 1));
                 const avatarImage = this._avatarImage.processAsTexture(AvatarSetType.FULL, highlightEnabled);
 
+                if(!this._isAnimating && this._avatarImage.isAnimating()) this._isAnimating = true;
+
                 if(avatarImage)
                 {
                     sprite.texture = avatarImage;
@@ -340,8 +344,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                     if(this._isLaying)
                     {
-                        // Convert isometric ground-plane offsets to screen pixels
-                        // isoX moves along one diagonal, isoY along the other
                         sprite.offsetX += (this._layXOffset - this._layYOffset);
                         sprite.offsetY += Math.floor((this._layXOffset + this._layYOffset) / 2);
                     }
@@ -349,9 +351,6 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                 if(this._isLaying)
                 {
-                    // Compensate for avatar Z elevation so it sorts near the bed's depth
-                    // layInside: avatar slightly behind bed (tucked in under blanket)
-                    // !layInside: avatar slightly in front of bed (on top)
                     const laySign = this._layInside ? AvatarVisualization.AVATAR_SPRITE_LAYING_DEPTH : -AvatarVisualization.AVATAR_SPRITE_LAYING_DEPTH;
                     sprite.relativeDepth = (laySign - this._layDepthOffset + canvasOffsets[2]);
                 }
@@ -544,9 +543,19 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 {
                     if(this._cachedAvatarEffects.length >= AvatarVisualization.MAX_EFFECT_CACHE)
                     {
-                        const cached = this._cachedAvatarEffects.remove(this._cachedAvatarEffects.getKey(0));
+                        for(let i = 0; i < this._cachedAvatarEffects.length; i++)
+                        {
+                            const key = this._cachedAvatarEffects.getKey(i);
+                            const candidate = this._cachedAvatarEffects.getValue(key);
 
-                        if(cached) cached.dispose();
+                            if(candidate === this._avatarImage) continue;
+
+                            this._cachedAvatarEffects.remove(key);
+
+                            if(candidate) candidate.dispose();
+
+                            break;
+                        }
                     }
 
                     this._cachedAvatarEffects.add(imageName, cachedImage);
@@ -1008,14 +1017,11 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         {
             this._isLaying = true;
 
-            // Format from server: "height;xOffset;yOffset" or just "height"
             const parts = this._postureParameter ? this._postureParameter.split(';') : [];
             const height = parts.length > 0 ? parseFloat(parts[0]) : 0;
 
             if(height < 0) this._layInside = true;
 
-            // Use the avatar's actual Z position for depth compensation
-            // This makes the renderer independent of what Z offset the emulator sends
             const avatarZ = this.object ? this.object.getLocation().z : 0;
             this._layDepthOffset = avatarZ * Math.sqrt(0.5);
 
@@ -1142,6 +1148,20 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(sprite?.texture)
         {
+            const roomId = this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID);
+
+            if(!RoomWindowReflectionState.hasZones || !RoomWindowReflectionState.isNearAnyZone(this.object.getLocation(), roomId))
+            {
+                if(this._windowReflectionPushed)
+                {
+                    RoomWindowReflectionState.removeAvatar(this.object.id, roomId);
+
+                    this._windowReflectionPushed = false;
+                }
+
+                return;
+            }
+
             const displayedDirection = this._avatarImage?.getDirection();
             const directionOffset = this._avatarImage?.getDirectionOffset() ?? 0;
             let oppositeTexture = sprite.texture;
@@ -1183,12 +1203,16 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 }
             }
 
-            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset, this.object.getDirection().x, oppositeTexture);
+            RoomWindowReflectionState.setAvatar(this.object.id, sprite.texture, this.object.getLocation(), this._reflectionVerticalOffset, this.object.getDirection().x, oppositeTexture, roomId);
+
+            this._windowReflectionPushed = true;
 
             return;
         }
 
-        RoomWindowReflectionState.removeAvatar(this.object.id);
+        RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
+
+        this._windowReflectionPushed = false;
     }
 
     private clearAvatar(): void
@@ -1220,7 +1244,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         this._avatarImage = null;
 
-        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id);
+        if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
+
+        this._windowReflectionPushed = false;
     }
 
     private getAddition(id: number): IAvatarAddition

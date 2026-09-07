@@ -1,4 +1,4 @@
-import { IRoomObjectController, RoomObjectVariable } from '@nitrots/api';
+import { IRoomObjectController, RoomObjectVariable } from '@octane/api';
 import { describe, expect, it, vi } from 'vitest';
 import { FurnitureGuildCustomizedVisualization } from './FurnitureGuildCustomizedVisualization';
 
@@ -7,10 +7,23 @@ const { getGroupBadgeImage, loadGroupBadgeImage } = vi.hoisted(() => ({
     loadGroupBadgeImage: vi.fn()
 }));
 
-vi.mock('@nitrots/utils', () => ({
+vi.mock('@octane/utils', () => ({
     ChooserSelectionFilter: class
     {},
-    TextureUtils: {}
+    TextureUtils: {},
+    Vector3d: class
+    {
+        public x: number = 0;
+        public y: number = 0;
+        public z: number = 0;
+
+        public assign(vector: { x: number; y: number; z: number }): void
+        {
+            this.x = vector.x;
+            this.y = vector.y;
+            this.z = vector.z;
+        }
+    }
 }));
 
 vi.mock('../../../utils', () => ({
@@ -18,7 +31,7 @@ vi.mock('../../../utils', () => ({
     {}
 }));
 
-vi.mock('@nitrots/session', () => ({
+vi.mock('@octane/session', () => ({
     GetSessionDataManager: () => ({
         getGroupBadgeImage,
         loadGroupBadgeImage

@@ -1,4 +1,4 @@
-﻿import { IActionDefinition, IPartColor } from '@nitrots/api';
+﻿import { IActionDefinition, IPartColor } from '@octane/api';
 import { AvatarAnimationFrame } from './structure';
 
 export class AvatarImagePartContainer
@@ -28,6 +28,16 @@ export class AvatarImagePartContainer
         this._isBlendable = isBlendable;
 
         if(this._partType === 'ey') this._isColorable = false;
+    }
+
+    public get frameCount(): number
+    {
+        return ((this._frames && this._frames.length) || 0);
+    }
+
+    public get hasMultipleStaticFrames(): boolean
+    {
+        return ((this.frameCount > 1) && !(this._frames[0] instanceof AvatarAnimationFrame));
     }
 
     public getFrameIndex(frameCount: number): number

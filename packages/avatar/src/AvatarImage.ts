@@ -1,5 +1,5 @@
-import { AvatarAction, AvatarDirectionAngle, AvatarScaleType, AvatarSetType, IActiveActionData, IAnimationLayerData, IAvatarDataContainer, IAvatarEffectListener, IAvatarFigureContainer, IAvatarImage, IGraphicAsset, IPartColor, ISpriteDataContainer } from '@nitrots/api';
-import { GetRenderer, GetTexturePool, GetTickerTime, PaletteMapFilter, TextureUtils } from '@nitrots/utils';
+import { AvatarAction, AvatarDirectionAngle, AvatarScaleType, AvatarSetType, IActiveActionData, IAnimationLayerData, IAvatarDataContainer, IAvatarEffectListener, IAvatarFigureContainer, IAvatarImage, IGraphicAsset, IPartColor, ISpriteDataContainer } from '@octane/api';
+import { GetRenderer, GetTexturePool, GetTickerTime, PaletteMapFilter, TextureUtils } from '@octane/utils';
 import { ColorMatrixFilter, Container, Filter, ICanvas, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { AvatarFigureContainer } from './AvatarFigureContainer';
 import { AvatarImageBodyPartContainer } from './AvatarImageBodyPartContainer';
@@ -247,9 +247,6 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
                     container.addChild(partContainer);
 
-                    // Cacheable parts stay owned by AvatarImageCache. Non-cacheable ones are
-                    // rendered fresh every time and never stored, so this is the only reference
-                    // that will ever exist — the render path has to destroy them itself.
                     if(!part.isCacheable) this._transientBodyParts.push(part);
                 }
             }
@@ -257,25 +254,20 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
             partCount--;
         }
 
-        container.filters = [];
-
         if(this._avatarSpriteData)
         {
-            if(this._avatarSpriteData.colorTransform)
-            {
-                if(container.filters === undefined || container.filters === null) container.filters = [ this._avatarSpriteData.colorTransform ];
-                else container.filters = [ ...(container.filters), this._avatarSpriteData.colorTransform ];
-            }
+            const filters: Filter[] = [];
+
+            if(this._avatarSpriteData.colorTransform) filters.push(this._avatarSpriteData.colorTransform);
 
             if(this._avatarSpriteData.paletteIsGrayscale)
             {
                 this.convertToGrayscale(container);
 
-                const paletteMapFilter = this.getPaletteMapFilter(this._avatarSpriteData);
-
-                if(container.filters === undefined || container.filters === null) container.filters = [ paletteMapFilter ];
-                else container.filters = [ ...(container.filters), paletteMapFilter ];
+                filters.push(this.getPaletteMapFilter(this._avatarSpriteData));
             }
+
+            if(filters.length) container.filters = filters;
         }
 
         return container;
@@ -293,26 +285,35 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
         if(!avatarCanvas) return null;
 
+        const container = this.buildAvatarContainer(avatarCanvas, setType);
+
+        if(!container) return null;
+
+        let previousTexture: Texture = null;
+
         if(this._activeTexture && ((this._activeTexture.width !== avatarCanvas.width) || (this._activeTexture.height !== avatarCanvas.height)))
         {
-            GetTexturePool().putTexture(this._activeTexture);
+            previousTexture = this._activeTexture;
 
             this._activeTexture = null;
         }
 
         if(!this._activeTexture) this._activeTexture = GetTexturePool().getTexture(avatarCanvas.width, avatarCanvas.height);
 
-        if(!this._activeTexture) return null;
+        if(!this._activeTexture)
+        {
+            this._activeTexture = previousTexture;
 
-        const container = this.buildAvatarContainer(avatarCanvas, setType);
-
-        if(!container) return null;
+            return null;
+        }
 
         GetRenderer().render({
             target: this._activeTexture,
             container: container,
             clear: true
         });
+
+        if(previousTexture) GetTexturePool().putTexture(previousTexture);
 
         for(const child of container.children)
         {
@@ -323,8 +324,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
         this.disposeTransientBodyParts();
 
-        //@ts-ignore
-        this._activeTexture.source.hitMap = null;
+        this._activeTexture.source.hitMapDirty = true;
 
         this._changes = false;
 
@@ -344,7 +344,6 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
         return url;
     }
 
-    /** AIR AvatarImage.getCroppedImage: extract the native body-part union bounds. */
     public processAsCroppedImageUrl(setType: string, trimTransparentPixels: boolean = false): string
     {
         if(!this._mainAction) return null;
@@ -644,7 +643,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
     public isAnimating(): boolean
     {
-        return (this._isAnimating) || (this._animationFrameCount > 1);
+        return (this._isAnimating) || (this._animationFrameCount > 1) || (!!this._cache && this._cache.hasAnimatedContent);
     }
 
     private resetActions(): boolean
