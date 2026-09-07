@@ -19,6 +19,7 @@ export class RoomPlane implements IRoomPlane
         '64': new RoomGeometry(64, new Vector3d(RoomPlane.HORIZONTAL_ANGLE_DEFAULT, RoomPlane.VERTICAL_ANGLE_DEFAULT), new Vector3d(-10, 0, 0))
     };
     private static ANIMATION_UPDATE_INTERVAL: number = 500;
+    private static EMPTY_CLEAR_CONTAINER: Container = new Container();
     private static LANDSCAPE_DEFAULT_BACKGROUND_COLOR: number = 0x84C6DF;
 
     public static TYPE_UNDEFINED: number = 0;
@@ -94,6 +95,7 @@ export class RoomPlane implements IRoomPlane
     private _windowReflectionLastVisible: Map<number, { texture: Texture; oppositeTexture: Texture; location: IVector3D; verticalOffset: number; direction: number }> = new Map();
     private _windowReflectionFadeOut: Map<number, { texture: Texture; oppositeTexture: Texture; location: IVector3D; verticalOffset: number; direction: number; startedAt: number }> = new Map();
     private _reflectionFadeAnimating: boolean = false;
+    private _animationCanvas: RenderTexture = null;
 
     constructor(origin: IVector3D, location: IVector3D, leftSide: IVector3D, rightSide: IVector3D, type: number, usesMask: boolean, secondaryNormals: IVector3D[], randomSeed: number, textureOffsetX: number = 0, textureOffsetY: number = 0, textureMaxX: number = 0, textureMaxY: number = 0)
     {
@@ -157,6 +159,13 @@ export class RoomPlane implements IRoomPlane
                 if(layer) layer.dispose();
             }
             this._animationLayers = [];
+        }
+
+        if(this._animationCanvas)
+        {
+            this._animationCanvas.destroy(true);
+
+            this._animationCanvas = null;
         }
 
         this._windowReflectionLastVisible.clear();
@@ -744,7 +753,28 @@ export class RoomPlane implements IRoomPlane
 
         if(canvasWidth <= 0 || canvasHeight <= 0) return;
 
-        const animationCanvas = RenderTexture.create({ width: canvasWidth, height: canvasHeight });
+        // Reuse the canvas across animation ticks (24/s per animated plane)
+        // instead of a create/destroy per frame.
+        if(this._animationCanvas && ((this._animationCanvas.width !== canvasWidth) || (this._animationCanvas.height !== canvasHeight)))
+        {
+            this._animationCanvas.destroy(true);
+
+            this._animationCanvas = null;
+        }
+
+        // Nearest-neighbor sampling: the canvas is mapped onto the wall
+        // through a shear matrix, and linear filtering smears the clouds'
+        // 1px pixel-art outlines into the sky on one of the two wall
+        // angles (Flash sampled wall bitmaps unsmoothed).
+        if(!this._animationCanvas) this._animationCanvas = RenderTexture.create({ width: canvasWidth, height: canvasHeight, scaleMode: 'nearest' });
+
+        const animationCanvas = this._animationCanvas;
+
+        GetRenderer().render({
+            target: animationCanvas,
+            container: RoomPlane.EMPTY_CLEAR_CONTAINER,
+            clear: true
+        });
 
         for(const layer of this._animationLayers)
         {
@@ -794,7 +824,6 @@ export class RoomPlane implements IRoomPlane
             clear: false
         });
 
-        animationCanvas.destroy(true);
         animContainer.destroy({ children: true });
     }
 

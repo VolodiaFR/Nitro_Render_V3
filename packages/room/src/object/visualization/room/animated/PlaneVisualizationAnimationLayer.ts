@@ -1,6 +1,6 @@
 import { IAssetPlaneVisualizationAnimatedLayerItem, IGraphicAssetCollection } from '@octane/api';
 import { TextureUtils } from '@octane/utils';
-import { RenderTexture, Sprite } from 'pixi.js';
+import { RenderTexture, Sprite, Texture } from 'pixi.js';
 import { AnimationItem } from './AnimationItem';
 
 export class PlaneVisualizationAnimationLayer
@@ -10,6 +10,8 @@ export class PlaneVisualizationAnimationLayer
     private _isDisposed: boolean = false;
     private _items: AnimationItem[] = [];
     private _randomState: number;
+    private _sanitizedTextures: Map<object, Texture> = new Map();
+    private _ownedTextures: Set<Texture> = new Set();
 
     constructor(items: IAssetPlaneVisualizationAnimatedLayerItem[], assets: IGraphicAssetCollection)
     {
@@ -94,6 +96,14 @@ export class PlaneVisualizationAnimationLayer
 
             this._items = [];
         }
+
+        for(const texture of this._ownedTextures)
+        {
+            if(texture && !texture.destroyed) texture.destroy(true);
+        }
+
+        this._ownedTextures.clear();
+        this._sanitizedTextures.clear();
     }
 
     public render(
@@ -149,9 +159,58 @@ export class PlaneVisualizationAnimationLayer
         return (x > -width) && (x < canvasWidth) && (y > -height) && (y < canvasHeight);
     }
 
+    // The plane mask pipeline keys PURE BLACK as "cut this pixel out"
+    // (PlaneMaskFilter turns rgb(0,0,0) transparent), so any pure-black
+    // content — the clouds' 1px outlines — gets erased on planes that carry
+    // window masks. Shift pure black to rgb(1,1,1) once per asset: visually
+    // identical, but no longer matches the mask key.
+    private getRenderTexture(item: AnimationItem): Texture
+    {
+        let texture = this._sanitizedTextures.get(item.bitmapData);
+
+        if(texture) return texture;
+
+        texture = item.bitmapData.texture;
+
+        try
+        {
+            const source = TextureUtils.generateCanvas(item.bitmapData.texture) as HTMLCanvasElement;
+            const context = source?.getContext && source.getContext('2d');
+
+            if(context)
+            {
+                const imageData = context.getImageData(0, 0, source.width, source.height);
+                const data = imageData.data;
+
+                for(let i = 0; i < data.length; i += 4)
+                {
+                    if((data[i + 3] > 0) && !data[i] && !data[i + 1] && !data[i + 2])
+                    {
+                        data[i] = data[i + 1] = data[i + 2] = 1;
+                    }
+                }
+
+                context.putImageData(imageData, 0, 0);
+
+                texture = Texture.from(source);
+
+                this._ownedTextures.add(texture);
+            }
+        }
+        catch
+        {
+            // Extraction unavailable (e.g. headless tests) — draw the
+            // original texture instead.
+        }
+
+        this._sanitizedTextures.set(item.bitmapData, texture);
+
+        return texture;
+    }
+
     private renderSprite(item: AnimationItem, x: number, y: number, canvas: RenderTexture): void
     {
-        const sprite = new Sprite(item.bitmapData.texture);
+        const sprite = new Sprite(this.getRenderTexture(item));
         sprite.position.set(x, y);
         TextureUtils.writeToTexture(sprite, canvas, false);
         sprite.destroy();
