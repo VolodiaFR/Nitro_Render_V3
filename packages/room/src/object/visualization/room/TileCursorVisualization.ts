@@ -12,6 +12,11 @@ export class TileCursorVisualization extends FurnitureAnimatedVisualization
         this._tileHeight = 0;
     }
 
+    protected get pushesWindowReflection(): boolean
+    {
+        return false;
+    }
+
     protected getLayerYOffset(scale: number, direction: number, layerId: number): number
     {
         if(layerId === 1)
