@@ -13,3 +13,4 @@ export * from './WiredUserInspectMoveComposer';
 export * from './WiredUserVariableManageComposer';
 export * from './WiredUserVariablesRequestComposer';
 export * from './WiredUserVariableUpdateComposer';
+export * from './WiredMenuSettingsComposer';
