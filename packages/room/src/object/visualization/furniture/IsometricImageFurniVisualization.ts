@@ -8,6 +8,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     protected static THUMBNAIL: string = 'THUMBNAIL';
 
     private _thumbnailImageNormal: Texture;
+    private _thumbnailImageOwned: boolean = false;
     private _thumbnailDirection: number;
     private _thumbnailSize: number;
     private _thumbnailChanged: boolean;
@@ -39,7 +40,14 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         }
 
         this._thumbnailTexture = null;
+
+        if(this._thumbnailImageOwned && this._thumbnailImageNormal && !this._thumbnailImageNormal.destroyed)
+        {
+            this._thumbnailImageNormal.destroy(true);
+        }
+
         this._thumbnailImageNormal = null;
+        this._thumbnailImageOwned = false;
 
         super.dispose();
     }
@@ -49,9 +57,15 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         return !(this._thumbnailImageNormal == null);
     }
 
-    public setThumbnailImages(texture: Texture, url?: string): void
+    public setThumbnailImages(texture: Texture, url?: string, owned: boolean = false): void
     {
+        if(this._thumbnailImageOwned && this._thumbnailImageNormal && (this._thumbnailImageNormal !== texture) && !this._thumbnailImageNormal.destroyed)
+        {
+            this._thumbnailImageNormal.destroy(true);
+        }
+
         this._thumbnailImageNormal = texture;
+        this._thumbnailImageOwned = (owned && !!texture);
         this._photoUrl = url || null;
         this._thumbnailChanged = true;
     }

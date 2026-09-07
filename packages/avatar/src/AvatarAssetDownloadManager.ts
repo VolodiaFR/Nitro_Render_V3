@@ -302,7 +302,7 @@ export class AvatarAssetDownloadManager
                     this._figureListeners.set(figure, listeners);
                 }
 
-                listeners.push(listener);
+                if(listeners.indexOf(listener) === -1) listeners.push(listener);
             }
 
             this._incompleteFigures.set(figure, pendingLibraries);

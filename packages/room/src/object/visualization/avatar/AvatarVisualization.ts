@@ -197,6 +197,13 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
         if(this.object) RoomWindowReflectionState.removeAvatar(this.object.id, this.object.model?.getValue<string>(RoomObjectVariable.OBJECT_ROOM_ID));
 
+        if(this._additions)
+        {
+            for(const addition of this._additions.values()) addition?.dispose();
+
+            this._additions.clear();
+        }
+
         this._shadow = null;
         this._disposed = true;
     }

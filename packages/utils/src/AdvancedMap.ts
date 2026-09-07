@@ -29,9 +29,9 @@ export class AdvancedMap<T, U> implements IAdvancedMap<T, U>
 
     public dispose(): void
     {
-        if(!this._dictionary)
+        if(this._dictionary)
         {
-            for(const key of this._dictionary.keys()) this._dictionary.delete(key);
+            this._dictionary.clear();
 
             this._dictionary = null;
         }

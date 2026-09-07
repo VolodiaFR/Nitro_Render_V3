@@ -210,7 +210,7 @@ export class EffectAssetDownloadManager
 
                 if(!listeners) listeners = [];
 
-                listeners.push(listener);
+                if(listeners.indexOf(listener) === -1) listeners.push(listener);
 
                 this._effectListeners.set(id.toString(), listeners);
             }

@@ -543,9 +543,14 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
                 sprite.posture = this.getPostureForAsset(scale, assetData.source);
                 sprite.clickHandling = this._clickHandling;
 
-                const chooserFilters = (sprite.filters || []).filter(f => f instanceof ChooserSelectionFilter);
+                const currentFilters = sprite.filters;
 
-                sprite.filters = chooserFilters.length > 0 ? [...this._filters, ...chooserFilters] : this._filters;
+                if((currentFilters && currentFilters.length) || this._filters.length)
+                {
+                    const chooserFilters = (currentFilters || []).filter(f => f instanceof ChooserSelectionFilter);
+
+                    sprite.filters = chooserFilters.length > 0 ? [...this._filters, ...chooserFilters] : this._filters;
+                }
             }
             else
             {

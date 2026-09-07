@@ -473,14 +473,6 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
         this.updateBoundaryMask();
 
-
-        // `updateVisuals` only means that visualizations were given an
-        // animation tick. It does not mean that any visualization actually
-        // changed a sprite. `renderObject` marks the canvas dirty when its
-        // visualization counter, location, or forced update changes; treating
-        // every animation tick as dirty makes DOM preview consumers perform a
-        // full GPU readback and repaint at the configured animation FPS even
-        // for a completely static room.
         if(update) this._canvasUpdated = true;
 
         this._renderTimestamp = this._totalTimeRunning;
@@ -703,10 +695,6 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
             if(extendedSprite.texture !== objectTexture) extendedSprite.setTexture(objectTexture);
 
-
-            // Per-sprite zoom (objectSprite.scale, default 1) combined with flip.
-            // Setting the magnitude directly (instead of reading the previous
-            // scale) avoids compounding across frames.
             const magnitude = (objectSprite.scale && (objectSprite.scale > 0)) ? objectSprite.scale : 1;
 
             extendedSprite.scale.x = objectSprite.flipH ? -magnitude : magnitude;
@@ -787,9 +775,6 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
         if(spriteCount < 0) spriteCount = 0;
 
-        // Removing the last (or any trailing) sprite is a real visual change,
-        // even though there may be no remaining object whose renderObject call
-        // can set the dirty flag.
         if(spriteCount !== this._activeSpriteCount) this._canvasUpdated = true;
 
         if((spriteCount < this._activeSpriteCount) || !this._activeSpriteCount)
@@ -900,6 +885,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         return this._mouseSpriteWasHit;
     }
 
+    private static SCRATCH_MOUSE_POINT: Point = new Point();
+
     private checkMouseHits(x: number, y: number, type: string, altKey: boolean = false, ctrlKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false): boolean
     {
         const checkedSprites: string[] = [];
@@ -908,17 +895,18 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         let mouseEvent: IRoomSpriteMouseEvent = null;
         let spriteId = (this._activeSpriteCount - 1);
 
+        const hitPoint = RoomSpriteCanvas.SCRATCH_MOUSE_POINT;
+
         while(spriteId >= 0)
         {
             const extendedSprite = this.getExtendedSprite(spriteId);
 
-            if(extendedSprite && extendedSprite.containsPoint(new Point((x - extendedSprite.x), (y - extendedSprite.y))))
+            if(extendedSprite && (hitPoint.set((x - extendedSprite.x), (y - extendedSprite.y)), extendedSprite.containsPoint(hitPoint)))
             {
                 if(!extendedSprite.skipMouseHandling)
                 {
                     if(extendedSprite.clickHandling && ((type === MouseEventType.MOUSE_CLICK) || (type === MouseEventType.DOUBLE_CLICK)))
                     {
-                        //
                     }
                     else
                     {

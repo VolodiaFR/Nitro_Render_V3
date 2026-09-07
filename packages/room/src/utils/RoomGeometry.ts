@@ -148,7 +148,8 @@ export class RoomGeometry implements IRoomGeometry
         {
             return;
         }
-        if(this._dir == null)
+        const isFirstAssignment = (this._dir == null);
+        if(isFirstAssignment)
         {
             this._dir = new Vector3d();
         }
@@ -157,10 +158,13 @@ export class RoomGeometry implements IRoomGeometry
         const previousZ: number = this._dir.z;
         this._dir.assign(direction);
         this._direction.assign(direction);
-        if((((!(this._dir.x == previousX)) || (!(this._dir.y == previousY))) || (!(this._dir.z == previousZ))))
+        const changed = (((!(this._dir.x == previousX)) || (!(this._dir.y == previousY))) || (!(this._dir.z == previousZ)));
+        if(changed)
         {
             this._updateId++;
         }
+
+        if(!isFirstAssignment && !changed) return;
         const unitY: IVector3D = new Vector3d(0, 1, 0);
         const unitZ: IVector3D = new Vector3d(0, 0, 1);
         const unitX: IVector3D = new Vector3d(1, 0, 0);
@@ -262,13 +266,11 @@ export class RoomGeometry implements IRoomGeometry
 
     private getDisplacenent(location: IVector3D): IVector3D
     {
-        let key: string;
-        if(this._displacements != null)
-        {
-            key = Math.trunc(Math.round(location.x)) + '_' + Math.trunc(Math.round(location.y)) + '_' + Math.trunc(Math.round(location.z));
-            return this._displacements.get(key);
-        }
-        return null;
+        if((this._displacements == null) || !this._displacements.size) return null;
+
+        const key = Math.trunc(Math.round(location.x)) + '_' + Math.trunc(Math.round(location.y)) + '_' + Math.trunc(Math.round(location.z));
+
+        return this._displacements.get(key);
     }
 
     public setDepthVector(direction: IVector3D): void

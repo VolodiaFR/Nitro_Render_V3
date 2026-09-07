@@ -8,6 +8,7 @@ export class AssetAliasCollection
     private _aliases: Map<string, AssetAlias>;
     private _avatarRenderManager: AvatarRenderManager;
     private _missingAssetNames: string[];
+    private _processedCollections: WeakSet<object> = new WeakSet();
 
     constructor(avatarRenderManager: AvatarRenderManager, assets: IAssetManager)
     {
@@ -32,7 +33,9 @@ export class AssetAliasCollection
     {
         for(const collection of this._assets.collections.values())
         {
-            if(!collection) continue;
+            if(!collection || this._processedCollections.has(collection)) continue;
+
+            this._processedCollections.add(collection);
 
             const aliases = collection.data && collection.data.aliases;
 

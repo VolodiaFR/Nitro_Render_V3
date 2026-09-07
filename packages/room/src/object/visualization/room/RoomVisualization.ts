@@ -186,9 +186,6 @@ export class RoomVisualization extends RoomObjectSpriteVisualization implements 
             }
         }
 
-        // RoomSpriteCanvas uses this counter as its actual visual-dirty
-        // signal. Do not advance it for a no-op animation tick: static room
-        // planes otherwise force preview texture readbacks every frame.
         if(needsUpdate) this.updateSpriteCounter++;
 
         this.updateModelCounter = objectModel.updateCounter;
@@ -493,6 +490,13 @@ export class RoomVisualization extends RoomObjectSpriteVisualization implements 
 
             index = (index + 1);
         };
+
+        for(let planeIndex = (this._planes.length - removedCount); planeIndex < this._planes.length; planeIndex++)
+        {
+            const plane = this._planes[planeIndex];
+
+            if(plane) plane.dispose();
+        }
 
         this._planes = this._planes.slice(0, (this._planes.length - removedCount));
         this.createSprites(this._planes.length);

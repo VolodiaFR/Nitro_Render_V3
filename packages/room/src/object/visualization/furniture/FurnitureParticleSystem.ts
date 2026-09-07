@@ -49,7 +49,7 @@ export class FurnitureParticleSystem
 
         if(this._canvasTexture)
         {
-            this._canvasTexture.destroy();
+            this._canvasTexture.destroy(true);
             this._canvasTexture = null;
         }
 
@@ -71,8 +71,17 @@ export class FurnitureParticleSystem
             this._particleSprite = null;
         }
 
-        this._blackOverlayAlphaTransform = null;
-        this._particleColorTransform = null;
+        if(this._blackOverlayAlphaTransform)
+        {
+            this._blackOverlayAlphaTransform.destroy();
+            this._blackOverlayAlphaTransform = null;
+        }
+
+        if(this._particleColorTransform)
+        {
+            this._particleColorTransform.destroy();
+            this._particleColorTransform = null;
+        }
         this._identityMatrix = null;
         this._translationMatrix = null;
     }
@@ -111,7 +120,7 @@ export class FurnitureParticleSystem
 
             if(this._canvasTexture && ((this._canvasTexture.width !== this._roomSprite.width) || (this._canvasTexture.height !== this._roomSprite.height)))
             {
-                this._canvasTexture.destroy();
+                this._canvasTexture.destroy(true);
                 this._canvasTexture = null;
             }
 
@@ -310,7 +319,7 @@ export class FurnitureParticleSystem
 
         if(this._canvasTexture)
         {
-            this._canvasTexture.destroy();
+            this._canvasTexture.destroy(true);
             this._canvasTexture = null;
         }
     }

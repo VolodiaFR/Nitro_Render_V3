@@ -230,8 +230,12 @@ export class RoomInstance implements IRoomInstance
 
             if(!objects.length) continue;
 
-            for(const object of objects.getValues())
+            const total = objects.length;
+
+            for(let index = 0; index < total; index++)
             {
+                const object = objects.getWithIndex(index);
+
                 if(!object) continue;
 
                 const logic = object.logic;

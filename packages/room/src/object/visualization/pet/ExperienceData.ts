@@ -18,7 +18,11 @@ export class ExperienceData
 
     public renderBubble(amount: number): Texture
     {
-        if(!this._sprite || (this._amount === amount)) return null;
+        if(!this._sprite) return null;
+
+        if((this._amount === amount) && this._texture) return this._texture;
+
+        this._amount = amount;
 
         const container = new Container();
 
@@ -50,7 +54,25 @@ export class ExperienceData
             TextureUtils.writeToTexture(container, this._texture, true);
         }
 
+        container.removeChild(this._sprite);
+        container.destroy({ children: true, style: true });
+
         return this._texture;
+    }
+
+    public dispose(): void
+    {
+        if(this._sprite)
+        {
+            this._sprite.destroy();
+            this._sprite = null;
+        }
+
+        if(this._texture)
+        {
+            this._texture.destroy(true);
+            this._texture = null;
+        }
     }
 
     public get amount(): number
