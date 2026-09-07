@@ -228,9 +228,14 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
         }
     }
 
+    protected get pushesWindowReflection(): boolean
+    {
+        return true;
+    }
+
     private updateWindowReflectionSource(): void
     {
-        if(!this.object) return;
+        if(!this.object || !this.pushesWindowReflection) return;
 
         if(this.object.model?.getValue<number>(RoomObjectVariable.FURNITURE_IS_WALL_ITEM) === 1) return;
 
