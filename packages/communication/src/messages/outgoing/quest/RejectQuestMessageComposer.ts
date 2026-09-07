@@ -4,9 +4,9 @@ export class RejectQuestMessageComposer implements IMessageComposer<ConstructorP
 {
     private _data: ConstructorParameters<typeof RejectQuestMessageComposer>;
 
-    constructor()
+    constructor(questId: number)
     {
-        this._data = [];
+        this._data = [questId];
     }
 
     public getMessageArray()

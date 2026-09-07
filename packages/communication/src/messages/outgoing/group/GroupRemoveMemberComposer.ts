@@ -4,9 +4,10 @@ export class GroupRemoveMemberComposer implements IMessageComposer<ConstructorPa
 {
     private _data: ConstructorParameters<typeof GroupRemoveMemberComposer>;
 
-    constructor(groupId: number, memberId: number)
+    // AIR 13 KickMember: `block` true kicks and blocks the member in one message.
+    constructor(groupId: number, memberId: number, block: boolean = false)
     {
-        this._data = [groupId, memberId];
+        this._data = [groupId, memberId, block];
     }
 
     public getMessageArray()

@@ -28,6 +28,7 @@ import { CatalogProductMetadataComposer } from './messages/outgoing/catalog/meta
 import { CatalogRuntimeConfigurationEvent } from './messages/incoming/catalog/configuration';
 import { CatalogRuntimeConfigurationComposer } from './messages/outgoing/catalog/configuration';
 import { RareValuesEvent, RequestRareValuesComposer } from './messages';
+import { GetHotLooksComposer, HotLooksEvent } from './messages';
 import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
 import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
 import { ChestDataEvent, ChestDepositComposer, ChestDepositFurniComposer, ChestDepositInventoryItemComposer, ChestFurniChunkEvent, ChestFurniDeltaEvent, ChestOpenComposer, ChestOpenEvent, ChestStartDepositComposer, ChestWithdrawAllFurniComposer, ChestWithdrawComposer, ChestWithdrawFurniComposer, ChestLogEvent, ChestCloseComposer, ChestEnableWiredComposer, ChestSaveOptionsComposer, ChestSaveSettingsComposer, ChestSaveNotificationsComposer, ChestUpgradeCapacityComposer, ChestNotificationEvent, ChestUpgradeResultEvent, ChestRequestLogComposer, WiredChestRoomLogsComposer, WiredChestLockComposer, WiredChestTransactionDetailsComposer, WiredChestRoomLogsEvent, WiredChestLockStateEvent, WiredChestTransactionDetailsEvent, WiredTradeOpenEvent, WiredTradeItemsEvent, WiredTradeCancelledEvent, WiredTradeCompletedEvent, WiredTradeOfferItemsComposer, WiredTradeAcceptComposer, WiredTradeCancelComposer } from './messages';
@@ -35,6 +36,7 @@ import { SoundboardCatalogEvent, SoundboardCatalogReorderComposer, SoundboardCat
 import { PressKeybindComposer } from './messages';
 import { EarningsCenterEvent, EarningsClaimResultEvent, RequestEarningsCenterComposer, ClaimEarningsRewardComposer, ClaimAllEarningsRewardsComposer } from './messages';
 import { DeleteMentionComposer, MarkMentionsReadComposer, MentionReceivedEvent, MentionsListEvent, RequestMentionsComposer } from './messages';
+import { ActiveDailyTasksMessageEvent, ClaimDailyTaskMessageComposer, ClaimRewardTrackPrizeMessageComposer, DailyTaskUpdatedMessageEvent, DailyTasksAddedMessageEvent, GetDailyTasksMessageComposer, GetRewardTracksMessageComposer, PurchaseRewardTrackPremiumMessageComposer, RewardTrackClaimResultMessageEvent, RewardTrackPremiumPurchaseResultMessageEvent, RewardTrackProgressMessageEvent, RewardTracksMessageEvent } from './messages';
 export class OctaneMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -455,6 +457,13 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.COMMUNITY_GOAL_PROGRESS, CommunityGoalProgressMessageEvent);
         this._events.set(IncomingHeader.CONCURRENT_USERS_GOAL_PROGRESS, ConcurrentUsersGoalProgressMessageEvent);
         this._events.set(IncomingHeader.QUEST_DAILY, QuestDailyMessageEvent);
+        this._events.set(IncomingHeader.ACTIVE_DAILY_TASKS, ActiveDailyTasksMessageEvent);
+        this._events.set(IncomingHeader.DAILY_TASKS_ADDED, DailyTasksAddedMessageEvent);
+        this._events.set(IncomingHeader.DAILY_TASK_UPDATED, DailyTaskUpdatedMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACKS, RewardTracksMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_CLAIM_RESULT, RewardTrackClaimResultMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_PROGRESS, RewardTrackProgressMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_PREMIUM_PURCHASE_RESULT, RewardTrackPremiumPurchaseResultMessageEvent);
         this._events.set(IncomingHeader.QUEST_CANCELLED, QuestCancelledMessageEvent);
         this._events.set(IncomingHeader.QUEST_COMPLETED, QuestCompletedMessageEvent);
         this._events.set(IncomingHeader.COMMUNITY_GOAL_HALL_OF_FAME, CommunityGoalHallOfFameMessageEvent);
@@ -604,6 +613,7 @@ export class OctaneMessages implements IMessageConfiguration
 
         // Custom features
         this._events.set(IncomingHeader.RARE_VALUES, RareValuesEvent);
+        this._events.set(IncomingHeader.HOT_LOOKS, HotLooksEvent);
         this._events.set(IncomingHeader.WHEEL_DATA, WheelDataEvent);
         this._events.set(IncomingHeader.WHEEL_RESULT, WheelResultEvent);
         this._events.set(IncomingHeader.WHEEL_RECENT_WINS, WheelRecentWinsEvent);
@@ -1404,6 +1414,11 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.GET_CONCURRENT_USERS_GOAL_PROGRESS, GetConcurrentUsersGoalProgressMessageComposer);
         this._composers.set(OutgoingHeader.GET_CONCURRENT_USERS_REWARD, GetConcurrentUsersRewardMessageComposer);
         this._composers.set(OutgoingHeader.GET_DAILY_QUEST, GetDailyQuestMessageComposer);
+        this._composers.set(OutgoingHeader.GET_DAILY_TASKS, GetDailyTasksMessageComposer);
+        this._composers.set(OutgoingHeader.CLAIM_DAILY_TASK, ClaimDailyTaskMessageComposer);
+        this._composers.set(OutgoingHeader.GET_REWARD_TRACKS, GetRewardTracksMessageComposer);
+        this._composers.set(OutgoingHeader.CLAIM_REWARD_TRACK_PRIZE, ClaimRewardTrackPrizeMessageComposer);
+        this._composers.set(OutgoingHeader.PURCHASE_REWARD_TRACK_PREMIUM, PurchaseRewardTrackPremiumMessageComposer);
         this._composers.set(OutgoingHeader.GET_QUESTS, GetQuestsMessageComposer);
         this._composers.set(OutgoingHeader.GET_SEASONAL_QUESTS_ONLY, GetSeasonalQuestsOnlyMessageComposer);
         this._composers.set(OutgoingHeader.OPEN_QUEST_TRACKER, OpenQuestTrackerMessageComposer);
@@ -1500,6 +1515,7 @@ export class OctaneMessages implements IMessageConfiguration
 
         // Custom features
         this._composers.set(OutgoingHeader.REQUEST_RARE_VALUES, RequestRareValuesComposer);
+        this._composers.set(OutgoingHeader.GET_HOT_LOOKS, GetHotLooksComposer);
         this._composers.set(OutgoingHeader.WHEEL_OPEN, WheelOpenComposer);
         this._composers.set(OutgoingHeader.WHEEL_SPIN, WheelSpinComposer);
         this._composers.set(OutgoingHeader.WHEEL_BUY_SPIN, WheelBuySpinComposer);

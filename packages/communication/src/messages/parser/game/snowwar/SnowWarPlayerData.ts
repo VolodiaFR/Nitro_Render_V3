@@ -8,6 +8,7 @@ export class SnowWarPlayerData
     private _name: string;
     private _figure: string;
     private _gender: string;
+    private _skillLevel: number = undefined;
 
     constructor(wrapper: IMessageDataWrapper)
     {
@@ -47,5 +48,16 @@ export class SnowWarPlayerData
     public get gender(): string
     {
         return this._gender;
+    }
+
+    /** AIR GameLobbyPlayerData.skillLevel (1-30); undefined when the server did not send it. */
+    public get skillLevel(): number
+    {
+        return this._skillLevel;
+    }
+
+    public set skillLevel(value: number)
+    {
+        this._skillLevel = value;
     }
 }

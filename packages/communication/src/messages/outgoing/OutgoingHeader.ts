@@ -400,6 +400,12 @@ export class OutgoingHeader
     public static REDEEM_COMMUNITY_GOAL_PRIZE = 90;
     public static REJECT_QUEST = 2397;
     public static START_CAMPAIGN = 1697;
+    // AIR 13 daily tasks and reward track (client -> server); GET_REWARD_TRACKS is custom, the official client is pushed
+    public static GET_DAILY_TASKS = 4100;
+    public static CLAIM_DAILY_TASK = 4101;
+    public static GET_REWARD_TRACKS = 9450;
+    public static CLAIM_REWARD_TRACK_PRIZE = 1111;
+    public static PURCHASE_REWARD_TRACK_PREMIUM = 3022;
     public static GET_BONUS_RARE_INFO = 957;
     public static CRAFT = 3591;
     public static CRAFT_SECRET = 1251;
@@ -675,4 +681,6 @@ export class OutgoingHeader
     // Use habbicon (client -> server). 9417 to match emulator RoomUserHabbiconEvent;
     // 6010 is reserved by SnowWar EDIT_ROOM.
     public static USE_HABBICON = 9417;
+    // AIR 13 avatar editor hot looks tab (client -> server). 9360 to match emulator GetHotLooksEvent.
+    public static GET_HOT_LOOKS = 9360;
 }
