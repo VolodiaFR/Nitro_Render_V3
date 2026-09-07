@@ -211,6 +211,8 @@ export class IncomingHeader
     public static ROOM_SPECTATOR = 1033;
     public static ROOM_THICKNESS = 3547;
     public static ROOM_GET_FILTER_WORDS = 2937;
+    public static CUSTOM_FILTER_RESULT = 3883;
+    public static MODIFY_CUSTOM_FILTER_RESULT = 3333;
     public static ROOM_MESSAGE_NOTIFICATION = 1634;
     public static ROOM_POPULAR_TAGS_RESULT = 2012;
     public static INFO_FEED_ENABLE = 3284;

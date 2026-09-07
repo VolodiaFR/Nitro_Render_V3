@@ -1,9 +1,13 @@
 import { IMessageConfiguration } from '@octane/api';
 import { UnsupportedOutgoingHeader } from './messages/outgoing/UnsupportedOutgoingHeader';
 import { UserSettingsPrivacyComposer } from './messages/outgoing/user/settings/UserSettingsPrivacyComposer';
+import { UserSettingsChatPreferencesComposer } from './messages/outgoing/user/settings/UserSettingsChatPreferencesComposer';
+import { UserSettingsOnlineIndicatorComposer } from './messages/outgoing/user/settings/UserSettingsOnlineIndicatorComposer';
+import { WiredMenuSettingsComposer } from './messages/outgoing/roomevents/WiredMenuSettingsComposer';
 import { RequestOfflineMessagesComposer } from './messages/outgoing/friendlist/RequestOfflineMessagesComposer';
 import { HotelViewLandingEvent, HotelViewLandingRequestComposer, HotelViewLandingSaveComposer, HotelViewLandingSaveSceneComposer, HotelViewLandingVoteComposer, HotelViewLandingResetVotesComposer } from './messages';
 import { RoomUnitHabbiconEvent, UseHabbiconComposer } from './messages';
+import { AddCustomFilterWordMessageComposer, CustomFilterResultEvent, GetCustomFilterMessageComposer, ModifyCustomFilterResultEvent, RemoveCustomFilterWordMessageComposer } from './messages';
 import { MarkMessengerReadComposer, MessengerConversationsEvent, MessengerHistoryEvent, MessengerMessageAckEvent, MessengerMessageFailedEvent, MessengerMessageEvent, MessengerReadCursorEvent, RequestMessengerConversationsComposer, RequestMessengerHistoryComposer, SendMessengerMessageComposer } from './messages';
 import { GetTraxEditorSongsComposer, TraxEditorBuySongComposer, TraxEditorDeleteSongComposer, TraxEditorErrorEvent, TraxEditorSaveSongComposer, TraxEditorSongsEvent } from './messages';
 import { SnowWarGetAllTimeFriendsLeaderboardComposer, SnowWarGetAllTimeLeaderboardComposer, SnowWarGetWeeklyFriendsLeaderboardComposer, SnowWarGetWeeklyLeaderboardComposer, SnowWarSelectArenaComposer } from './messages';
@@ -545,6 +549,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.ROOM_PAINT, RoomPaintEvent);
         this._events.set(IncomingHeader.ROOM_THICKNESS, RoomVisualizationSettingsEvent);
         this._events.set(IncomingHeader.ROOM_GET_FILTER_WORDS, RoomFilterSettingsMessageEvent);
+        this._events.set(IncomingHeader.CUSTOM_FILTER_RESULT, CustomFilterResultEvent);
+        this._events.set(IncomingHeader.MODIFY_CUSTOM_FILTER_RESULT, ModifyCustomFilterResultEvent);
         this._events.set(IncomingHeader.ROOM_MODEL_BLOCKED_TILES, RoomOccupiedTilesMessageEvent);
         this._events.set(IncomingHeader.PET_FIGURE_UPDATE, PetFigureUpdateEvent);
         this._events.set(IncomingHeader.PET_INFO, PetInfoEvent);
@@ -917,6 +923,9 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.SNOWWAR_GET_WEEKLY_FRIENDS_LEADERBOARD, SnowWarGetWeeklyFriendsLeaderboardComposer);
         this._composers.set(OutgoingHeader.USE_HABBICON, UseHabbiconComposer);
         this._composers.set(OutgoingHeader.USER_SETTINGS_PRIVACY, UserSettingsPrivacyComposer);
+        this._composers.set(OutgoingHeader.USER_SETTINGS_CHAT_PREFERENCES, UserSettingsChatPreferencesComposer);
+        this._composers.set(OutgoingHeader.USER_SETTINGS_ONLINE_INDICATOR, UserSettingsOnlineIndicatorComposer);
+        this._composers.set(OutgoingHeader.WIRED_MENU_SETTINGS_SAVE, WiredMenuSettingsComposer);
         this._composers.set(OutgoingHeader.REQUEST_OFFLINE_MESSAGES, RequestOfflineMessagesComposer);
         this._composers.set(OutgoingHeader.HOTEL_VIEW_LANDING_REQUEST, HotelViewLandingRequestComposer);
         this._composers.set(OutgoingHeader.HOTEL_VIEW_LANDING_SAVE, HotelViewLandingSaveComposer);
@@ -1055,6 +1064,9 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.ROOM_STAFF_PICK, ToggleStaffPickMessageComposer);
         this._composers.set(OutgoingHeader.ROOM_FILTER_WORDS, GetCustomRoomFilterMessageComposer);
         this._composers.set(OutgoingHeader.ROOM_FILTER_WORDS_MODIFY, UpdateRoomFilterMessageComposer);
+        this._composers.set(OutgoingHeader.GET_CUSTOM_FILTER, GetCustomFilterMessageComposer);
+        this._composers.set(OutgoingHeader.ADD_CUSTOM_FILTER_WORD, AddCustomFilterWordMessageComposer);
+        this._composers.set(OutgoingHeader.REMOVE_CUSTOM_FILTER_WORD, RemoveCustomFilterWordMessageComposer);
         this._composers.set(OutgoingHeader.USER_HOME_ROOM, UpdateHomeRoomMessageComposer);
         this._composers.set(OutgoingHeader.UPDATE_ROOM_THUMBNAIL, UpdateRoomThumbnailMessageComposer);
         // NEW NAVIGATOR

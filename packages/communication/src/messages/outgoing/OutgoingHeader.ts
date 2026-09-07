@@ -243,6 +243,9 @@ export class OutgoingHeader
     public static ROOM_STAFF_PICK = 1918;
     public static ROOM_FILTER_WORDS = 1911;
     public static ROOM_FILTER_WORDS_MODIFY = 3001;
+    public static GET_CUSTOM_FILTER = 145;
+    public static ADD_CUSTOM_FILTER_WORD = 68;
+    public static REMOVE_CUSTOM_FILTER_WORD = 1996;
     public static MYSTERYBOXWAITINGCANCELEDMESSAGE = 2012;
     public static MYSTERYBOX_OPEN_TROPHY = 3074;
     public static SECURITY_MACHINE = 2490;
@@ -294,6 +297,11 @@ export class OutgoingHeader
     public static USER_SETTINGS_INVITES = 1086;
     public static USER_SETTINGS_OLD_CHAT = 1262;
     public static USER_SETTINGS_VOLUME = 1367;
+    // Official AIR 13 ids (client -> server): chat mode/bubble width/scroll speed, friend-online
+    // notification preference and the wired menu preferences (wired whisper switch).
+    public static USER_SETTINGS_CHAT_PREFERENCES = 2506;
+    public static USER_SETTINGS_ONLINE_INDICATOR = 818;
+    public static WIRED_MENU_SETTINGS_SAVE = 1226;
     public static USER_SUBSCRIPTION = 3166;
     public static GET_WARDROBE = 2742;
     public static SAVE_WARDROBE_OUTFIT = 800;
