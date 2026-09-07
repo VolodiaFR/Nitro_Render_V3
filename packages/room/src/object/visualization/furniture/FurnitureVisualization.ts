@@ -275,13 +275,15 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
             return;
         }
 
+        const reflectionDebug = (typeof window !== 'undefined' && (window as unknown as { OctaneReflectionDebug?: boolean }).OctaneReflectionDebug === true);
+
         let mirrorDirectionX = -1;
         let mirrorDirectionY = -1;
 
         if(this._data && (this._scale > 0))
         {
-            const rawMirrorX = ((((4 - this._direction) % 8) + 8) % 8);
-            const rawMirrorY = ((((8 - this._direction) % 8) + 8) % 8);
+            const rawMirrorX = ((((8 - this._direction) % 8) + 8) % 8);
+            const rawMirrorY = ((((4 - this._direction) % 8) + 8) % 8);
             const validMirrorX = this._data.getValidDirection(this._scale, (rawMirrorX * 45));
             const validMirrorY = this._data.getValidDirection(this._scale, (rawMirrorY * 45));
 
