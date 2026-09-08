@@ -13,7 +13,8 @@ export interface ISnowWarArenaData
  * can show the waiting players split into their teams (Red / Blue) before the
  * arena splash. Player records use the SnowWarPlayerData wire shape (objectId
  * is 0 here - the real match, and its object ids, only exists once the
- * countdown ends).
+ * countdown ends). The AIR GameLobbyPlayerData skill level follows the arena
+ * list as an optional tail (count, [userId, skillLevel]) merged into players.
  */
 export class SnowWarLobbyTeamsParser implements IMessageParser
 {
@@ -65,6 +66,23 @@ export class SnowWarLobbyTeamsParser implements IMessageParser
                 official: wrapper.readBoolean(),
             });
             totalArenas--;
+        }
+
+        if(!wrapper.bytesAvailable) return true;
+
+        let totalSkillLevels = wrapper.readInt();
+
+        while(totalSkillLevels > 0)
+        {
+            const userId = wrapper.readInt();
+            const skillLevel = wrapper.readInt();
+
+            for(const player of this._players)
+            {
+                if(player.userId === userId) player.skillLevel = skillLevel;
+            }
+
+            totalSkillLevels--;
         }
 
         return true;

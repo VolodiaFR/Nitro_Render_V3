@@ -243,6 +243,9 @@ export class OutgoingHeader
     public static ROOM_STAFF_PICK = 1918;
     public static ROOM_FILTER_WORDS = 1911;
     public static ROOM_FILTER_WORDS_MODIFY = 3001;
+    public static GET_CUSTOM_FILTER = 145;
+    public static ADD_CUSTOM_FILTER_WORD = 68;
+    public static REMOVE_CUSTOM_FILTER_WORD = 1996;
     public static MYSTERYBOXWAITINGCANCELEDMESSAGE = 2012;
     public static MYSTERYBOX_OPEN_TROPHY = 3074;
     public static SECURITY_MACHINE = 2490;
@@ -294,6 +297,11 @@ export class OutgoingHeader
     public static USER_SETTINGS_INVITES = 1086;
     public static USER_SETTINGS_OLD_CHAT = 1262;
     public static USER_SETTINGS_VOLUME = 1367;
+    // Official AIR 13 ids (client -> server): chat mode/bubble width/scroll speed, friend-online
+    // notification preference and the wired menu preferences (wired whisper switch).
+    public static USER_SETTINGS_CHAT_PREFERENCES = 2506;
+    public static USER_SETTINGS_ONLINE_INDICATOR = 818;
+    public static WIRED_MENU_SETTINGS_SAVE = 1226;
     public static USER_SUBSCRIPTION = 3166;
     public static GET_WARDROBE = 2742;
     public static SAVE_WARDROBE_OUTFIT = 800;
@@ -392,6 +400,12 @@ export class OutgoingHeader
     public static REDEEM_COMMUNITY_GOAL_PRIZE = 90;
     public static REJECT_QUEST = 2397;
     public static START_CAMPAIGN = 1697;
+    // AIR 13 daily tasks and reward track (client -> server); GET_REWARD_TRACKS is custom, the official client is pushed
+    public static GET_DAILY_TASKS = 4100;
+    public static CLAIM_DAILY_TASK = 4101;
+    public static GET_REWARD_TRACKS = 9450;
+    public static CLAIM_REWARD_TRACK_PRIZE = 1111;
+    public static PURCHASE_REWARD_TRACK_PREMIUM = 3022;
     public static GET_BONUS_RARE_INFO = 957;
     public static CRAFT = 3591;
     public static CRAFT_SECRET = 1251;
@@ -667,4 +681,6 @@ export class OutgoingHeader
     // Use habbicon (client -> server). 9417 to match emulator RoomUserHabbiconEvent;
     // 6010 is reserved by SnowWar EDIT_ROOM.
     public static USE_HABBICON = 9417;
+    // AIR 13 avatar editor hot looks tab (client -> server). 9360 to match emulator GetHotLooksEvent.
+    public static GET_HOT_LOOKS = 9360;
 }

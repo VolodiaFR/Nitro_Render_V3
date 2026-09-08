@@ -19,6 +19,8 @@ export class QuestMessageData
     private _catalogPageName: string;
     private _chainCode: string;
     private _easy: boolean;
+    private _isSeasonal: boolean;
+    private _secondsLeft: number;
     private _receiveTime: Date;
 
     constructor(wrapper: IMessageDataWrapper)
@@ -40,6 +42,31 @@ export class QuestMessageData
         this._catalogPageName = wrapper.readString();
         this._chainCode = wrapper.readString();
         this._easy = wrapper.readBoolean();
+        this._isSeasonal = wrapper.readBoolean();
+        this._secondsLeft = 0;
+
+        if(this._isSeasonal) this._secondsLeft = wrapper.readInt();
+    }
+
+    /** Seasonal quests carry a countdown; it is counted down from the moment the packet arrived. */
+    public get isSeasonal(): boolean
+    {
+        return this._isSeasonal;
+    }
+
+    public get secondsLeft(): number
+    {
+        if(this._secondsLeft <= 0) return 0;
+
+        const elapsed = Math.floor((Date.now() - this._receiveTime.getTime()) / 1000);
+
+        return this._secondsLeft - elapsed;
+    }
+
+    /** The key of the tracker instance: seasonal quests are tracked per chain. */
+    public get campaignChainCode(): string
+    {
+        return this._isSeasonal ? `${ this._campaignCode }.${ this._chainCode }` : this._campaignCode;
     }
 
     public static getCampaignLocalizationKeyForCode(code: string): string

@@ -211,6 +211,8 @@ export class IncomingHeader
     public static ROOM_SPECTATOR = 1033;
     public static ROOM_THICKNESS = 3547;
     public static ROOM_GET_FILTER_WORDS = 2937;
+    public static CUSTOM_FILTER_RESULT = 3883;
+    public static MODIFY_CUSTOM_FILTER_RESULT = 3333;
     public static ROOM_MESSAGE_NOTIFICATION = 1634;
     public static ROOM_POPULAR_TAGS_RESULT = 2012;
     public static INFO_FEED_ENABLE = 3284;
@@ -364,6 +366,14 @@ export class IncomingHeader
     public static SEASONAL_QUESTS = 1122;
     public static QUESTS = 3625;
     public static QUEST = 230;
+    // AIR 13 daily tasks and reward track (server -> client); 9450-9452 replace the colliding official 2392/596/2142
+    public static ACTIVE_DAILY_TASKS = 2900;
+    public static DAILY_TASKS_ADDED = 670;
+    public static DAILY_TASK_UPDATED = 9450;
+    public static REWARD_TRACKS = 2327;
+    public static REWARD_TRACK_CLAIM_RESULT = 9451;
+    public static REWARD_TRACK_PROGRESS = 9452;
+    public static REWARD_TRACK_PREMIUM_PURCHASE_RESULT = 2248;
     public static BONUS_RARE_INFO = 1533;
     public static CRAFTABLE_PRODUCTS = 1000;
     public static CRAFTING_RECIPE = 2774;
@@ -600,4 +610,6 @@ export class IncomingHeader
     // Room unit habbicon broadcast (server -> client). 9410 to match emulator
     // RoomUserHabbiconComposer; 6011 is reserved by SnowWar SAVE_EDITOR.
     public static UNIT_HABBICON = 9410;
+    // AIR 13 avatar editor hot looks tab (server -> client). 9360 to match emulator HotLooksComposer.
+    public static HOT_LOOKS = 9360;
 }

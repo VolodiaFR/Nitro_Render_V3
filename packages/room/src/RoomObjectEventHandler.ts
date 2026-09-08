@@ -128,6 +128,37 @@ export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomOb
         return true;
     }
 
+    // Rotates the floor item currently being moved or placed without talking to
+    // the server: the preview direction only becomes real once it is dropped.
+    public rotateActiveObjectPreview(roomId: number, positive: boolean): boolean
+    {
+        if(!this._roomEngine) return false;
+
+        const selectedData = this.getSelectedRoomObjectData(roomId);
+
+        if(!selectedData || (selectedData.category !== RoomObjectCategory.FLOOR)) return false;
+
+        if((selectedData.operation !== RoomObjectOperationType.OBJECT_MOVE) && (selectedData.operation !== RoomObjectOperationType.OBJECT_PLACE)) return false;
+
+        const roomObject = this._roomEngine.getRoomObject(roomId, selectedData.id, selectedData.category);
+
+        if(!roomObject) return false;
+
+        const direction = this.getValidRoomObjectDirection(roomObject, positive);
+
+        if(direction === roomObject.getDirection().x) return false;
+
+        const newDirection = new Vector3d(direction);
+
+        if(!this.isValidLocation(roomObject, newDirection, this._roomEngine.getFurnitureStackingHeightMap(roomId))) return false;
+
+        roomObject.setDirection(newDirection);
+
+        this.updateSelectedObjectData(roomId, selectedData.id, selectedData.category, roomObject.getLocation(), newDirection, selectedData.operation, selectedData.typeId, selectedData.instanceData, selectedData.stuffData, selectedData.state, selectedData.animFrame, selectedData.posture);
+
+        return true;
+    }
+
     private getMouseEventId(category: number, eventType: string): string
     {
         const existing = this._eventIds.get(category);

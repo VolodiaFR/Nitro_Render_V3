@@ -7,6 +7,8 @@ export class GroupRank
     public static readonly MEMBER: number = 2;
     public static readonly REQUESTED: number = 3;
     public static readonly DELETED: number = 4;
+    /** AIR 13: a member blocked by a group admin (same rank value the official client calls `blocked`). */
+    public static readonly BLOCKED: number = 4;
 }
 
 export class GroupMemberParser

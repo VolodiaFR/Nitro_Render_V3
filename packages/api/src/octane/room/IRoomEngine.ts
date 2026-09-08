@@ -1,4 +1,4 @@
-import { Container, Point, Rectangle, RenderTexture, Texture } from 'pixi.js';
+import { Container, Point, PointData, Rectangle, RenderTexture, Texture } from 'pixi.js';
 import { IRoomGeometry, IRoomManager, IRoomObject, IRoomObjectController, IRoomRenderingCanvas } from '../../room';
 import { IVector3D } from '../../utils';
 import { IPetCustomPart } from '../session';
@@ -14,12 +14,15 @@ export interface IRoomEngine
     setActiveRoomId(roomId: number): void;
     createRoomInstance(roomId: number, roomMap: IRoomMapData): void;
     getRoomInstanceDisplay(roomId: number, id: number, width: number, height: number, scale: number): Container;
-    setRoomInstanceRenderingCanvasScale(roomId: number, canvasId: number, level: number, point?: Point, offsetPoint?: Point, isFlipForced?: boolean): void;
+    // `isFlipForced` toggles the 180 degree room flip instead of zooming;
+    // `isAnimated` passes a fractional scale through without snapping it.
+    setRoomInstanceRenderingCanvasScale(roomId: number, canvasId: number, level: number, point?: PointData, offsetPoint?: PointData, isFlipForced?: boolean, isAnimated?: boolean): void;
     setRoomInstanceRenderingCanvasMask(roomId: number, canvasId: number, flag: boolean): void;
     getRoomInstanceRenderingCanvas(roomId: number, canvasId?: number): IRoomRenderingCanvas;
     getRoomInstanceRenderingCanvasOffset(roomId: number, canvasId?: number): Point;
     setRoomInstanceRenderingCanvasOffset(roomId: number, canvasId: number, point: Point): boolean;
     getRoomInstanceRenderingCanvasScale(roomId?: number, canvasId?: number): number;
+    getRoomInstanceRenderingCanvasIsFlipped(roomId?: number, canvasId?: number): boolean;
     initializeRoomInstanceRenderingCanvas(roomId: number, canvasId: number, width: number, height: number): void;
     updateRoomInstancePlaneVisibility(roomId: number, wallVisible: boolean, floorVisible?: boolean): boolean;
     updateRoomInstancePlaneThickness(roomId: number, wallThickness: number, floorThickness: number): boolean;
@@ -75,6 +78,7 @@ export interface IRoomEngine
     changeObjectModelData(roomId: number, objectId: number, category: number, numberKey: string, numberValue: number): boolean;
     changeObjectState(roomId: number, objectId: number, category: number): void;
     processRoomObjectOperation(objectId: number, category: number, operation: string): boolean;
+    rotateActiveObjectPreview(positive: boolean): boolean;
     modifyRoomObjectDataWithMap(objectId: number, category: number, operation: string, data: Map<string, string>): boolean
     modifyRoomObjectData(objectId: number, category: number, colorHex: string, data: string): boolean
     processRoomObjectPlacement(placementSource: string, id: number, category: number, typeId: number, legacyString?: string, stuffData?: IObjectData, state?: number, frameNumber?: number, posture?: string): boolean;

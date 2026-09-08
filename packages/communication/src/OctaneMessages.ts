@@ -1,9 +1,13 @@
 import { IMessageConfiguration } from '@octane/api';
 import { UnsupportedOutgoingHeader } from './messages/outgoing/UnsupportedOutgoingHeader';
 import { UserSettingsPrivacyComposer } from './messages/outgoing/user/settings/UserSettingsPrivacyComposer';
+import { UserSettingsChatPreferencesComposer } from './messages/outgoing/user/settings/UserSettingsChatPreferencesComposer';
+import { UserSettingsOnlineIndicatorComposer } from './messages/outgoing/user/settings/UserSettingsOnlineIndicatorComposer';
+import { WiredMenuSettingsComposer } from './messages/outgoing/roomevents/WiredMenuSettingsComposer';
 import { RequestOfflineMessagesComposer } from './messages/outgoing/friendlist/RequestOfflineMessagesComposer';
 import { HotelViewLandingEvent, HotelViewLandingRequestComposer, HotelViewLandingSaveComposer, HotelViewLandingSaveSceneComposer, HotelViewLandingVoteComposer, HotelViewLandingResetVotesComposer } from './messages';
 import { RoomUnitHabbiconEvent, UseHabbiconComposer } from './messages';
+import { AddCustomFilterWordMessageComposer, CustomFilterResultEvent, GetCustomFilterMessageComposer, ModifyCustomFilterResultEvent, RemoveCustomFilterWordMessageComposer } from './messages';
 import { MarkMessengerReadComposer, MessengerConversationsEvent, MessengerHistoryEvent, MessengerMessageAckEvent, MessengerMessageFailedEvent, MessengerMessageEvent, MessengerReadCursorEvent, RequestMessengerConversationsComposer, RequestMessengerHistoryComposer, SendMessengerMessageComposer } from './messages';
 import { GetTraxEditorSongsComposer, TraxEditorBuySongComposer, TraxEditorDeleteSongComposer, TraxEditorErrorEvent, TraxEditorSaveSongComposer, TraxEditorSongsEvent } from './messages';
 import { SnowWarGetAllTimeFriendsLeaderboardComposer, SnowWarGetAllTimeLeaderboardComposer, SnowWarGetWeeklyFriendsLeaderboardComposer, SnowWarGetWeeklyLeaderboardComposer, SnowWarSelectArenaComposer } from './messages';
@@ -24,6 +28,7 @@ import { CatalogProductMetadataComposer } from './messages/outgoing/catalog/meta
 import { CatalogRuntimeConfigurationEvent } from './messages/incoming/catalog/configuration';
 import { CatalogRuntimeConfigurationComposer } from './messages/outgoing/catalog/configuration';
 import { RareValuesEvent, RequestRareValuesComposer } from './messages';
+import { GetHotLooksComposer, HotLooksEvent } from './messages';
 import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
 import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
 import { ChestDataEvent, ChestDepositComposer, ChestDepositFurniComposer, ChestDepositInventoryItemComposer, ChestFurniChunkEvent, ChestFurniDeltaEvent, ChestOpenComposer, ChestOpenEvent, ChestStartDepositComposer, ChestWithdrawAllFurniComposer, ChestWithdrawComposer, ChestWithdrawFurniComposer, ChestLogEvent, ChestCloseComposer, ChestEnableWiredComposer, ChestSaveOptionsComposer, ChestSaveSettingsComposer, ChestSaveNotificationsComposer, ChestUpgradeCapacityComposer, ChestNotificationEvent, ChestUpgradeResultEvent, ChestRequestLogComposer, WiredChestRoomLogsComposer, WiredChestLockComposer, WiredChestTransactionDetailsComposer, WiredChestRoomLogsEvent, WiredChestLockStateEvent, WiredChestTransactionDetailsEvent, WiredTradeOpenEvent, WiredTradeItemsEvent, WiredTradeCancelledEvent, WiredTradeCompletedEvent, WiredTradeOfferItemsComposer, WiredTradeAcceptComposer, WiredTradeCancelComposer } from './messages';
@@ -31,6 +36,7 @@ import { SoundboardCatalogEvent, SoundboardCatalogReorderComposer, SoundboardCat
 import { PressKeybindComposer } from './messages';
 import { EarningsCenterEvent, EarningsClaimResultEvent, RequestEarningsCenterComposer, ClaimEarningsRewardComposer, ClaimAllEarningsRewardsComposer } from './messages';
 import { DeleteMentionComposer, MarkMentionsReadComposer, MentionReceivedEvent, MentionsListEvent, RequestMentionsComposer } from './messages';
+import { ActiveDailyTasksMessageEvent, ClaimDailyTaskMessageComposer, ClaimRewardTrackPrizeMessageComposer, DailyTaskUpdatedMessageEvent, DailyTasksAddedMessageEvent, GetDailyTasksMessageComposer, GetRewardTracksMessageComposer, PurchaseRewardTrackPremiumMessageComposer, RewardTrackClaimResultMessageEvent, RewardTrackPremiumPurchaseResultMessageEvent, RewardTrackProgressMessageEvent, RewardTracksMessageEvent } from './messages';
 export class OctaneMessages implements IMessageConfiguration
 {
     private _events: Map<number, Function>;
@@ -451,6 +457,13 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.COMMUNITY_GOAL_PROGRESS, CommunityGoalProgressMessageEvent);
         this._events.set(IncomingHeader.CONCURRENT_USERS_GOAL_PROGRESS, ConcurrentUsersGoalProgressMessageEvent);
         this._events.set(IncomingHeader.QUEST_DAILY, QuestDailyMessageEvent);
+        this._events.set(IncomingHeader.ACTIVE_DAILY_TASKS, ActiveDailyTasksMessageEvent);
+        this._events.set(IncomingHeader.DAILY_TASKS_ADDED, DailyTasksAddedMessageEvent);
+        this._events.set(IncomingHeader.DAILY_TASK_UPDATED, DailyTaskUpdatedMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACKS, RewardTracksMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_CLAIM_RESULT, RewardTrackClaimResultMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_PROGRESS, RewardTrackProgressMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_PREMIUM_PURCHASE_RESULT, RewardTrackPremiumPurchaseResultMessageEvent);
         this._events.set(IncomingHeader.QUEST_CANCELLED, QuestCancelledMessageEvent);
         this._events.set(IncomingHeader.QUEST_COMPLETED, QuestCompletedMessageEvent);
         this._events.set(IncomingHeader.COMMUNITY_GOAL_HALL_OF_FAME, CommunityGoalHallOfFameMessageEvent);
@@ -545,6 +558,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.ROOM_PAINT, RoomPaintEvent);
         this._events.set(IncomingHeader.ROOM_THICKNESS, RoomVisualizationSettingsEvent);
         this._events.set(IncomingHeader.ROOM_GET_FILTER_WORDS, RoomFilterSettingsMessageEvent);
+        this._events.set(IncomingHeader.CUSTOM_FILTER_RESULT, CustomFilterResultEvent);
+        this._events.set(IncomingHeader.MODIFY_CUSTOM_FILTER_RESULT, ModifyCustomFilterResultEvent);
         this._events.set(IncomingHeader.ROOM_MODEL_BLOCKED_TILES, RoomOccupiedTilesMessageEvent);
         this._events.set(IncomingHeader.PET_FIGURE_UPDATE, PetFigureUpdateEvent);
         this._events.set(IncomingHeader.PET_INFO, PetInfoEvent);
@@ -598,6 +613,7 @@ export class OctaneMessages implements IMessageConfiguration
 
         // Custom features
         this._events.set(IncomingHeader.RARE_VALUES, RareValuesEvent);
+        this._events.set(IncomingHeader.HOT_LOOKS, HotLooksEvent);
         this._events.set(IncomingHeader.WHEEL_DATA, WheelDataEvent);
         this._events.set(IncomingHeader.WHEEL_RESULT, WheelResultEvent);
         this._events.set(IncomingHeader.WHEEL_RECENT_WINS, WheelRecentWinsEvent);
@@ -917,6 +933,9 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.SNOWWAR_GET_WEEKLY_FRIENDS_LEADERBOARD, SnowWarGetWeeklyFriendsLeaderboardComposer);
         this._composers.set(OutgoingHeader.USE_HABBICON, UseHabbiconComposer);
         this._composers.set(OutgoingHeader.USER_SETTINGS_PRIVACY, UserSettingsPrivacyComposer);
+        this._composers.set(OutgoingHeader.USER_SETTINGS_CHAT_PREFERENCES, UserSettingsChatPreferencesComposer);
+        this._composers.set(OutgoingHeader.USER_SETTINGS_ONLINE_INDICATOR, UserSettingsOnlineIndicatorComposer);
+        this._composers.set(OutgoingHeader.WIRED_MENU_SETTINGS_SAVE, WiredMenuSettingsComposer);
         this._composers.set(OutgoingHeader.REQUEST_OFFLINE_MESSAGES, RequestOfflineMessagesComposer);
         this._composers.set(OutgoingHeader.HOTEL_VIEW_LANDING_REQUEST, HotelViewLandingRequestComposer);
         this._composers.set(OutgoingHeader.HOTEL_VIEW_LANDING_SAVE, HotelViewLandingSaveComposer);
@@ -1055,6 +1074,9 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.ROOM_STAFF_PICK, ToggleStaffPickMessageComposer);
         this._composers.set(OutgoingHeader.ROOM_FILTER_WORDS, GetCustomRoomFilterMessageComposer);
         this._composers.set(OutgoingHeader.ROOM_FILTER_WORDS_MODIFY, UpdateRoomFilterMessageComposer);
+        this._composers.set(OutgoingHeader.GET_CUSTOM_FILTER, GetCustomFilterMessageComposer);
+        this._composers.set(OutgoingHeader.ADD_CUSTOM_FILTER_WORD, AddCustomFilterWordMessageComposer);
+        this._composers.set(OutgoingHeader.REMOVE_CUSTOM_FILTER_WORD, RemoveCustomFilterWordMessageComposer);
         this._composers.set(OutgoingHeader.USER_HOME_ROOM, UpdateHomeRoomMessageComposer);
         this._composers.set(OutgoingHeader.UPDATE_ROOM_THUMBNAIL, UpdateRoomThumbnailMessageComposer);
         // NEW NAVIGATOR
@@ -1392,6 +1414,11 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.GET_CONCURRENT_USERS_GOAL_PROGRESS, GetConcurrentUsersGoalProgressMessageComposer);
         this._composers.set(OutgoingHeader.GET_CONCURRENT_USERS_REWARD, GetConcurrentUsersRewardMessageComposer);
         this._composers.set(OutgoingHeader.GET_DAILY_QUEST, GetDailyQuestMessageComposer);
+        this._composers.set(OutgoingHeader.GET_DAILY_TASKS, GetDailyTasksMessageComposer);
+        this._composers.set(OutgoingHeader.CLAIM_DAILY_TASK, ClaimDailyTaskMessageComposer);
+        this._composers.set(OutgoingHeader.GET_REWARD_TRACKS, GetRewardTracksMessageComposer);
+        this._composers.set(OutgoingHeader.CLAIM_REWARD_TRACK_PRIZE, ClaimRewardTrackPrizeMessageComposer);
+        this._composers.set(OutgoingHeader.PURCHASE_REWARD_TRACK_PREMIUM, PurchaseRewardTrackPremiumMessageComposer);
         this._composers.set(OutgoingHeader.GET_QUESTS, GetQuestsMessageComposer);
         this._composers.set(OutgoingHeader.GET_SEASONAL_QUESTS_ONLY, GetSeasonalQuestsOnlyMessageComposer);
         this._composers.set(OutgoingHeader.OPEN_QUEST_TRACKER, OpenQuestTrackerMessageComposer);
@@ -1488,6 +1515,7 @@ export class OctaneMessages implements IMessageConfiguration
 
         // Custom features
         this._composers.set(OutgoingHeader.REQUEST_RARE_VALUES, RequestRareValuesComposer);
+        this._composers.set(OutgoingHeader.GET_HOT_LOOKS, GetHotLooksComposer);
         this._composers.set(OutgoingHeader.WHEEL_OPEN, WheelOpenComposer);
         this._composers.set(OutgoingHeader.WHEEL_SPIN, WheelSpinComposer);
         this._composers.set(OutgoingHeader.WHEEL_BUY_SPIN, WheelBuySpinComposer);
