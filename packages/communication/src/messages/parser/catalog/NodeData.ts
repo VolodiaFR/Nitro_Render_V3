@@ -33,9 +33,8 @@ export class NodeData
         return true;
     }
 
-    private static readonly MAX_OFFERS: number = 4000;
-    private static readonly MAX_CHILDREN: number = 500;
     private static readonly MAX_DEPTH: number = 20;
+    private static readonly MIN_CHILD_BYTES: number = 25;
 
     private static requireBytes(wrapper: IMessageDataWrapper, amount: number, field: string): void
     {
@@ -91,11 +90,6 @@ export class NodeData
 
         if(totalOffers < 0) throw new Error(`Catalog index offer count ${ totalOffers } is invalid`);
 
-        if(totalOffers > NodeData.MAX_OFFERS)
-        {
-            throw new Error(`Catalog index offer count ${ totalOffers } exceeds limit ${ NodeData.MAX_OFFERS }`);
-        }
-
         NodeData.requireBytes(wrapper, (totalOffers * 4) + 4, 'offer id');
 
         for(let index = 0; index < totalOffers; index++)
@@ -107,10 +101,7 @@ export class NodeData
 
         if(totalChildren < 0) throw new Error(`Catalog index child count ${ totalChildren } is invalid`);
 
-        if(totalChildren > NodeData.MAX_CHILDREN)
-        {
-            throw new Error(`Catalog index child count ${ totalChildren } exceeds limit ${ NodeData.MAX_CHILDREN }`);
-        }
+        NodeData.requireBytes(wrapper, totalChildren * NodeData.MIN_CHILD_BYTES, 'child node');
 
         if((totalChildren > 0) && (depth >= NodeData.MAX_DEPTH))
         {

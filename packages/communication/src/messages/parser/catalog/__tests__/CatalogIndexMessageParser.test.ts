@@ -61,12 +61,23 @@ const createRootPacket = (declaredOffers: number, writtenOffers: number, include
 
 describe('CatalogIndexMessageParser', () =>
 {
-    it('rejects an oversized offer list before the packet cursor becomes misaligned', () =>
+    it('parses an offer list larger than the legacy 4000 cap without misaligning the cursor', () =>
     {
         const wrapper = new EvaWireDataWrapper(0, new BinaryReader(createRootPacket(4001, 4001)));
         const parser = new CatalogIndexMessageParser();
 
-        expect(() => parser.parse(wrapper)).toThrowError('Catalog index offer count 4001 exceeds limit 4000');
+        expect(parser.parse(wrapper)).toBe(true);
+        expect(parser.root.offerIds.length).toBe(4001);
+        expect(parser.catalogType).toBe('NORMAL');
+        expect(wrapper.remainingBytes).toBe(0);
+    });
+
+    it('rejects an offer count that cannot fit in the packet before the cursor becomes misaligned', () =>
+    {
+        const wrapper = new EvaWireDataWrapper(0, new BinaryReader(createRootPacket(1_000_000, 4)));
+        const parser = new CatalogIndexMessageParser();
+
+        expect(() => parser.parse(wrapper)).toThrowError('Catalog index packet truncated while reading offer id');
     });
 
     it('reports a truncated offer list without leaking a DataView RangeError', () =>
