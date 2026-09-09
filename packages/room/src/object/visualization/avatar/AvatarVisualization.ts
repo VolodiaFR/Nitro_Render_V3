@@ -85,7 +85,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
     private _reflectionVerticalOffset: number;
     private _reflectionOppositeTexture: Texture;
     private _reflectionOppositeDirection: number;
-    private _reflectionOppositeBaseTexture: Texture;
+
+    private _avatarTextureRenderVersion: number;
+    private _reflectionOppositeRenderVersion: number;
     private _windowReflectionPushed: boolean;
     private _lastReflectionPushedTexture: Texture;
     private _lastReflectionPushedDirection: number;
@@ -147,7 +149,8 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this._reflectionVerticalOffset = 0;
         this._reflectionOppositeTexture = null;
         this._reflectionOppositeDirection = -1;
-        this._reflectionOppositeBaseTexture = null;
+        this._avatarTextureRenderVersion = 0;
+        this._reflectionOppositeRenderVersion = -1;
         this._windowReflectionPushed = false;
         this._lastReflectionPushedTexture = null;
         this._lastReflectionPushedDirection = -1;
@@ -338,6 +341,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                 if(avatarImage)
                 {
                     sprite.texture = avatarImage;
+                    this._avatarTextureRenderVersion++;
 
                     if(highlightEnabled)
                     {
@@ -1130,13 +1134,22 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         this.clearAvatar();
     }
 
-    private cloneTexture(texture: Texture): Texture
+    private cloneTexture(texture: Texture, reuse: Texture = null): Texture
     {
         if(!texture) return null;
 
         const width = Math.max(1, Math.ceil(texture.width));
         const height = Math.max(1, Math.ceil(texture.height));
-        const target = RenderTexture.create({ width, height });
+
+        let target = reuse;
+
+        if(!(target instanceof RenderTexture) || target.destroyed || (target.width !== width) || (target.height !== height))
+        {
+            if(reuse && !reuse.destroyed) reuse.destroy(true);
+
+            target = RenderTexture.create({ width, height });
+        }
+
         const sprite = new Sprite(texture);
         const container = new Container();
 
@@ -1199,7 +1212,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                 if(displayedOpposite !== displayedDirection)
                 {
-                    if(this._reflectionOppositeTexture && (this._reflectionOppositeDirection === displayedDirection) && (this._reflectionOppositeBaseTexture === sprite.texture))
+                    if(this._reflectionOppositeTexture && (this._reflectionOppositeDirection === displayedDirection) && (this._reflectionOppositeRenderVersion === this._avatarTextureRenderVersion))
                     {
                         oppositeTexture = this._reflectionOppositeTexture;
                     }
@@ -1211,15 +1224,9 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
 
                         const renderedOpposite = (this._avatarImage.processAsTexture(AvatarSetType.FULL, highlightEnabled) || sprite.texture);
 
-                        if(this._reflectionOppositeTexture)
-                        {
-                            this._reflectionOppositeTexture.destroy(true);
-                            this._reflectionOppositeTexture = null;
-                        }
-
-                        this._reflectionOppositeTexture = this.cloneTexture(renderedOpposite);
+                        this._reflectionOppositeTexture = this.cloneTexture(renderedOpposite, this._reflectionOppositeTexture);
                         this._reflectionOppositeDirection = displayedDirection;
-                        this._reflectionOppositeBaseTexture = sprite.texture;
+                        this._reflectionOppositeRenderVersion = this._avatarTextureRenderVersion;
                         oppositeTexture = (this._reflectionOppositeTexture || renderedOpposite);
                         this._avatarImage.setDirection(AvatarSetType.FULL, rawCurrent);
 
@@ -1269,7 +1276,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
         }
 
         this._reflectionOppositeDirection = -1;
-        this._reflectionOppositeBaseTexture = null;
+        this._reflectionOppositeRenderVersion = -1;
 
         this._avatarImage = null;
 
