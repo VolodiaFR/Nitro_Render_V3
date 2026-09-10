@@ -7495,6 +7495,22 @@
       ]
     },
     {
+      "name": "ROOM_REMOVE_BACKGROUND",
+      "direction": "client_to_server",
+      "header": 7020,
+      "java": {
+        "symbol": "RoomRemoveBackgroundEvent",
+        "className": "RoomRemoveBackgroundEvent",
+        "path": "Emulator/src/main/java/com/eu/habbo/messages/incoming/rooms/RoomRemoveBackgroundEvent.java"
+      },
+      "typescript": {
+        "symbol": "ROOM_REMOVE_BACKGROUND",
+        "className": "RoomRemoveBackgroundComposer",
+        "path": "packages/communication/src/messages/outgoing/room/furniture/RoomRemoveBackgroundComposer.ts"
+      },
+      "fields": []
+    },
+    {
       "name": "HOUSEKEEPING_FIND_USER_BY_NAME",
       "direction": "client_to_server",
       "header": 9100,

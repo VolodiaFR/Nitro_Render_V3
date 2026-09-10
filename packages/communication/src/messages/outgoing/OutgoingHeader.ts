@@ -592,6 +592,7 @@ export class OutgoingHeader
     public static SET_ACTIVE_NICK_ICON = 7017;
     public static PURCHASE_CATALOG_PREFIX = 7018;
     public static SET_DISPLAY_ORDER = 7019;
+    public static ROOM_REMOVE_BACKGROUND = 7020;
 
     // YouTube Room Broadcast
     public static YOUTUBE_ROOM_PLAY = 8001;
