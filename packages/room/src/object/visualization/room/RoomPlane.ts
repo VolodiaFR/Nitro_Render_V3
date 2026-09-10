@@ -1257,12 +1257,12 @@ export class RoomPlane implements IRoomPlane
                 return false;
             }
 
-            const leftSideLoc = Vector3d.scalarProjection(relative, this._leftSide);
+            const rawLeftSideLoc = Vector3d.scalarProjection(relative, this._leftSide);
             const rightSideLoc = Vector3d.scalarProjection(relative, this._rightSide);
 
             const closestMask = this._windowMasks.reduce((best, mask) =>
             {
-                const score = Math.abs(mask.leftSideLoc - leftSideLoc) + Math.abs(mask.rightSideLoc - rightSideLoc);
+                const score = Math.abs(mask.leftSideLoc - rawLeftSideLoc) + Math.abs(mask.rightSideLoc - rightSideLoc);
 
                 if(!best || (score < best.score)) return { mask, score };
 
@@ -1271,12 +1271,15 @@ export class RoomPlane implements IRoomPlane
 
             if(!closestMask || (closestMask.score > 3))
             {
-                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: unit at (${location.x}, ${location.y}) rejected — mask score ${closestMask ? closestMask.score.toFixed(2) : 'none'} (masks: ${JSON.stringify(this._windowMasks)}, leftSideLoc ${leftSideLoc.toFixed(2)})`);
+                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: unit at (${location.x}, ${location.y}) rejected — mask score ${closestMask ? closestMask.score.toFixed(2) : 'none'} (masks: ${JSON.stringify(this._windowMasks)}, leftSideLoc ${rawLeftSideLoc.toFixed(2)})`);
 
                 return false;
             }
 
-            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: unit at (${location.x}, ${location.y}) DRAWN — planeDist ${planeDistance.toFixed(2)}, maskScore ${closestMask.score.toFixed(2)}, leftSideLoc ${leftSideLoc.toFixed(2)}, masks ${JSON.stringify(this._windowMasks)}, mirrors ${projectionMirrors}`);
+            const maskFraction = (closestMask.mask.leftSideLoc - Math.round(closestMask.mask.leftSideLoc));
+            const leftSideLoc = (rawLeftSideLoc + maskFraction);
+
+            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: unit at (${location.x}, ${location.y}) DRAWN — planeDist ${planeDistance.toFixed(2)}, maskScore ${closestMask.score.toFixed(2)}, leftSideLoc ${leftSideLoc.toFixed(2)}, maskFraction ${maskFraction.toFixed(2)}, masks ${JSON.stringify(this._windowMasks)}, mirrors ${projectionMirrors}`);
 
             const x = (canvasWidth - ((canvasWidth * leftSideLoc) / this._leftSide.length));
             const y = (canvasHeight - ((canvasHeight * rightSideLoc) / this._rightSide.length));
@@ -1314,21 +1317,17 @@ export class RoomPlane implements IRoomPlane
 
             screenSpot.y += (pxPerTile * 0.35);
 
-            const maskX = (canvasWidth - ((canvasWidth * closestMask.mask.leftSideLoc) / this._leftSide.length));
-            const clipHalfWidth = (pxPerTile * 1.25);
-            const clipLeft = Math.max(0, (maskX - clipHalfWidth));
-            const clipRight = Math.min(canvasWidth, (maskX + clipHalfWidth));
-
-            if(clipRight <= clipLeft) return false;
-
-            const clip = buildClipGraphics(clipLeft, 0, (clipRight - clipLeft), canvasHeight);
-
-            if(!clip) return false;
-
             const unitContainer = new Container();
 
-            unitContainer.addChild(clip);
-            unitContainer.mask = clip;
+            if(holeRects.length)
+            {
+                const clip = buildClipGraphics(0, 0, canvasWidth, canvasHeight);
+
+                if(!clip) return false;
+
+                unitContainer.addChild(clip);
+                unitContainer.mask = clip;
+            }
 
             let added = false;
 

@@ -108,6 +108,7 @@ export class OutgoingHeader
     public static ITEM_DIMMER_SAVE = 1648;
     public static ITEM_DIMMER_SETTINGS = 2813;
     public static SET_BUILD_HEIGHT = 9351;
+    public static SET_BUILD_UNDERPASS = 7022;
     public static CHEST_DEPOSIT = 9313;
     public static CHEST_WITHDRAW = 9314;
     public static CHEST_SAVE_SETTINGS = 9315;
@@ -593,6 +594,7 @@ export class OutgoingHeader
     public static PURCHASE_CATALOG_PREFIX = 7018;
     public static SET_DISPLAY_ORDER = 7019;
     public static ROOM_REMOVE_BACKGROUND = 7020;
+    public static ROOM_REMOVE_PAINT = 7021;
 
     // YouTube Room Broadcast
     public static YOUTUBE_ROOM_PLAY = 8001;
