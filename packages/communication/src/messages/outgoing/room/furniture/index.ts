@@ -12,6 +12,7 @@ export * from './FurniturePickupComposer';
 export * from './FurniturePlaceComposer';
 export * from './FurniturePlacePaintComposer';
 export * from './RoomRemoveBackgroundComposer';
+export * from './RoomRemovePaintComposer';
 export * from './FurniturePostItPlaceComposer';
 export * from './GetRentOrBuyoutOfferMessageComposer';
 export * from './logic';
