@@ -25,3 +25,4 @@ export * from './RespectReceivedEvent';
 export * from './ScrSendKickbackInfoMessageEvent';
 export * from './wardrobe';
 export * from './WelcomeGiftChangeEmailResultEvent';
+export * from './wordfilter';

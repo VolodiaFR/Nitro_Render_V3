@@ -14,3 +14,8 @@ export * from './OpenQuestTrackerMessageComposer';
 export * from './RedeemCommunityGoalPrizeMessageComposer';
 export * from './RejectQuestMessageComposer';
 export * from './StartCampaignMessageComposer';
+export * from './GetDailyTasksMessageComposer';
+export * from './ClaimDailyTaskMessageComposer';
+export * from './GetRewardTracksMessageComposer';
+export * from './ClaimRewardTrackPrizeMessageComposer';
+export * from './PurchaseRewardTrackPremiumMessageComposer';

@@ -1,10 +1,14 @@
 import { IMessageDataWrapper, IMessageParser } from '@octane/api';
 import { CatalogLocalizationData } from './CatalogLocalizationData';
 import { CatalogPageMessageOfferData } from './CatalogPageMessageOfferData';
+import { readBoundedCatalogCount } from './catalogPacketGuards';
 import { FrontPageItem } from './FrontPageItem';
 
 export class CatalogPageMessageParser implements IMessageParser
 {
+    private static readonly MIN_OFFER_BYTES: number = 35;
+    private static readonly MIN_FRONT_PAGE_ITEM_BYTES: number = 16;
+
     private _pageId: number;
     private _catalogType: string;
     private _layoutCode: string;
@@ -37,13 +41,11 @@ export class CatalogPageMessageParser implements IMessageParser
         this._layoutCode = wrapper.readString();
         this._localization = new CatalogLocalizationData(wrapper);
 
-        let totalOffers = Math.min(wrapper.readInt(), 1000);
+        const totalOffers = readBoundedCatalogCount(wrapper, CatalogPageMessageParser.MIN_OFFER_BYTES, 'catalog page offer');
 
-        while(totalOffers > 0)
+        for(let index = 0; index < totalOffers; index++)
         {
             this._offers.push(new CatalogPageMessageOfferData(wrapper));
-
-            totalOffers--;
         }
 
         this._offerId = wrapper.readInt();
@@ -51,13 +53,11 @@ export class CatalogPageMessageParser implements IMessageParser
 
         if(wrapper.bytesAvailable)
         {
-            let totalFrontPageItems = Math.min(wrapper.readInt(), 100);
+            const totalFrontPageItems = readBoundedCatalogCount(wrapper, CatalogPageMessageParser.MIN_FRONT_PAGE_ITEM_BYTES, 'front page item');
 
-            while(totalFrontPageItems > 0)
+            for(let index = 0; index < totalFrontPageItems; index++)
             {
                 this._frontPageItems.push(new FrontPageItem(wrapper));
-
-                totalFrontPageItems--;
             }
         }
 

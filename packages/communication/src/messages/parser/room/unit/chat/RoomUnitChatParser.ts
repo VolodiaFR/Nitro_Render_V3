@@ -16,6 +16,7 @@ export class RoomUnitChatParser implements IMessageParser
     private _prefixFont: string;
     private _nickIcon: string;
     private _displayOrder: string;
+    private _bubbleWidthOverride: number;
 
     public flush(): boolean
     {
@@ -33,6 +34,7 @@ export class RoomUnitChatParser implements IMessageParser
         this._prefixFont = '';
         this._nickIcon = '';
         this._displayOrder = 'icon-prefix-name';
+        this._bubbleWidthOverride = -1;
 
         return true;
     }
@@ -57,6 +59,8 @@ export class RoomUnitChatParser implements IMessageParser
         this._prefixFont = wrapper.readString();
         this._nickIcon = wrapper.readString();
         this._displayOrder = (wrapper.bytesAvailable ? wrapper.readString() : 'icon-prefix-name');
+        // A wired message may carry a bubble width of its own; -1 leaves the room setting in charge.
+        this._bubbleWidthOverride = (wrapper.bytesAvailable ? wrapper.readInt() : -1);
 
         return true;
     }
@@ -147,5 +151,10 @@ export class RoomUnitChatParser implements IMessageParser
     public get displayOrder(): string
     {
         return this._displayOrder;
+    }
+
+    public get bubbleWidthOverride(): number
+    {
+        return this._bubbleWidthOverride;
     }
 }

@@ -1111,21 +1111,48 @@ export class RoomPlane implements IRoomPlane
             const relative = Vector3d.dif(location, this._location);
             const planeDistance = Math.abs(Vector3d.scalarProjection(relative, this._normal));
 
-            if(planeDistance > 0.8) return false;
+            if(planeDistance > 0.8)
+            {
+                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: avatar at (${location.x}, ${location.y}) rejected — planeDist ${planeDistance.toFixed(2)} > 0.8`);
 
-            const leftSideLoc = Vector3d.scalarProjection(relative, this._leftSide);
+                return false;
+            }
+
+            const rawLeftSideLoc = Vector3d.scalarProjection(relative, this._leftSide);
             const rightSideLoc = Vector3d.scalarProjection(relative, this._rightSide);
 
             const closestMask = this._windowMasks.reduce((best, mask) =>
             {
-                const score = Math.abs(mask.leftSideLoc - leftSideLoc) + Math.abs(mask.rightSideLoc - rightSideLoc);
+                const score = Math.abs(mask.leftSideLoc - rawLeftSideLoc) + Math.abs(mask.rightSideLoc - rightSideLoc);
 
                 if(!best || (score < best.score)) return { mask, score };
 
                 return best;
             }, null as { mask: { leftSideLoc: number; rightSideLoc: number }; score: number } | null);
 
-            if(!closestMask || (closestMask.score > 3)) return false;
+            if(!closestMask)
+            {
+                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: avatar at (${location.x}, ${location.y}) rejected — no window mask`);
+
+                return false;
+            }
+
+            const maskFraction = (closestMask.mask.leftSideLoc - Math.round(closestMask.mask.leftSideLoc));
+            const rawDeltaLeft = Math.abs(closestMask.mask.leftSideLoc - rawLeftSideLoc);
+            const leftSideLoc = (rawLeftSideLoc + maskFraction);
+
+            const deltaLeft = Math.abs(closestMask.mask.leftSideLoc - leftSideLoc);
+            const deltaRight = Math.abs(closestMask.mask.rightSideLoc - rightSideLoc);
+            const maskScore = (deltaLeft + deltaRight);
+
+            if(maskScore > 3)
+            {
+                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: avatar at (${location.x}, ${location.y}) rejected — mask score ${maskScore.toFixed(2)} (rawDeltaLeft ${rawDeltaLeft.toFixed(2)}, deltaRight ${deltaRight.toFixed(2)}, masks ${JSON.stringify(this._windowMasks)})`);
+
+                return false;
+            }
+
+            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: avatar at (${location.x}, ${location.y}) DRAWN — planeDist ${planeDistance.toFixed(2)}, maskScore ${maskScore.toFixed(2)}, rawDeltaLeft ${rawDeltaLeft.toFixed(2)}, maskFraction ${maskFraction.toFixed(2)}`);
 
             const x = (canvasWidth - ((canvasWidth * leftSideLoc) / this._leftSide.length));
             const y = (canvasHeight - ((canvasHeight * rightSideLoc) / this._rightSide.length)) + verticalOffset;
@@ -1141,10 +1168,7 @@ export class RoomPlane implements IRoomPlane
                 ? (((facingX * toPlaneX) + (facingY * toPlaneY)) / toPlaneLength) > 0.5
                 : false;
 
-            const deltaLeft = Math.abs(closestMask.mask.leftSideLoc - leftSideLoc);
-            const deltaRight = Math.abs(closestMask.mask.rightSideLoc - rightSideLoc);
-
-            const isInFrontOfWindow = ((closestMask.score <= 2) && ((deltaLeft <= 0.9) || (deltaRight <= 0.9)));
+            const isInFrontOfWindow = (deltaLeft <= 0.9);
             const shouldMirror = isInFrontOfWindow;
 
             const normal2DLength = Math.hypot(this._normal.x, this._normal.y);
@@ -1382,7 +1406,7 @@ export class RoomPlane implements IRoomPlane
 
                 let firstSeenAt = this._windowReflectionFirstSeenAt.get(key);
 
-                if(firstSeenAt === undefined) firstSeenAt = now;
+                if(firstSeenAt === undefined) firstSeenAt = (this._windowReflectionFadeOut.has(key) ? (now - fadeDurationMs) : now);
 
                 const elapsed = Math.min(fadeDurationMs, Math.max(0, (now - firstSeenAt)));
                 const alpha = (0.4 * (elapsed / fadeDurationMs));
@@ -1417,7 +1441,7 @@ export class RoomPlane implements IRoomPlane
 
             let firstSeenAt = this._windowReflectionFirstSeenAt.get('a' + avatar.id);
 
-            if(firstSeenAt === undefined) firstSeenAt = now;
+            if(firstSeenAt === undefined) firstSeenAt = (this._windowReflectionFadeOut.has('a' + avatar.id) ? (now - fadeDurationMs) : now);
 
             const elapsed = Math.min(fadeDurationMs, Math.max(0, (now - firstSeenAt)));
             const alpha = (0.4 * (elapsed / fadeDurationMs));
@@ -1485,7 +1509,8 @@ export class RoomPlane implements IRoomPlane
                     fadeOut.location,
                     alpha,
                     fadeOut.verticalOffset,
-                    fadeOut.direction);
+                    fadeOut.direction,
+                    parseInt(id.substring(1)));
 
             if(!rendered)
             {

@@ -162,7 +162,7 @@ export class RoomUsersHandler extends BaseHandler
 
         session.userDataManager.setUserBadges(parser.userId, parser.badges);
 
-        GetEventDispatcher().dispatchEvent(new RoomSessionUserBadgesEvent(session, parser.userId, parser.badges));
+        GetEventDispatcher().dispatchEvent(new RoomSessionUserBadgesEvent(session, parser.userId, parser.badges, parser.badgeDetails));
     }
 
     private onRoomDoorbellEvent(event: DoorbellMessageEvent): void

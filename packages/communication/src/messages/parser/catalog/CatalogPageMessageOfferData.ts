@@ -1,8 +1,12 @@
 import { IMessageDataWrapper } from '@octane/api';
 import { CatalogPageMessageProductData } from './CatalogPageMessageProductData';
+import { readBoundedCatalogCount } from './catalogPacketGuards';
 
 export class CatalogPageMessageOfferData
 {
+    // productType(2) + extraParam(2) — the badge branch, the smallest product
+    private static readonly MIN_PRODUCT_BYTES: number = 4;
+
     private _offerId: number;
     private _localizationId: string;
     private _rent: boolean;
@@ -30,13 +34,11 @@ export class CatalogPageMessageOfferData
 
         this._products = [];
 
-        let totalProducts = Math.min(wrapper.readInt(), 200);
+        const totalProducts = readBoundedCatalogCount(wrapper, CatalogPageMessageOfferData.MIN_PRODUCT_BYTES, 'offer product');
 
-        while(totalProducts > 0)
+        for(let index = 0; index < totalProducts; index++)
         {
             this._products.push(new CatalogPageMessageProductData(wrapper));
-
-            totalProducts--;
         }
 
         this._clubLevel = wrapper.readInt();

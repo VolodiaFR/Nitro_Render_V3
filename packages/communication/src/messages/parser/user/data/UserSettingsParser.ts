@@ -14,6 +14,11 @@ export class UserSettingsParser implements IMessageParser
     private _onlineStatusVisible: boolean;
     private _friendsCanFollow: boolean;
     private _friendRequestsAllowed: boolean;
+    private _wiredWhisperDisabled: boolean;
+    private _chatMode: number;
+    private _chatBubbleWidth: number;
+    private _chatScrollSpeed: number;
+    private _onlineIndicatorPreference: number;
 
     public flush(): boolean
     {
@@ -29,6 +34,11 @@ export class UserSettingsParser implements IMessageParser
         this._onlineStatusVisible = true;
         this._friendsCanFollow = true;
         this._friendRequestsAllowed = true;
+        this._wiredWhisperDisabled = false;
+        this._chatMode = 0;
+        this._chatBubbleWidth = 1;
+        this._chatScrollSpeed = 1;
+        this._onlineIndicatorPreference = 0;
 
         return true;
     }
@@ -49,6 +59,13 @@ export class UserSettingsParser implements IMessageParser
         this._friendsCanFollow = wrapper.readBoolean();
         this._friendRequestsAllowed = wrapper.readBoolean();
         this._volumeSoundboard = wrapper.bytesAvailable ? wrapper.readInt() : 80;
+        // Trailing per-user preferences (official UserSettings 3574 layout, each optional so an older
+        // emulator that stops at the soundboard volume keeps the official defaults).
+        this._wiredWhisperDisabled = wrapper.bytesAvailable ? wrapper.readBoolean() : false;
+        this._chatMode = wrapper.bytesAvailable ? wrapper.readInt() : 0;
+        this._chatBubbleWidth = wrapper.bytesAvailable ? wrapper.readInt() : 1;
+        this._chatScrollSpeed = wrapper.bytesAvailable ? wrapper.readInt() : 1;
+        this._onlineIndicatorPreference = wrapper.bytesAvailable ? wrapper.readInt() : 0;
 
         return true;
     }
@@ -111,5 +128,30 @@ export class UserSettingsParser implements IMessageParser
     public get friendRequestsAllowed(): boolean
     {
         return this._friendRequestsAllowed;
+    }
+
+    public get wiredWhisperDisabled(): boolean
+    {
+        return this._wiredWhisperDisabled;
+    }
+
+    public get chatMode(): number
+    {
+        return this._chatMode;
+    }
+
+    public get chatBubbleWidth(): number
+    {
+        return this._chatBubbleWidth;
+    }
+
+    public get chatScrollSpeed(): number
+    {
+        return this._chatScrollSpeed;
+    }
+
+    public get onlineIndicatorPreference(): number
+    {
+        return this._onlineIndicatorPreference;
     }
 }

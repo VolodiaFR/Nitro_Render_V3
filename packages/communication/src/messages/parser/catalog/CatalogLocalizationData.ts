@@ -1,7 +1,11 @@
 import { IMessageDataWrapper } from '@octane/api';
+import { readBoundedCatalogCount } from './catalogPacketGuards';
 
 export class CatalogLocalizationData
 {
+    // an empty string is a 2-byte length prefix
+    private static readonly MIN_STRING_BYTES: number = 2;
+
     private _images: string[];
     private _texts: string[];
 
@@ -10,22 +14,18 @@ export class CatalogLocalizationData
         this._images = [];
         this._texts = [];
 
-        let totalImages = Math.min(wrapper.readInt(), 100);
+        const totalImages = readBoundedCatalogCount(wrapper, CatalogLocalizationData.MIN_STRING_BYTES, 'localization image');
 
-        while(totalImages > 0)
+        for(let index = 0; index < totalImages; index++)
         {
             this._images.push(wrapper.readString());
-
-            totalImages--;
         }
 
-        let totalTexts = Math.min(wrapper.readInt(), 100);
+        const totalTexts = readBoundedCatalogCount(wrapper, CatalogLocalizationData.MIN_STRING_BYTES, 'localization text');
 
-        while(totalTexts > 0)
+        for(let index = 0; index < totalTexts; index++)
         {
             this._texts.push(wrapper.readString());
-
-            totalTexts--;
         }
     }
 
