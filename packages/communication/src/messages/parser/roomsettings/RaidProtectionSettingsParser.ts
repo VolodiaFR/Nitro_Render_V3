@@ -5,6 +5,10 @@ import { IMessageDataWrapper, IMessageParser } from '@octane/api';
  *
  * `incidentActive` and `lastRaidAtEpochSeconds` are state rather than settings, which is why the
  * panel leaves them out when it compares what the user has edited against what is stored.
+ *
+ * `RaidProtectionSaveResultParser` repeats these reads instead of calling into this class: the
+ * packet contract verifier reads each parser file statically and cannot follow a call into another
+ * class, so a delegated read would be an invisible read.
  */
 export class RaidProtectionSettingsParser implements IMessageParser
 {
@@ -40,15 +44,6 @@ export class RaidProtectionSettingsParser implements IMessageParser
         if(!wrapper) return false;
 
         this._roomId = wrapper.readInt();
-
-        return this.parseAfterRoomId(wrapper);
-    }
-
-    /** The save result writes the room id, then its result code, then the rest of these fields. */
-    public parseAfterRoomId(wrapper: IMessageDataWrapper): boolean
-    {
-        if(!wrapper) return false;
-
         this._enabled = wrapper.readBoolean();
         this._detectionSensitivity = wrapper.readInt();
         this._actionType = wrapper.readInt();
@@ -60,11 +55,6 @@ export class RaidProtectionSettingsParser implements IMessageParser
         this._lastRaidAtEpochSeconds = wrapper.readInt();
 
         return true;
-    }
-
-    public setRoomId(roomId: number): void
-    {
-        this._roomId = roomId;
     }
 
     public get roomId(): number

@@ -41,7 +41,7 @@ const writeSnapshotAfterRoomId = (writer: PacketWriter): PacketWriter => writer
     .boolean(false)
     .int(1_757_600_000);
 
-const expectSnapshot = (settings: RaidProtectionSettingsParser, roomId: number): void =>
+const expectSnapshot = (settings: RaidProtectionSettingsParser | RaidProtectionSaveResultParser, roomId: number): void =>
 {
     expect(settings.roomId).toBe(roomId);
     expect(settings.enabled).toBe(true);
@@ -88,7 +88,7 @@ describe('raid protection parsers', () =>
 
         expect(parser.resultCode).toBe(0);
         expect(parser.succeeded).toBe(true);
-        expectSnapshot(parser.settings, 42);
+        expectSnapshot(parser, 42);
     });
 
     it('treats any result code other than zero as a failure', () =>
