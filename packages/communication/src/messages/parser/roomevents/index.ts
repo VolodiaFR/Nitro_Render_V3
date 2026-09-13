@@ -25,3 +25,7 @@ export * from './WiredVariableHoldersPageParser';
 export * from './WiredVariableHoldersParser';
 export * from './WiredAllVariablesHashParser';
 export * from './WiredAllVariablesDiffParser';
+export * from './VariableFxConfigUpdateParser';
+export * from './VariableFxConfigRemoveParser';
+export * from './VariableFxStatusUpdateParser';
+export * from './VariableFxStatusRemoveParser';
