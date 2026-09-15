@@ -25,6 +25,10 @@ export interface IFurnitureData
     rentCouldBeUsedForBuyout: boolean;
     availableForBuildersClub: boolean;
     allowStack: boolean;
+    // AIR inventory classification metadata; separate from Polaris allowStack.
+    canPutStuffOn?: boolean;
+    height?: number;
+    tradeable?: boolean;
     canStandOn: boolean;
     canSitOn: boolean;
     canLayOn: boolean;

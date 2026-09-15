@@ -1,5 +1,6 @@
 ﻿import { IAdvancedMap, IMessageDataWrapper, IMessageParser } from '@octane/api';
-import { AdvancedMap } from '@octane/utils';
+import { AdvancedMap, BinaryReader } from '@octane/utils';
+import { EvaWireDataWrapper } from '../../../../codec/evawire/EvaWireDataWrapper';
 
 /** One badge as the inventory badges packet carries it. */
 export interface IBadgeDetail
@@ -36,38 +37,96 @@ export class BadgesParser implements IMessageParser
         this._badgeIds = new AdvancedMap();
         this._badgeDetails = [];
 
-        let count = wrapper.readInt();
+        // These are two complete wire schemas, not optional fields per badge.
+        // Try modern AIR first and retry legacy Polaris only from a fresh copy.
+        const length = wrapper.remainingBytes;
+        let result: ReturnType<BadgesParser['readPayload']>;
 
-        while(count > 0)
+        if(typeof length === 'number')
         {
-            // Official `BadgesMessageParser` (AIR 13): every badge carries how
-            // many Habbos own it and its rarity tier alongside the id and code.
-            const badgeId = wrapper.readInt();
-            const badgeCode = wrapper.readString();
-            const ownerCount = wrapper.readInt();
-            const badgeRarityId = wrapper.readInt();
+            if(length < 8) return false;
 
-            this._badgeIds.add(badgeCode, badgeId);
+            const payload = wrapper.readBytes(length).toArrayBuffer();
+            const modern = new EvaWireDataWrapper(wrapper.header, new BinaryReader(payload));
 
-            this._allBadgeCodes.push(badgeCode);
-            this._badgeDetails.push({ badgeId, badgeCode, ownerCount, badgeRarityId });
+            result = this.readPayload(modern, true);
 
-            count--;
+            if(!result)
+            {
+                const legacy = new EvaWireDataWrapper(wrapper.header, new BinaryReader(payload));
+
+                result = this.readPayload(legacy, false);
+            }
+        }
+        else
+        {
+            // Transports without replayable bytes retain the modern contract.
+            result = this.readPayload(wrapper, true);
         }
 
-        count = wrapper.readInt();
+        if(!result) return false;
 
-        while(count > 0)
+        this._badgeDetails = result.details;
+        this._activeBadgeCodes = result.active;
+
+        for(const badge of result.details)
         {
-            const badgeSlot = wrapper.readInt();
-            const badgeCode = wrapper.readString();
-
-            this._activeBadgeCodes.push(badgeCode);
-
-            count--;
+            this._badgeIds.add(badge.badgeCode, badge.badgeId);
+            this._allBadgeCodes.push(badge.badgeCode);
         }
 
         return true;
+    }
+
+    private readPayload(wrapper: IMessageDataWrapper, hasMetadata: boolean): { details: IBadgeDetail[]; active: string[] } | null
+    {
+        const details: IBadgeDetail[] = [];
+        const active: string[] = [];
+
+        try
+        {
+            const count = wrapper.readInt();
+            const minimumRecordBytes = hasMetadata ? 14 : 6;
+
+            if(count < 0 || (typeof wrapper.remainingBytes === 'number' && count > Math.floor((wrapper.remainingBytes - 4) / minimumRecordBytes))) return null;
+
+            for(let index = 0; index < count; index++)
+            {
+                const badgeId = wrapper.readInt();
+                const badgeCode = this.readBadgeCode(wrapper);
+                const ownerCount = hasMetadata ? wrapper.readInt() : 0;
+                const badgeRarityId = hasMetadata ? wrapper.readInt() : 0;
+
+                details.push({ badgeId, badgeCode, ownerCount, badgeRarityId });
+            }
+
+            const activeCount = wrapper.readInt();
+
+            if(activeCount < 0 || (typeof wrapper.remainingBytes === 'number' && activeCount > Math.floor(wrapper.remainingBytes / 6))) return null;
+
+            for(let index = 0; index < activeCount; index++)
+            {
+                wrapper.readInt(); // Equipped slot precedes each badge code.
+                active.push(this.readBadgeCode(wrapper));
+            }
+
+            if(wrapper.bytesAvailable || (typeof wrapper.remainingBytes === 'number' && wrapper.remainingBytes !== 0)) return null;
+
+            return { details, active };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private readBadgeCode(wrapper: IMessageDataWrapper): string
+    {
+        const length = wrapper.readShort();
+
+        if(length < 0 || (typeof wrapper.remainingBytes === 'number' && length > wrapper.remainingBytes)) throw new RangeError('Invalid badge code length');
+
+        return wrapper.readBytes(length).toString('utf8');
     }
 
     public getBadgeId(code: string): number
