@@ -11,6 +11,7 @@ export * from './WiredRoomSettingsDataEvent';
 export * from './WiredRewardResultMessageEvent';
 export * from './WiredSaveSuccessEvent';
 export * from './WiredUserVariablesDataEvent';
+export * from './WiredArrayInspectionDataEvent';
 export * from './WiredValidationErrorEvent';
 export * from './SelfDonationResultMessageEvent';
 export * from './WiredClickUserResponseEvent';
