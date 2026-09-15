@@ -25,6 +25,9 @@ export interface IFurnitureData
     rentCouldBeUsedForBuyout: boolean;
     availableForBuildersClub: boolean;
     allowStack: boolean;
+    canPutStuffOn?: boolean;
+    height?: number;
+    tradeable?: boolean;
     canStandOn: boolean;
     canSitOn: boolean;
     canLayOn: boolean;
