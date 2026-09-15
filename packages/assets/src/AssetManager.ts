@@ -141,7 +141,7 @@ export class AssetManager implements IAssetManager
 
                             decodedResources.push(resource);
 
-                            return resource.texture;
+                            return pinPixelArtSampling(resource.texture);
                         });
 
                     await this.processAsset(octaneBundle.texture, octaneBundle.jsonFile);
@@ -182,7 +182,7 @@ export class AssetManager implements IAssetManager
 
                 try
                 {
-                    await this.processAsset(resource.texture, data);
+                    await this.processAsset(pinPixelArtSampling(resource.texture), data);
                     this.setImageResource(url, resource);
                 }
                 catch (error)
@@ -385,6 +385,18 @@ export class AssetManager implements IAssetManager
         return this._collections;
     }
 }
+
+const pinPixelArtSampling = (texture: Texture): Texture =>
+{
+    const source = texture?.source as (Texture['source'] & { octaneFixedScaleMode?: boolean }) | undefined;
+
+    if(!source) return texture;
+
+    source.scaleMode = 'nearest';
+    source.octaneFixedScaleMode = true;
+
+    return texture;
+};
 
 const imageNameFromPath = (path: string): string =>
 {

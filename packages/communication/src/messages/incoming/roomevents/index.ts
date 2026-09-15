@@ -1,3 +1,4 @@
+export * from './WiredEnvironmentEvent';
 export * from './WiredFurniActionEvent';
 export * from './WiredFurniConditionEvent';
 export * from './WiredFurniMoveStyleEvent';
@@ -12,7 +13,6 @@ export * from './WiredSaveSuccessEvent';
 export * from './WiredUserVariablesDataEvent';
 export * from './WiredValidationErrorEvent';
 export * from './SelfDonationResultMessageEvent';
-export * from './WiredEnvironmentEvent';
 export * from './WiredClickUserResponseEvent';
 export * from './WiredClickSettingsEvent';
 export * from './WiredLogPageEvent';

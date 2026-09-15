@@ -29,7 +29,10 @@ const createCanvas = () =>
 
     Object.assign(canvas, {
         _master: {},
-        _display: { scale: { x: 1, y: 1, set(x: number, y: number = x) { this.x = x; this.y = y; } }, x: 0, y: 0 },
+        _display: { scale: { x: 1, y: 1, set(x: number, y: number = x)
+        {
+            this.x = x; this.y = y;
+        } }, x: 0, y: 0 },
         _width: 800,
         _height: 600,
         _screenOffsetX: 0,
@@ -128,7 +131,10 @@ describe('RoomSpriteCanvas flip', () =>
         const canvas = createCanvas();
         const seen: number[][] = [];
 
-        Object.assign(canvas, { checkMouseHits: (x: number, y: number) => { seen.push([ x, y ]); return false; } });
+        Object.assign(canvas, { checkMouseHits: (x: number, y: number) =>
+        {
+            seen.push([ x, y ]); return false;
+        } });
 
         canvas.setFlip(true);
         canvas.handleMouseEvent(100, 50, 'click', false, false, false, false);

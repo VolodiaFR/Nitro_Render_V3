@@ -1,6 +1,7 @@
 import { GetRoomEngine } from '@octane/room';
 import { GetDesiredScaleMode, GetRenderer, StartDprRenderingModeWatcher } from '@octane/utils';
 import { BrowserAdapter, DOMAdapter, HelloSystem, TextureSource } from 'pixi.js';
+import './pixi-augmentations';
 
 HelloSystem.defaultOptions.hello = true;
 StartDprRenderingModeWatcher();
@@ -32,7 +33,7 @@ if(typeof window !== 'undefined')
 
             for(const source of (renderer?.texture?.managedTextures ?? []))
             {
-                const key = `${ source?.style?.scaleMode ?? '?' }${ (source as any)?.octaneFixedScaleMode ? '/fixed' : '' }`;
+                const key = `${ source?.style?.scaleMode ?? '?' }${ source?.octaneFixedScaleMode ? '/fixed' : '' }`;
 
                 census[key] = (census[key] ?? 0) + 1;
             }
@@ -51,7 +52,7 @@ if(typeof window !== 'undefined')
                 geometryScale: geometry?.scale ?? null
             } : null;
         }
-        catch(e)
+        catch (e)
         {
             out.error = String(e);
         }

@@ -86,3 +86,4 @@ export * from './user/inventory/currency';
 export * from './user/inventory/subscription';
 export * from './user/settings';
 export * from './userclassification';
+export * from './habbicons';

@@ -29,7 +29,7 @@ export class RoomQueueStatusParser implements IMessageParser
         this._queueSets = [];
         this._flatId = wrapper.readInt();
 
-        let totalSets = wrapper.readInt();
+        const totalSets = wrapper.readInt();
         let setIndex = 0;
 
         while(setIndex < totalSets)

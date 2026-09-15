@@ -711,6 +711,14 @@ export class OutgoingHeader
     public static USE_HABBICON = 9417;
     // AIR 13 avatar editor hot looks tab (client -> server). 9360 to match emulator GetHotLooksEvent.
     public static GET_HOT_LOOKS = 9360;
+    // AIR Habbicon semantics on the established Polaris custom header range.
+    public static GET_HABBICON_SHOP_DATA = 9460;
+    public static GET_HABBICON_INFO = 9461;
+    public static BUY_HABBICON = 9462;
+    public static BUY_HABBICON_COLLECTION = 9463;
+    public static CLAIM_HABBICON = 9464;
+    public static FAVORITE_HABBICON = 9465;
+    public static UNFAVORITE_HABBICON = 9466;
     // AIR 13 session block list (client -> server), official ids.
     public static USER_BLOCK_LIST = 485;
     public static USER_BLOCK = 697;

@@ -133,22 +133,45 @@ export default tseslint.config(
             '@typescript-eslint/no-unused-vars': [
                 'off'
             ],
-            '@typescript-eslint/ban-types': [
+            // typescript-eslint 8 split ban-types into three rules. Keep the old intent:
+            // the primitive wrappers stay banned, `Function`, `{}` and `object` stay allowed.
+            '@typescript-eslint/no-wrapper-object-types': [
+                'error'
+            ],
+            '@typescript-eslint/no-unsafe-function-type': [
+                'off'
+            ],
+            '@typescript-eslint/no-empty-object-type': [
+                'off'
+            ],
+            // Rules that ESLint 10 / typescript-eslint 8 turned on by default and which the
+            // renderer's existing style trips: `x && x.dispose()`, empty catch blocks,
+            // `String(error)` on unknown, re-thrown errors that carry the message in text,
+            // and `let x = default` before a switch. They are intentional here.
+            '@typescript-eslint/no-unused-expressions': [
                 'error',
                 {
-                    'types':
-                    {
-                        'String': true,
-                        'Boolean': true,
-                        'Number': true,
-                        'Symbol': true,
-                        '{}': false,
-                        'Object': false,
-                        'object': false,
-                        'Function': false
-                    },
-                    'extendDefaults': true
+                    'allowShortCircuit': true,
+                    'allowTernary': true
                 }
+            ],
+            'no-empty': [
+                'error',
+                {
+                    'allowEmptyCatch': true
+                }
+            ],
+            'no-useless-assignment': [
+                'off'
+            ],
+            'preserve-caught-error': [
+                'off'
+            ],
+            '@typescript-eslint/no-base-to-string': [
+                'off'
+            ],
+            '@typescript-eslint/no-redundant-type-constituents': [
+                'off'
             ]
         }
     },

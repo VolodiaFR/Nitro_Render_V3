@@ -8,11 +8,15 @@ export class GoToBreedingNestFailureParser implements IMessageParser
 
     public flush(): boolean
     {
+        this._reason = 0;
+
         return true;
     }
 
     public parse(wrapper: IMessageDataWrapper): boolean
     {
+        if(!wrapper) return false;
+
         this._reason = wrapper.readInt();
 
         return true;

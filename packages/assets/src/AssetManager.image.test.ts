@@ -149,3 +149,29 @@ describe('AssetManager modern image loading', () =>
         expect(dependencies.loadImageResource).not.toHaveBeenCalled();
     });
 });
+
+describe('AssetManager spritesheet sampling', () =>
+{
+    it('samples bundle atlases with nearest filtering even though the decoder pins linear', async () =>
+    {
+        const source = { scaleMode: 'linear', octaneFixedScaleMode: true };
+        const resource = createResource({ label: '', source });
+        const loadOctaneBundle = vi.fn(async (_buffer: ArrayBuffer, decodeImage: (bytes: ArrayBuffer, name: string) => Promise<unknown>) =>
+        {
+            const texture = await decodeImage(new ArrayBuffer(4), 'classic1_wall1.png');
+
+            return { texture, jsonFile: { name: 'classic1_wall1', spritesheet: {} } };
+        });
+        const { manager, dependencies } = createManager({
+            fetch: vi.fn().mockResolvedValue({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(8) }),
+            loadImageResource: vi.fn().mockResolvedValue(resource),
+            loadOctaneBundle
+        });
+
+        await manager.downloadAsset('https://cdn.example/furni/classic1_wall1.nitro');
+
+        expect(dependencies.loadImageResource).toHaveBeenCalledTimes(1);
+        expect(source.scaleMode).toBe('nearest');
+        expect(source.octaneFixedScaleMode).toBe(true);
+    });
+});

@@ -955,6 +955,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
                 {
                     if(extendedSprite.clickHandling && ((type === MouseEventType.MOUSE_CLICK) || (type === MouseEventType.DOUBLE_CLICK)))
                     {
+                        // The sprite handles its own clicks; nothing to dispatch here.
                     }
                     else
                     {

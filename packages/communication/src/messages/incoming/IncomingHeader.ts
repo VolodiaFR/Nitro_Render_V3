@@ -643,6 +643,15 @@ export class IncomingHeader
     public static UNIT_HABBICON = 9410;
     // AIR 13 avatar editor hot looks tab (server -> client). 9360 to match emulator HotLooksComposer.
     public static HOT_LOOKS = 9360;
+    // AIR Habbicon semantics on the established Polaris custom header range.
+    // 9460-9462 are the wired click response and the two variable-holder packets, which are
+    // already published on Dev; the habbicon block moves into the free slots above 9464 rather
+    // than shadowing them. The emulator half of habbicon has to follow (Polaris-Emulator#681).
+    public static USER_HABBICONS = 9465;
+    public static USER_HABBICON_STATUS_CHANGED = 9466;
+    public static HABBICON_SHOP_DATA = 9467;
+    public static HABBICON_INFO = 9463;
+    public static HABBICON_ACTION_RESULT = 9464;
     // AIR 13 official rooms view (server -> client), official id 438.
     public static OFFICIAL_ROOMS = 438;
     // AIR 13 batched room / inventory removals and wall-item state batch.

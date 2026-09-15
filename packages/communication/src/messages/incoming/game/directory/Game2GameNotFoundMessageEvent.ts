@@ -11,6 +11,6 @@ export class Game2GameNotFoundMessageEvent extends MessageEvent implements IMess
 
     public getParser(): Game2GameNotFoundMessageParser
     {
-        return this.parser as Game2GameNotFoundMessageParser;
+        return this.parser;
     }
 }

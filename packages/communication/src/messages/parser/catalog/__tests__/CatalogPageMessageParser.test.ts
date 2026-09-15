@@ -39,35 +39,35 @@ class PacketWriter
 const writeOffer = (writer: PacketWriter, offerId: number): void =>
 {
     writer
-        .int(offerId)                    // offerId
-        .string(`item_${ offerId }`)     // localizationId
-        .byte(0)                         // rent
-        .int(3)                          // priceCredits
-        .int(0)                          // priceActivityPoints
-        .int(0)                          // priceActivityPointsType
-        .byte(1)                         // giftable
-        .int(1)                          // product count
-        .string('s')                     // productType (floor)
-        .int(offerId)                    // furniClassId
-        .string('')                      // extraParam
-        .int(1)                          // productCount
-        .byte(0)                         // uniqueLimitedItem
-        .int(1)                          // clubLevel
-        .byte(0)                         // bundlePurchaseAllowed
-        .byte(0)                         // isPet
-        .string('')                      // previewImage
-        .string('')                      // itemIds
-        .byte(0);                        // haveOffer
+        .int(offerId) // offerId
+        .string(`item_${ offerId }`) // localizationId
+        .byte(0) // rent
+        .int(3) // priceCredits
+        .int(0) // priceActivityPoints
+        .int(0) // priceActivityPointsType
+        .byte(1) // giftable
+        .int(1) // product count
+        .string('s') // productType (floor)
+        .int(offerId) // furniClassId
+        .string('') // extraParam
+        .int(1) // productCount
+        .byte(0) // uniqueLimitedItem
+        .int(1) // clubLevel
+        .byte(0) // bundlePurchaseAllowed
+        .byte(0) // isPet
+        .string('') // previewImage
+        .string('') // itemIds
+        .byte(0); // haveOffer
 };
 
 const createPagePacket = (declaredOffers: number, writtenOffers: number): ArrayBuffer =>
 {
     const writer = new PacketWriter()
-        .int(1)                          // pageId
-        .string('NORMAL')                // catalogType
-        .string('default_3x3')           // layoutCode
-        .int(0)                          // localization images
-        .int(0)                          // localization texts
+        .int(1) // pageId
+        .string('NORMAL') // catalogType
+        .string('default_3x3') // layoutCode
+        .int(0) // localization images
+        .int(0) // localization texts
         .int(declaredOffers);
 
     for(let index = 0; index < writtenOffers; index++) writeOffer(writer, index + 1);
@@ -75,8 +75,8 @@ const createPagePacket = (declaredOffers: number, writtenOffers: number): ArrayB
     if(writtenOffers === declaredOffers)
     {
         writer
-            .int(-1)                     // offerId
-            .byte(0);                    // acceptSeasonCurrencyAsCredits
+            .int(-1) // offerId
+            .byte(0); // acceptSeasonCurrencyAsCredits
     }
 
     return writer.toArrayBuffer();

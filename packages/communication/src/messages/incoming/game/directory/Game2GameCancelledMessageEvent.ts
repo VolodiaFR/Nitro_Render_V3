@@ -11,6 +11,6 @@ export class Game2GameCancelledMessageEvent extends MessageEvent implements IMes
 
     public getParser(): Game2GameCancelledMessageParser
     {
-        return this.parser as Game2GameCancelledMessageParser;
+        return this.parser;
     }
 }

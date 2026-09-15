@@ -6,3 +6,5 @@ export * from './GroupMembersEvent';
 export * from './GroupPurchasedEvent';
 export * from './GroupSettingsEvent';
 export * from './HabboGroupDeactivatedMessageEvent';
+export * from './GroupMemberUpdateEvent';
+export * from './GroupMembersRefreshEvent';

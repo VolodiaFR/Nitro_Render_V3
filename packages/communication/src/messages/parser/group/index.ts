@@ -7,3 +7,5 @@ export * from './GroupPurchasedParser';
 export * from './GroupSettingsParser';
 export * from './HabboGroupDeactivatedMessageParser';
 export * from './utils';
+export * from './GroupMemberUpdateParser';
+export * from './GroupMembersRefreshParser';
