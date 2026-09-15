@@ -37,8 +37,7 @@ export class BadgesParser implements IMessageParser
         this._badgeIds = new AdvancedMap();
         this._badgeDetails = [];
 
-        // These are two complete wire schemas, not optional fields per badge.
-        // Try modern AIR first and retry legacy Polaris only from a fresh copy.
+        // Retry the entire payload because metadata changes the record boundaries.
         const length = wrapper.remainingBytes;
         let result: ReturnType<BadgesParser['readPayload']>;
 
