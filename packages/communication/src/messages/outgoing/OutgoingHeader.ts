@@ -708,9 +708,9 @@ export class OutgoingHeader
     public static HOTEL_VIEW_LANDING_RESET_VOTES = 9414;
     public static USER_SETTINGS_PRIVACY = 9415;
     public static REQUEST_OFFLINE_MESSAGES = 9416;
-    // Use habbicon (client -> server). 9417 to match emulator RoomUserHabbiconEvent;
+    // Trigger habbicon (client -> server). 9417 to match emulator TriggerHabbiconEvent;
     // 6010 is reserved by SnowWar EDIT_ROOM.
-    public static USE_HABBICON = 9417;
+    public static TRIGGER_HABBICON = 9417;
     // AIR 13 avatar editor hot looks tab (client -> server). 9360 to match emulator GetHotLooksEvent.
     public static GET_HOT_LOOKS = 9360;
     // AIR Habbicon semantics on the established Polaris custom header range.
