@@ -1,4 +1,5 @@
 import { IMessageConfiguration } from '@octane/api';
+import { GoToBreedingNestFailureEvent, GroupMemberUpdateEvent, GroupMembersRefreshEvent } from './messages';
 import { UnsupportedOutgoingHeader } from './messages/outgoing/UnsupportedOutgoingHeader';
 import { UserSettingsPrivacyComposer } from './messages/outgoing/user/settings/UserSettingsPrivacyComposer';
 import { UserSettingsChatPreferencesComposer } from './messages/outgoing/user/settings/UserSettingsChatPreferencesComposer';
@@ -274,6 +275,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.GROUP_INFO, GroupInformationEvent);
         this._events.set(IncomingHeader.GROUP_MEMBER_REMOVE_CONFIRM, GroupConfirmMemberRemoveEvent);
         this._events.set(IncomingHeader.GROUP_MEMBERS, GroupMembersEvent);
+        this._events.set(IncomingHeader.GROUP_MEMBER, GroupMemberUpdateEvent);
+        this._events.set(IncomingHeader.GROUP_MEMBERS_REFRESH, GroupMembersRefreshEvent);
         this._events.set(IncomingHeader.GROUP_CREATE_OPTIONS, GroupBuyDataEvent);
         this._events.set(IncomingHeader.GROUP_BADGE_PARTS, GroupBadgePartsEvent);
         this._events.set(IncomingHeader.GROUP_SETTINGS, GroupSettingsEvent);
@@ -464,6 +467,7 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.PET_OPEN_PACKAGE_RESULT, OpenPetPackageResultMessageEvent);
         this._events.set(IncomingHeader.PET_BREEDING_RESULT, PetBreedingResultEvent);
         this._events.set(IncomingHeader.PET_BREEDING, PetBreedingMessageEvent);
+        this._events.set(IncomingHeader.PET_GO_TO_BREEDING_NEST_FAILURE, GoToBreedingNestFailureEvent);
         this._events.set(IncomingHeader.PET_CONFIRM_BREEDING_REQUEST, ConfirmBreedingRequestEvent);
         this._events.set(IncomingHeader.PET_CONFIRM_BREEDING_RESULT, ConfirmBreedingResultEvent);
         this._events.set(IncomingHeader.PET_NEST_BREEDING_SUCCESS, NestBreedingSuccessEvent);

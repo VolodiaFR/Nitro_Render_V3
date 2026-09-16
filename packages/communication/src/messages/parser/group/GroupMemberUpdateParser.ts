@@ -18,6 +18,10 @@ export class GroupMemberUpdateParser implements IMessageParser
     {
         if(!wrapper) return false;
 
+        // 4 for the group id plus the smallest member record GroupMemberParser can read:
+        // two ints and three empty length-prefixed strings.
+        if((typeof wrapper.remainingBytes === 'number') && (wrapper.remainingBytes < 18)) return false;
+
         this.groupId = wrapper.readInt();
         this.member = new GroupMemberParser(wrapper);
 
