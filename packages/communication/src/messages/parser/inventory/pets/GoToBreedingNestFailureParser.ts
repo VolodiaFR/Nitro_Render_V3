@@ -17,6 +17,8 @@ export class GoToBreedingNestFailureParser implements IMessageParser
     {
         if(!wrapper) return false;
 
+        if((typeof wrapper.remainingBytes === 'number') && (wrapper.remainingBytes < 4)) return false;
+
         this._reason = wrapper.readInt();
 
         return true;

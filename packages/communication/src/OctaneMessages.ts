@@ -1,4 +1,5 @@
 import { IMessageConfiguration } from '@octane/api';
+import { GoToBreedingNestFailureEvent, GroupMemberUpdateEvent, GroupMembersRefreshEvent } from './messages';
 import { UnsupportedOutgoingHeader } from './messages/outgoing/UnsupportedOutgoingHeader';
 import { UserSettingsPrivacyComposer } from './messages/outgoing/user/settings/UserSettingsPrivacyComposer';
 import { UserSettingsChatPreferencesComposer } from './messages/outgoing/user/settings/UserSettingsChatPreferencesComposer';
@@ -7,8 +8,8 @@ import { WiredMenuSettingsComposer } from './messages/outgoing/roomevents/WiredM
 import { RequestOfflineMessagesComposer } from './messages/outgoing/friendlist/RequestOfflineMessagesComposer';
 import { HotelViewLandingEvent, HotelViewLandingRequestComposer, HotelViewLandingSaveComposer, HotelViewLandingSaveSceneComposer, HotelViewLandingVoteComposer, HotelViewLandingResetVotesComposer } from './messages';
 import { RoomQueueStatusEvent, YouAreNotSpectatorMessageEvent, ConfigurationItemStatesEvent, SpecialRoomEventEvent, SpecialSystemChatEvent, ObjectRemoveMultipleEvent, ItemRemoveMultipleEvent, ItemsStateUpdateEvent, ObjectRemoveConfirmEvent, FurnitureListRemoveMultipleEvent, OfficialRoomsEvent } from './messages';
-import { RoomUnitHabbiconEvent, UseHabbiconComposer } from './messages';
-import { UserHabbiconsEvent, UserHabbiconStatusChangedEvent, HabbiconInfoEvent, HabbiconActionResultEvent, HabbiconShopDataEvent, GetHabbiconShopDataComposer, GetHabbiconInfoComposer, BuyHabbiconComposer, BuyHabbiconCollectionComposer, ClaimHabbiconComposer, FavoriteHabbiconComposer, UnfavoriteHabbiconComposer } from './messages';
+import { RoomUseHabbiconEvent, TriggerHabbiconComposer } from './messages';
+import { UserHabbiconsEvent, UserHabbiconStatusChangedEvent, HabbiconInfoEvent, HabbiconShopDataEvent, GetHabbiconShopDataComposer, GetHabbiconInfoComposer, BuyHabbiconComposer, BuyHabbiconCollectionComposer, ClaimHabbiconComposer, FavoriteHabbiconComposer, UnfavoriteHabbiconComposer } from './messages';
 import { AddCustomFilterWordMessageComposer, CustomFilterResultEvent, GetCustomFilterMessageComposer, ModifyCustomFilterResultEvent, RemoveCustomFilterWordMessageComposer } from './messages';
 import { MarkMessengerReadComposer, MessengerConversationsEvent, MessengerHistoryEvent, MessengerMessageAckEvent, MessengerMessageFailedEvent, MessengerMessageEvent, MessengerReadCursorEvent, RequestMessengerConversationsComposer, RequestMessengerHistoryComposer, SendMessengerMessageComposer } from './messages';
 import { GetTraxEditorSongsComposer, TraxEditorBuySongComposer, TraxEditorDeleteSongComposer, TraxEditorErrorEvent, TraxEditorSaveSongComposer, TraxEditorSongsEvent } from './messages';
@@ -274,6 +275,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.GROUP_INFO, GroupInformationEvent);
         this._events.set(IncomingHeader.GROUP_MEMBER_REMOVE_CONFIRM, GroupConfirmMemberRemoveEvent);
         this._events.set(IncomingHeader.GROUP_MEMBERS, GroupMembersEvent);
+        this._events.set(IncomingHeader.GROUP_MEMBER, GroupMemberUpdateEvent);
+        this._events.set(IncomingHeader.GROUP_MEMBERS_REFRESH, GroupMembersRefreshEvent);
         this._events.set(IncomingHeader.GROUP_CREATE_OPTIONS, GroupBuyDataEvent);
         this._events.set(IncomingHeader.GROUP_BADGE_PARTS, GroupBadgePartsEvent);
         this._events.set(IncomingHeader.GROUP_SETTINGS, GroupSettingsEvent);
@@ -464,6 +467,7 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.PET_OPEN_PACKAGE_RESULT, OpenPetPackageResultMessageEvent);
         this._events.set(IncomingHeader.PET_BREEDING_RESULT, PetBreedingResultEvent);
         this._events.set(IncomingHeader.PET_BREEDING, PetBreedingMessageEvent);
+        this._events.set(IncomingHeader.PET_GO_TO_BREEDING_NEST_FAILURE, GoToBreedingNestFailureEvent);
         this._events.set(IncomingHeader.PET_CONFIRM_BREEDING_REQUEST, ConfirmBreedingRequestEvent);
         this._events.set(IncomingHeader.PET_CONFIRM_BREEDING_RESULT, ConfirmBreedingResultEvent);
         this._events.set(IncomingHeader.PET_NEST_BREEDING_SUCCESS, NestBreedingSuccessEvent);
@@ -782,12 +786,11 @@ export class OctaneMessages implements IMessageConfiguration
 
         // Custom packets
         this._events.set(IncomingHeader.AREA_HIDE, AreaHideMessageEvent);
-        this._events.set(IncomingHeader.UNIT_HABBICON, RoomUnitHabbiconEvent);
+        this._events.set(IncomingHeader.ROOM_USE_HABBICON, RoomUseHabbiconEvent);
         this._events.set(IncomingHeader.USER_HABBICONS, UserHabbiconsEvent);
         this._events.set(IncomingHeader.USER_HABBICON_STATUS_CHANGED, UserHabbiconStatusChangedEvent);
         this._events.set(IncomingHeader.HABBICON_SHOP_DATA, HabbiconShopDataEvent);
         this._events.set(IncomingHeader.HABBICON_INFO, HabbiconInfoEvent);
-        this._events.set(IncomingHeader.HABBICON_ACTION_RESULT, HabbiconActionResultEvent);
         this._events.set(IncomingHeader.HOTEL_VIEW_LANDING, HotelViewLandingEvent);
 
         // Nick Icons
@@ -998,7 +1001,7 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.SNOWWAR_GET_ALL_TIME_FRIENDS_LEADERBOARD, SnowWarGetAllTimeFriendsLeaderboardComposer);
         this._composers.set(OutgoingHeader.SNOWWAR_GET_WEEKLY_LEADERBOARD, SnowWarGetWeeklyLeaderboardComposer);
         this._composers.set(OutgoingHeader.SNOWWAR_GET_WEEKLY_FRIENDS_LEADERBOARD, SnowWarGetWeeklyFriendsLeaderboardComposer);
-        this._composers.set(OutgoingHeader.USE_HABBICON, UseHabbiconComposer);
+        this._composers.set(OutgoingHeader.TRIGGER_HABBICON, TriggerHabbiconComposer);
         this._composers.set(OutgoingHeader.GET_HABBICON_SHOP_DATA, GetHabbiconShopDataComposer);
         this._composers.set(OutgoingHeader.GET_HABBICON_INFO, GetHabbiconInfoComposer);
         this._composers.set(OutgoingHeader.BUY_HABBICON, BuyHabbiconComposer);

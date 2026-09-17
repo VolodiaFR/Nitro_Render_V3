@@ -1,8 +1,8 @@
 import { IMessageComposer } from '@octane/api';
 
-export class UseHabbiconComposer implements IMessageComposer<ConstructorParameters<typeof UseHabbiconComposer>>
+export class TriggerHabbiconComposer implements IMessageComposer<ConstructorParameters<typeof TriggerHabbiconComposer>>
 {
-    private _data: ConstructorParameters<typeof UseHabbiconComposer>;
+    private _data: ConstructorParameters<typeof TriggerHabbiconComposer>;
 
     constructor(habbiconId: number)
     {

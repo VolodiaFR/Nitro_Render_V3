@@ -4,12 +4,12 @@ import { HabbiconState } from './HabbiconData';
 export class UserHabbiconStatusChangedParser implements IMessageParser
 {
     public habbiconId = 0;
-    public state = HabbiconState.NotOwned;
+    public habbiconState = HabbiconState.NotOwned;
 
     public flush(): boolean
     {
         this.habbiconId = 0;
-        this.state = HabbiconState.NotOwned;
+        this.habbiconState = HabbiconState.NotOwned;
 
         return true;
     }
@@ -19,7 +19,7 @@ export class UserHabbiconStatusChangedParser implements IMessageParser
         if(!wrapper) return false;
 
         this.habbiconId = wrapper.readInt();
-        this.state = wrapper.readInt();
+        this.habbiconState = wrapper.readInt();
 
         return true;
     }

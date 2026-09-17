@@ -640,8 +640,8 @@ export class IncomingHeader
     // Hotel view landing scene (server -> client)
     public static HOTEL_VIEW_LANDING = 9409;
     // Room unit habbicon broadcast (server -> client). 9410 to match emulator
-    // RoomUserHabbiconComposer; 6011 is reserved by SnowWar SAVE_EDITOR.
-    public static UNIT_HABBICON = 9410;
+    // RoomUseHabbiconComposer; 6011 is reserved by SnowWar SAVE_EDITOR.
+    public static ROOM_USE_HABBICON = 9410;
     // AIR 13 avatar editor hot looks tab (server -> client). 9360 to match emulator HotLooksComposer.
     public static HOT_LOOKS = 9360;
     // AIR Habbicon semantics on the established Polaris custom header range.
@@ -652,7 +652,6 @@ export class IncomingHeader
     public static USER_HABBICON_STATUS_CHANGED = 9466;
     public static HABBICON_SHOP_DATA = 9467;
     public static HABBICON_INFO = 9463;
-    public static HABBICON_ACTION_RESULT = 9464;
     // AIR 13 official rooms view (server -> client), official id 438.
     public static OFFICIAL_ROOMS = 438;
     // AIR 13 batched room / inventory removals and wall-item state batch.

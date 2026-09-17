@@ -1,6 +1,6 @@
 import { IMessageDataWrapper, IMessageParser } from '@octane/api';
 
-export class RoomUnitHabbiconParser implements IMessageParser
+export class RoomUseHabbiconParser implements IMessageParser
 {
     private _unitId: number;
     private _habbiconId: number;
