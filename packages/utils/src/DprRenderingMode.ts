@@ -4,7 +4,15 @@ export type DprScaleMode = 'nearest' | 'linear';
 
 export const GetDesiredScaleMode = (): DprScaleMode => 'nearest';
 
-export const GetDesiredResolution = (): number => Math.max(1, Math.ceil(window.devicePixelRatio));
+export const GetDesiredResolution = (): number =>
+{
+    const dpr = window.devicePixelRatio || 1;
+    const nearest = Math.round(dpr);
+
+    if(Math.abs(dpr - nearest) < 0.001) return Math.max(1, nearest);
+
+    return Math.max(1, Math.floor(dpr));
+};
 
 export const StartDprRenderingModeWatcher = (): void =>
 {
