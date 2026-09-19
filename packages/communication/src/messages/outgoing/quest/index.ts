@@ -19,3 +19,8 @@ export * from './ClaimDailyTaskMessageComposer';
 export * from './GetRewardTracksMessageComposer';
 export * from './ClaimRewardTrackPrizeMessageComposer';
 export * from './PurchaseRewardTrackPremiumMessageComposer';
+export * from './GetRewardTrackAdminDataMessageComposer';
+export * from './SaveRewardTrackMessageComposer';
+export * from './SaveRewardTrackTaskMessageComposer';
+export * from './SaveRewardTrackPrizeMessageComposer';
+export * from './DeleteRewardTrackEntityMessageComposer';

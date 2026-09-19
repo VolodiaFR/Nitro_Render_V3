@@ -16,3 +16,5 @@ export * from './RewardTracksMessageEvent';
 export * from './RewardTrackClaimResultMessageEvent';
 export * from './RewardTrackProgressMessageEvent';
 export * from './RewardTrackPremiumPurchaseResultMessageEvent';
+export * from './RewardTrackAdminDataMessageEvent';
+export * from './RewardTrackAdminResultMessageEvent';

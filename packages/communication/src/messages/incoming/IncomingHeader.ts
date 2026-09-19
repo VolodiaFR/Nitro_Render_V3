@@ -400,6 +400,9 @@ export class IncomingHeader
     public static REWARD_TRACK_CLAIM_RESULT = 9451;
     public static REWARD_TRACK_PROGRESS = 9452;
     public static REWARD_TRACK_PREMIUM_PURCHASE_RESULT = 2248;
+    // Reward track staff editor (custom, 10100-10199).
+    public static REWARD_TRACK_ADMIN_DATA = 10100;
+    public static REWARD_TRACK_ADMIN_RESULT = 10105;
     public static BONUS_RARE_INFO = 1533;
     public static CRAFTABLE_PRODUCTS = 1000;
     public static CRAFTING_RECIPE = 2774;

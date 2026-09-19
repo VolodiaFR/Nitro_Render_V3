@@ -23,3 +23,6 @@ export * from './RewardTrackData';
 export * from './RewardTrackPremiumPurchaseResultMessageParser';
 export * from './RewardTrackProgressMessageParser';
 export * from './RewardTracksMessageParser';
+export * from './RewardTrackAdminData';
+export * from './RewardTrackAdminDataMessageParser';
+export * from './RewardTrackAdminResultMessageParser';
