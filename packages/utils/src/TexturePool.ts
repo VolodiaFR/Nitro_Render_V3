@@ -7,6 +7,7 @@ export class TexturePool
     private static MAX_POOL_SIZE: number = 200;
 
     private _textures: { [index: string]: { [index: string]: Texture[] } } = {};
+    private _pooledAt: WeakMap<Texture, number> = new WeakMap();
     private _totalTextures: number = 0;
     private _runCount: number = 0;
 
@@ -39,6 +40,7 @@ export class TexturePool
 
             if(texture)
             {
+                this._pooledAt.delete(texture);
                 this._totalTextures--;
 
                 return texture;
@@ -70,6 +72,7 @@ export class TexturePool
         delete texture.source.hitMapDirty;
 
         this._textures[texture.width][texture.height].push(texture);
+        this._pooledAt.set(texture, this._runCount);
 
         this._totalTextures++;
     }
@@ -89,19 +92,19 @@ export class TexturePool
                 for(let i = textures.length - 1; i >= 0; i--)
                 {
                     const texture = textures[i];
-                    const source = texture.source;
+                    const pooledAt = this._pooledAt.get(texture);
 
-                    if((source._touched > -1) && (this._runCount - source._touched) > TexturePool.MAX_IDLE)
-                    {
-                        delete texture.source.hitMap;
-                        delete texture.source.hitMapDirty;
+                    if((pooledAt === undefined) || ((this._runCount - pooledAt) <= TexturePool.MAX_IDLE)) continue;
 
-                        if(!source.destroyed) texture.destroy(true);
+                    delete texture.source?.hitMap;
+                    delete texture.source?.hitMapDirty;
 
-                        this._textures[texture.width][texture.height].splice(i, 1);
+                    if(!texture.destroyed) texture.destroy(true);
 
-                        this._totalTextures--;
-                    }
+                    textures.splice(i, 1);
+                    this._pooledAt.delete(texture);
+
+                    this._totalTextures--;
                 }
             }
         }
