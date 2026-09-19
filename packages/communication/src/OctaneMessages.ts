@@ -40,7 +40,7 @@ import { SoundboardCatalogEvent, SoundboardCatalogReorderComposer, SoundboardCat
 import { PressKeybindComposer } from './messages';
 import { EarningsCenterEvent, EarningsClaimResultEvent, IncomeRewardNotificationEvent, RequestEarningsCenterComposer, ClaimEarningsRewardComposer, ClaimAllEarningsRewardsComposer } from './messages';
 import { DeleteMentionComposer, MarkMentionsReadComposer, MentionReceivedEvent, MentionsListEvent, RequestMentionsComposer } from './messages';
-import { ActiveDailyTasksMessageEvent, ClaimDailyTaskMessageComposer, ClaimRewardTrackPrizeMessageComposer, DailyTaskUpdatedMessageEvent, DailyTasksAddedMessageEvent, DeleteRewardTrackEntityMessageComposer, GetDailyTasksMessageComposer, GetRewardTrackAdminDataMessageComposer, GetRewardTracksMessageComposer, PurchaseRewardTrackPremiumMessageComposer, RewardTrackAdminDataMessageEvent, RewardTrackAdminResultMessageEvent, RewardTrackClaimResultMessageEvent, RewardTrackPremiumPurchaseResultMessageEvent, RewardTrackProgressMessageEvent, RewardTracksMessageEvent, SaveRewardTrackMessageComposer, SaveRewardTrackPrizeMessageComposer, SaveRewardTrackTaskMessageComposer } from './messages';
+import { ActiveDailyTasksMessageEvent, ClaimDailyTaskMessageComposer, ClaimRewardTrackPrizeMessageComposer, DailyTaskUpdatedMessageEvent, DailyTasksAddedMessageEvent, DeleteRewardTrackEntityMessageComposer, GetDailyTasksMessageComposer, GetRewardTrackAdminDataMessageComposer, GetRewardTracksMessageComposer, PurchaseRewardTrackPremiumMessageComposer, RewardTrackAdminDataMessageEvent, RewardTrackAdminResultMessageEvent, RewardTrackClaimResultMessageEvent, RewardTrackFurniSearchResultMessageEvent, RewardTrackTextsMessageEvent, RewardTrackPremiumPurchaseResultMessageEvent, RewardTrackProgressMessageEvent, RewardTracksMessageEvent, SaveRewardTrackMessageComposer, SaveRewardTrackPrizeMessageComposer, SaveRewardTrackTaskMessageComposer, SaveRewardTrackTextsMessageComposer, SearchRewardTrackFurniMessageComposer } from './messages';
 import { TreasureHuntFirstWinnerMessageEvent, TreasureHuntFailMessageEvent, TreasureHuntUpdateMessageEvent } from './messages';
 import { SelfDonationResultMessageEvent, SelfDonationMessageComposer } from './messages';
 export class OctaneMessages implements IMessageConfiguration
@@ -496,6 +496,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.REWARD_TRACK_PREMIUM_PURCHASE_RESULT, RewardTrackPremiumPurchaseResultMessageEvent);
         this._events.set(IncomingHeader.REWARD_TRACK_ADMIN_DATA, RewardTrackAdminDataMessageEvent);
         this._events.set(IncomingHeader.REWARD_TRACK_ADMIN_RESULT, RewardTrackAdminResultMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_FURNI_SEARCH_RESULT, RewardTrackFurniSearchResultMessageEvent);
+        this._events.set(IncomingHeader.REWARD_TRACK_TEXTS, RewardTrackTextsMessageEvent);
         this._events.set(IncomingHeader.QUEST_CANCELLED, QuestCancelledMessageEvent);
         this._events.set(IncomingHeader.QUEST_COMPLETED, QuestCompletedMessageEvent);
         this._events.set(IncomingHeader.COMMUNITY_GOAL_HALL_OF_FAME, CommunityGoalHallOfFameMessageEvent);
@@ -1533,6 +1535,8 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.SAVE_REWARD_TRACK_TASK, SaveRewardTrackTaskMessageComposer);
         this._composers.set(OutgoingHeader.SAVE_REWARD_TRACK_PRIZE, SaveRewardTrackPrizeMessageComposer);
         this._composers.set(OutgoingHeader.DELETE_REWARD_TRACK_ENTITY, DeleteRewardTrackEntityMessageComposer);
+        this._composers.set(OutgoingHeader.SEARCH_REWARD_TRACK_FURNI, SearchRewardTrackFurniMessageComposer);
+        this._composers.set(OutgoingHeader.SAVE_REWARD_TRACK_TEXTS, SaveRewardTrackTextsMessageComposer);
         this._composers.set(OutgoingHeader.GET_QUESTS, GetQuestsMessageComposer);
         this._composers.set(OutgoingHeader.GET_SEASONAL_QUESTS_ONLY, GetSeasonalQuestsOnlyMessageComposer);
         this._composers.set(OutgoingHeader.OPEN_QUEST_TRACKER, OpenQuestTrackerMessageComposer);

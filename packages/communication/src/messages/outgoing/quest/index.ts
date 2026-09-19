@@ -24,3 +24,5 @@ export * from './SaveRewardTrackMessageComposer';
 export * from './SaveRewardTrackTaskMessageComposer';
 export * from './SaveRewardTrackPrizeMessageComposer';
 export * from './DeleteRewardTrackEntityMessageComposer';
+export * from './SearchRewardTrackFurniMessageComposer';
+export * from './SaveRewardTrackTextsMessageComposer';

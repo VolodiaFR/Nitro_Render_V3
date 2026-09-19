@@ -92,6 +92,10 @@ describe('RewardTrackAdminDataMessageParser', () =>
         writer.writeInt(1);
         writer.writeByte(1);
         writer.writeInt(3);
+        writer.writeInt(7);
+        writer.writeInt(1);
+        writer.writeString('name');
+        writer.writeString('Season 1');
 
         const parser = new RewardTrackAdminDataMessageParser();
         parser.flush();
@@ -122,8 +126,9 @@ describe('RewardTrackAdminDataMessageParser', () =>
             ] }
         ]);
         expect(track.prizes).toEqual([
-            { id: 'p1', requiredPoints: 10, productItemTypeId: 7, rewardType: 'badge', extraParams: 'ACH_1', rewardAmount: 1, premium: true, sortOrder: 3 }
+            { id: 'p1', requiredPoints: 10, productItemTypeId: 7, rewardType: 'badge', extraParams: 'ACH_1', rewardAmount: 1, premium: true, sortOrder: 3, claimedCount: 7 }
         ]);
+        expect(track.texts).toEqual({ name: 'Season 1' });
     });
 });
 

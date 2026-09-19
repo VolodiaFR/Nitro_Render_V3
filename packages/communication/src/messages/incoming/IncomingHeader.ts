@@ -403,6 +403,8 @@ export class IncomingHeader
     // Reward track staff editor (custom, 10100-10199).
     public static REWARD_TRACK_ADMIN_DATA = 10100;
     public static REWARD_TRACK_ADMIN_RESULT = 10105;
+    public static REWARD_TRACK_FURNI_SEARCH_RESULT = 10107;
+    public static REWARD_TRACK_TEXTS = 10109;
     public static BONUS_RARE_INFO = 1533;
     public static CRAFTABLE_PRODUCTS = 1000;
     public static CRAFTING_RECIPE = 2774;

@@ -30,6 +30,8 @@ export interface RewardTrackAdminPrize
     rewardAmount: number;
     premium: boolean;
     sortOrder: number;
+    /** How many users claimed it. */
+    claimedCount: number;
 }
 
 /** A track as stored, disabled ones included. The premium boost is in hundredths: 150 is 1.5x. */
@@ -48,6 +50,8 @@ export interface RewardTrackAdminTrack
     enabled: boolean;
     tasks: RewardTrackAdminTask[];
     prizes: RewardTrackAdminPrize[];
+    /** The localization texts, keyed by the part after "reward_track.<track>.". */
+    texts: Record<string, string>;
 }
 
 export const readRewardTrackAdminTrack = (wrapper: IMessageDataWrapper): RewardTrackAdminTrack =>
@@ -65,7 +69,8 @@ export const readRewardTrackAdminTrack = (wrapper: IMessageDataWrapper): RewardT
         premiumCostCredits: wrapper.readInt(),
         enabled: wrapper.readBoolean(),
         tasks: [],
-        prizes: []
+        prizes: [],
+        texts: {}
     };
 
     const taskCount = wrapper.readInt();
@@ -107,8 +112,18 @@ export const readRewardTrackAdminTrack = (wrapper: IMessageDataWrapper): RewardT
             extraParams: wrapper.readString(),
             rewardAmount: wrapper.readInt(),
             premium: wrapper.readBoolean(),
-            sortOrder: wrapper.readInt()
+            sortOrder: wrapper.readInt(),
+            claimedCount: wrapper.readInt()
         });
+    }
+
+    const textCount = wrapper.readInt();
+
+    for(let i = 0; i < textCount; i++)
+    {
+        const key = wrapper.readString();
+
+        track.texts[key] = wrapper.readString();
     }
 
     return track;
