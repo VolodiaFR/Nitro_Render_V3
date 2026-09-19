@@ -24,7 +24,7 @@ export class UserHabbiconsParser implements IMessageParser
 
         for(let index = 0; index < count; index++)
         {
-            this.habbicons.push({ habbiconId: wrapper.readInt(), state: wrapper.readInt() });
+            this.habbicons.push({ habbiconId: wrapper.readInt(), habbiconState: wrapper.readInt() });
         }
 
         const recentCount = wrapper.readInt();

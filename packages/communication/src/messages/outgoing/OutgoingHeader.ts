@@ -327,6 +327,8 @@ export class OutgoingHeader
     public static WIRED_USER_INSPECT_MOVE = 10027;
     public static WIRED_FURNI_RUNTIME_STATE_REQUEST = 10028;
     public static WIRED_FEATURE_CAPABILITIES = 10029;
+    public static WIRED_ARRAY_INSPECTION_REQUEST = 10034;
+    public static WIRED_ARRAY_INSPECTION_UPDATE = 10035;
     // AIR 13 wired leftovers, all on their official ids.
     public static WIRED_USER_SELECTED = 3122;
     public static WIRED_MENU_PERMISSIONS_SAVE = 1936;
@@ -706,9 +708,9 @@ export class OutgoingHeader
     public static HOTEL_VIEW_LANDING_RESET_VOTES = 9414;
     public static USER_SETTINGS_PRIVACY = 9415;
     public static REQUEST_OFFLINE_MESSAGES = 9416;
-    // Use habbicon (client -> server). 9417 to match emulator RoomUserHabbiconEvent;
+    // Trigger habbicon (client -> server). 9417 to match emulator TriggerHabbiconEvent;
     // 6010 is reserved by SnowWar EDIT_ROOM.
-    public static USE_HABBICON = 9417;
+    public static TRIGGER_HABBICON = 9417;
     // AIR 13 avatar editor hot looks tab (client -> server). 9360 to match emulator GetHotLooksEvent.
     public static GET_HOT_LOOKS = 9360;
     // AIR Habbicon semantics on the established Polaris custom header range.

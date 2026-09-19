@@ -15,6 +15,7 @@ export * from './WiredOpenParser';
 export * from './WiredRewardResultMessageParser';
 export * from './WiredSaveSuccessParser';
 export * from './WiredUserVariablesDataParser';
+export * from './WiredArrayInspectionDataParser';
 export * from './WiredValidationErrorParser';
 export * from './SelfDonationResultMessageParser';
 export * from './WiredVariableData';

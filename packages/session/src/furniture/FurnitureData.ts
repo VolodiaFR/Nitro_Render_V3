@@ -32,8 +32,11 @@ export class FurnitureData implements IFurnitureData
     private _furniLine: string;
     private _environment: string;
     private _rare: boolean;
+    private _canPutStuffOn?: boolean;
+    private _height?: number;
+    private _tradeable?: boolean;
 
-    constructor(type: FurnitureType, id: number, fullName: string, className: string, category: string, localizedName: string, description: string, revision: number, tileSizeX: number, tileSizeY: number, tileSizeZ: number, colors: number[], hadIndexedColor: boolean, colorIndex: number, adUrl: string, purchaseOfferId: number, purchaseCouldBeUsedForBuyout: boolean, rentOfferId: number, rentCouldBeUsedForBuyout: boolean, availableForBuildersClub: boolean, customParams: string, specialType: number, allowStack: boolean, canStandOn: boolean, canSitOn: boolean, canLayOn: boolean, excludedfromDynamic: boolean, furniLine: string, environment: string, rare: boolean)
+    constructor(type: FurnitureType, id: number, fullName: string, className: string, category: string, localizedName: string, description: string, revision: number, tileSizeX: number, tileSizeY: number, tileSizeZ: number, colors: number[], hadIndexedColor: boolean, colorIndex: number, adUrl: string, purchaseOfferId: number, purchaseCouldBeUsedForBuyout: boolean, rentOfferId: number, rentCouldBeUsedForBuyout: boolean, availableForBuildersClub: boolean, customParams: string, specialType: number, allowStack: boolean, canStandOn: boolean, canSitOn: boolean, canLayOn: boolean, excludedfromDynamic: boolean, furniLine: string, environment: string, rare: boolean, canPutStuffOn?: boolean, height?: number, tradeable?: boolean)
     {
         this._type = type;
         this._id = id;
@@ -65,6 +68,24 @@ export class FurnitureData implements IFurnitureData
         this._furniLine = furniLine;
         this._environment = environment;
         this._rare = rare;
+        this._canPutStuffOn = canPutStuffOn;
+        this._height = height;
+        this._tradeable = tradeable;
+    }
+
+    public get canPutStuffOn(): boolean | undefined
+    {
+        return this._canPutStuffOn;
+    }
+
+    public get height(): number | undefined
+    {
+        return this._height;
+    }
+
+    public get tradeable(): boolean | undefined
+    {
+        return this._tradeable;
     }
 
     public get type(): FurnitureType

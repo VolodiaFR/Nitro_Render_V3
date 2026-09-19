@@ -19,26 +19,18 @@ export enum HabbiconAction
     Unfavorite = 4
 }
 
-export enum HabbiconActionError
-{
-    None = 0,
-    Unavailable = 1,
-    NotEnoughCredits = 2,
-    NotEnoughActivityPoints = 3,
-    NotEligible = 4,
-    Failed = 5
-}
-
 export interface UserHabbiconData
 {
     habbiconId: number;
-    state: HabbiconState;
+    habbiconState: HabbiconState;
 }
 
-export interface HabbiconData extends UserHabbiconData
+export interface HabbiconData
 {
+    habbiconId: number;
     name: string;
     collectionId: number;
+    state: HabbiconState;
     priceCredits: number;
     priceActivityPoints: number;
     activityPointType: number;
