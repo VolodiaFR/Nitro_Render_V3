@@ -8,6 +8,12 @@ export interface IWiredArrayFieldDefinitionData
     textConnected?: boolean;
 }
 
+export interface IWiredVariableTextConnectorEntry
+{
+    key: number;
+    value: string;
+}
+
 export interface IWiredArrayVariableMetadata
 {
     arrayFormat?: 'simple' | 'record';
@@ -15,6 +21,8 @@ export interface IWiredArrayVariableMetadata
     fields?: IWiredArrayFieldDefinitionData[];
     maxEntries?: number;
     permanent?: boolean;
+    /** The value-to-text table of a text connected definition, when the server sent one. */
+    textConnector?: IWiredVariableTextConnectorEntry[];
     /** Set when the server reported a stored array schema it could not parse. */
     unavailable?: boolean;
     valueShape?: 'single' | 'array';
@@ -305,6 +313,16 @@ export class WiredUserVariablesDataParser implements IMessageParser
                 const definition = definitions?.find(current => current.itemId === value.itemId);
 
                 if(!definition) continue;
+
+                if(Array.isArray(value.textConnector))
+                {
+                    definition.textConnector = value.textConnector
+                        .filter((entry: any) => entry && Number.isInteger(entry.key) && typeof entry.value === 'string')
+                        .map((entry: any) => ({ key: entry.key, value: entry.value }));
+                }
+
+                // An entry that only carries a text connector says nothing about the value shape.
+                if(value.valueShape === undefined) continue;
 
                 // A schema the server could not parse is neither a usable array nor a scalar, so it
                 // stays unselectable instead of being flattened into a scalar the editors would offer.

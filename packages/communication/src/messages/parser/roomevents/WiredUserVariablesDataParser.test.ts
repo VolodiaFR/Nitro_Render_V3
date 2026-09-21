@@ -94,6 +94,22 @@ describe('WiredUserVariablesDataParser', () =>
         expect(parser.definitions[0].valueShape).toBeUndefined();
     });
 
+    it('merges a text connector table without touching the value shape', () =>
+    {
+        const writer = basePacket();
+        writer.writeString(JSON.stringify([ {
+            itemId: 42,
+            variableType: 2,
+            textConnector: [ { key: 1, value: 'Sword' }, { key: 2, value: 'Shield' }, { key: 'x', value: 'dropped' } ]
+        } ]));
+        const parser = new WiredUserVariablesDataParser();
+
+        expect(parser.parse(wrapper(writer))).toBe(true);
+        expect(parser.definitions[0].textConnector).toEqual([ { key: 1, value: 'Sword' }, { key: 2, value: 'Shield' } ]);
+        expect(parser.definitions[0].valueShape).toBeUndefined();
+        expect(parser.definitions[0].arrayFormat).toBeUndefined();
+    });
+
     it('keeps the legacy packet valid when optional metadata is absent or malformed', () =>
     {
         const legacy = new WiredUserVariablesDataParser();

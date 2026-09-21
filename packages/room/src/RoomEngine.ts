@@ -5,6 +5,7 @@ import { BadgeImageReadyEvent, GetEventDispatcher, OctaneToolbarAnimateIconEvent
 import { GetRoomSessionManager, GetSessionDataManager } from '@octane/session';
 import { FurniId, GetTickerTime, OctaneLogger, NumberBank, TextureUtils, Vector3d } from '@octane/utils';
 import { Container, Matrix, Point, PointData, Rectangle, RenderTexture, Sprite, Texture, Ticker } from 'pixi.js';
+import { DEFAULT_WIRED_CLICK_SETTINGS, normalizeWiredClickSettings, WiredClickSettings } from './utils/WiredClickSettings';
 import { GetRoomContentLoader } from './GetRoomContentLoader';
 import { GetRoomManager } from './GetRoomManager';
 import { GetRoomMessageHandler } from './GetRoomMessageHandler';
@@ -58,6 +59,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
     private _activeRoomDragX: number = 0;
     private _activeRoomDragY: number = 0;
     private _moveBlocked: boolean = false;
+    private _wiredClickSettings: WiredClickSettings = DEFAULT_WIRED_CLICK_SETTINGS;
     private _roomDraggingAlwaysCenters: boolean = false;
     private _roomAllowsDragging: boolean = true;
     private _roomDatas: Map<number, RoomData> = new Map();
@@ -137,7 +139,25 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
     public setActiveRoomId(roomId: number): void
     {
+        // A wired click setting belongs to the room that sent it.
+        if(roomId !== this._activeRoomId) this._wiredClickSettings = DEFAULT_WIRED_CLICK_SETTINGS;
+
         this._activeRoomId = roomId;
+    }
+
+    public setWiredClickSettings(userOption: number, furniOption: number): void
+    {
+        this._wiredClickSettings = normalizeWiredClickSettings(userOption, furniOption);
+    }
+
+    public get wiredClickUserOption(): number
+    {
+        return this._wiredClickSettings.userOption;
+    }
+
+    public get wiredClickFurniOption(): number
+    {
+        return this._wiredClickSettings.furniOption;
     }
 
     public destroyRoom(roomId: number): void
