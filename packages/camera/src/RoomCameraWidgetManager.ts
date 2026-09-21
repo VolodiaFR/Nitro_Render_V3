@@ -86,9 +86,33 @@ export const normalizeCameraColorMatrix = (matrix: ColorMatrix): ColorMatrix =>
     return normalized;
 };
 
+const IDENTITY_COLOR_MATRIX: ColorMatrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+
+// Composes two 4x5 colour matrices so that `earlier` is applied first; same
+// layout and convention as ColorMatrixFilter's own matrix multiplication.
+export const composeCameraColorMatrices = (later: ColorMatrix, earlier: ColorMatrix): ColorMatrix =>
+{
+    const out = [ ...later ] as ColorMatrix;
+
+    for(let row = 0; row < 4; row++)
+    {
+        for(let column = 0; column < 5; column++)
+        {
+            let value = (column === 4) ? later[(row * 5) + 4] : 0;
+
+            for(let k = 0; k < 4; k++) value += later[(row * 5) + k] * earlier[(k * 5) + column];
+
+            out[(row * 5) + column] = value;
+        }
+    }
+
+    return out;
+};
+
 export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
 {
     private _effects: Map<string, IRoomCameraWidgetEffect> = new Map();
+    private _colorMatrixFilters: Map<string, ColorMatrixFilter> = new Map();
     private _isLoaded: boolean = false;
 
     public async init(): Promise<void>
@@ -132,7 +156,6 @@ export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
         const renderTextureA = RenderTexture.create({ width: texture.width, height: texture.height, resolution });
         const renderTextureB = RenderTexture.create({ width: texture.width, height: texture.height, resolution });
         const baseSprite = new Sprite(texture);
-        const identityMatrix: ColorMatrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
 
         try
         {
@@ -153,48 +176,96 @@ export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
             let currentTexture = renderTextureA;
             let nextTexture = renderTextureB;
 
-            const applyEffect = (selectedEffect: IRoomCameraWidgetSelectedEffect): void =>
+            const renderPass = (populate: (stage: Container, currentSprite: Sprite) => void): void =>
             {
-                const effect = selectedEffect.effect;
                 const stage = new Container();
                 const currentSprite = new Sprite(currentTexture);
-                let filter: ColorMatrixFilter = null;
 
                 try
                 {
                     stage.addChild(currentSprite);
-
-                    if((effect.type === 'colormatrix') && effect.colorMatrix)
-                    {
-                        filter = new ColorMatrixFilter();
-                        filter.matrix = effect.colorMatrix.map((value, index) => identityMatrix[index] + (value - identityMatrix[index]) * selectedEffect.strength) as ColorMatrix;
-                        currentSprite.filters = [filter];
-                    }
-                    else if(effect.texture)
-                    {
-                        const effectSprite = new Sprite(effect.texture);
-
-                        effectSprite.width = texture.width;
-                        effectSprite.height = texture.height;
-                        effectSprite.alpha = (effect.type === 'frame') ? 1 : selectedEffect.strength;
-                        effectSprite.blendMode = (effect.type === 'frame') ? 'normal' : (effect.blendMode ?? 'normal');
-
-                        stage.addChild(effectSprite);
-                    }
-
+                    populate(stage, currentSprite);
                     TextureUtils.writeToTexture(stage, nextTexture);
                 }
                 finally
                 {
                     stage.destroy({ children: true });
-                    filter?.destroy();
                 }
 
                 [currentTexture, nextTexture] = [nextTexture, currentTexture];
             };
 
-            for(const selectedEffect of nonFrameEffects) applyEffect(selectedEffect);
-            for(const selectedEffect of frameEffects) applyEffect(selectedEffect);
+            const scaledColorMatrix = (selectedEffect: IRoomCameraWidgetSelectedEffect): ColorMatrix =>
+                selectedEffect.effect.colorMatrix.map((value, index) => IDENTITY_COLOR_MATRIX[index] + (value - IDENTITY_COLOR_MATRIX[index]) * selectedEffect.strength) as ColorMatrix;
+
+            // Adjacent colour-matrix effects collapse into one matrix on one cached filter.
+            const applyColorMatrixEffects = (selectedEffects: IRoomCameraWidgetSelectedEffect[]): void =>
+            {
+                const name = selectedEffects[0].effect.name;
+                let filter = this._colorMatrixFilters.get(name);
+
+                if(!filter)
+                {
+                    filter = new ColorMatrixFilter();
+                    this._colorMatrixFilters.set(name, filter);
+                }
+
+                filter.matrix = selectedEffects.slice(1).reduce((matrix, selectedEffect) => composeCameraColorMatrices(scaledColorMatrix(selectedEffect), matrix), scaledColorMatrix(selectedEffects[0]));
+
+                renderPass((stage, currentSprite) =>
+                {
+                    currentSprite.filters = [filter];
+                });
+            };
+
+            const applyTextureEffect = (selectedEffect: IRoomCameraWidgetSelectedEffect): void =>
+            {
+                const effect = selectedEffect.effect;
+
+                renderPass(stage =>
+                {
+                    const effectSprite = new Sprite(effect.texture);
+
+                    effectSprite.width = texture.width;
+                    effectSprite.height = texture.height;
+                    effectSprite.alpha = (effect.type === 'frame') ? 1 : selectedEffect.strength;
+                    effectSprite.blendMode = (effect.type === 'frame') ? 'normal' : (effect.blendMode ?? 'normal');
+
+                    stage.addChild(effectSprite);
+                });
+            };
+
+            const applyEffects = (selectedEffects: IRoomCameraWidgetSelectedEffect[]): void =>
+            {
+                let colorMatrixRun: IRoomCameraWidgetSelectedEffect[] = [];
+
+                const flushColorMatrixRun = (): void =>
+                {
+                    if(colorMatrixRun.length) applyColorMatrixEffects(colorMatrixRun);
+
+                    colorMatrixRun = [];
+                };
+
+                for(const selectedEffect of selectedEffects)
+                {
+                    const effect = selectedEffect.effect;
+
+                    if((effect.type === 'colormatrix') && effect.colorMatrix)
+                    {
+                        colorMatrixRun.push(selectedEffect);
+                    }
+                    else if(effect.texture)
+                    {
+                        flushColorMatrixRun();
+                        applyTextureEffect(selectedEffect);
+                    }
+                }
+
+                flushColorMatrixRun();
+            };
+
+            applyEffects(nonFrameEffects);
+            applyEffects(frameEffects);
 
             return await TextureUtils.generateImage(currentTexture);
         }
