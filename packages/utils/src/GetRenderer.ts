@@ -1,5 +1,4 @@
 import { AutoDetectOptions, Renderer, Texture, autoDetectRenderer } from 'pixi.js';
-import { GetDesiredScaleMode } from './DprRenderingMode';
 
 let renderer: Renderer = null;
 
@@ -36,16 +35,6 @@ const patchGlTextureSystem = (r: Renderer): void =>
             if(!source || source.destroyed || !source.style)
             {
                 source = Texture.EMPTY.source;
-            }
-            else if(!source.octaneFixedScaleMode)
-            {
-                const scaleMode = GetDesiredScaleMode();
-
-                if(source.style.scaleMode !== scaleMode)
-                {
-                    source.style.scaleMode = scaleMode;
-                    source.style.update();
-                }
             }
 
             return origBindSource.call(this, source, location);
