@@ -95,4 +95,8 @@ export interface IRoomEngine
     moveBlocked: boolean;
     isAreaSelectionMode(): boolean;
     whereYouClickIsWhereYouGo(): boolean;
+    /** What the room's wired asked this player's clicks on avatars and furni to do; forgotten with the room. */
+    setWiredClickSettings(userOption: number, furniOption: number): void;
+    readonly wiredClickUserOption: number;
+    readonly wiredClickFurniOption: number;
 }

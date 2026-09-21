@@ -39,6 +39,8 @@ export interface IRoomEngineServices
     activeRoomId: number;
     isDecorating: boolean;
     moveBlocked: boolean;
+    readonly wiredClickUserOption: number;
+    readonly wiredClickFurniOption: number;
     isAreaSelectionMode(): boolean;
     whereYouClickIsWhereYouGo(): boolean;
     areaSelectionManager: IRoomAreaSelectionManager;

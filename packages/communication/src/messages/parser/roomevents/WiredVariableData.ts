@@ -82,3 +82,12 @@ export function readWiredLong(wrapper: IMessageDataWrapper): number
 
     return (high * 0x100000000) + low;
 }
+
+/** A signed `long` sent as two 32-bit halves; the high half carries the sign. */
+export function readWiredSignedLong(wrapper: IMessageDataWrapper): number
+{
+    const high = wrapper.readInt();
+    const low = wrapper.readInt() >>> 0;
+
+    return (high * 0x100000000) + low;
+}
