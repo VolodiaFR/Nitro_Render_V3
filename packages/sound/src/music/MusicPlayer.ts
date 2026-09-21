@@ -4,6 +4,7 @@ import { Howl, Howler } from 'howler';
 import { TraxData } from '../trax/TraxData';
 
 const HowlerUnlockState = Howler as typeof Howler & { _audioUnlocked?: boolean };
+const MAX_CACHED_SAMPLES = 64;
 
 export class MusicPlayer
 {
@@ -34,9 +35,11 @@ export class MusicPlayer
 
     public async play(song: string, currentSongId: number, startPos: number = 0, playLength: number = -1): Promise<void>
     {
-        this.reset();
+        const nextSong = new TraxData(song);
 
-        this._currentSong = new TraxData(song);
+        this.reset(new Set(nextSong.getSampleIds()));
+
+        this._currentSong = nextSong;
         this._startPos = Math.trunc(startPos);
         this._playLength = playLength;
         this._currentPos = this._startPos;
@@ -50,12 +53,13 @@ export class MusicPlayer
         this._tickerInterval = window.setInterval(() => this.tick(), 1000);
     }
 
-    private reset(): void
+    private reset(keepSampleIds: ReadonlySet<number> = new Set()): void
     {
         this._isPlaying = false;
         window.clearInterval(this._tickerInterval);
 
         Howler.stop();
+        this.unloadSamples(keepSampleIds);
         this._currentSongId = -1;
         this._currentSong = undefined;
         this._tickerInterval = undefined;
@@ -191,6 +195,8 @@ export class MusicPlayer
 
             sample.once('load', () =>
             {
+                if(this._cache.size >= MAX_CACHED_SAMPLES) this.unloadSamples(this.currentSampleIds, 1);
+
                 this._cache.set(songId, sample);
                 resolve(sample);
             });
@@ -203,6 +209,29 @@ export class MusicPlayer
         });
     }
 
+
+    private get currentSampleIds(): ReadonlySet<number>
+    {
+        return new Set(this._currentSong ? this._currentSong.getSampleIds() : []);
+    }
+
+    // Frees decoded audio for cached samples the current song does not use,
+    // oldest first; the audition sample is dropped with its cache entry.
+    private unloadSamples(keepSampleIds: ReadonlySet<number>, limit: number = Infinity): void
+    {
+        for(const [id, sample] of this._cache)
+        {
+            if(limit <= 0) return;
+
+            if(keepSampleIds.has(id)) continue;
+
+            if(sample === this._auditionHowl) this.stopSampleOnce();
+
+            sample.unload();
+            this._cache.delete(id);
+            limit--;
+        }
+    }
 
     private tick(): void
     {

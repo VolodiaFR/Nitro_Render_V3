@@ -9,6 +9,7 @@ export class Motions
     private static _REMOVED_MOTIONS: Motion[] = [];
     private static _TIMER: ReturnType<typeof setInterval> = null;
     private static _IS_UPDATING: boolean = false;
+    private static _VISIBILITY_WATCHED: boolean = false;
 
     public static get TIMER_TIME(): number
     {
@@ -163,7 +164,9 @@ export class Motions
 
     private static startTimer(): void
     {
-        if(!Motions._TIMER)
+        Motions.watchVisibility();
+
+        if(!Motions._TIMER && !Motions.isHidden)
         {
             Motions._TIMER = setInterval(() => Motions.onTick(), Motions.TIMER_TIME);
         }
@@ -177,6 +180,26 @@ export class Motions
 
             Motions._TIMER = null;
         }
+    }
+
+    private static get isHidden(): boolean
+    {
+        return ((typeof document !== 'undefined') && document.hidden);
+    }
+
+    // The ticker clock the motions read from freezes in a hidden tab, so the
+    // interval would only burn wakeups; park it and resume with the tab.
+    private static watchVisibility(): void
+    {
+        if(Motions._VISIBILITY_WATCHED || (typeof document === 'undefined')) return;
+
+        Motions._VISIBILITY_WATCHED = true;
+
+        document.addEventListener('visibilitychange', () =>
+        {
+            if(Motions.isHidden) Motions.stopTimer();
+            else if(Motions._RUNNING_MOTIONS.length || Motions._QUEUED_MOTIONS.length) Motions.startTimer();
+        });
     }
 
 
