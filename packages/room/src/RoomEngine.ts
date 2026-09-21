@@ -3338,7 +3338,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         if(!displayObject) return null;
 
-        return displayObject.getChildByName(RoomEngine.OVERLAY) ?? null;
+        return displayObject.getChildByLabel(RoomEngine.OVERLAY) ?? null;
     }
 
     private removeOverlayIconSprite(container: Container, label: string): boolean

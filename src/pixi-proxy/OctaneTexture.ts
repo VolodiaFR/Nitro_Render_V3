@@ -1,4 +1,1 @@
-import { Texture } from 'pixi.js';
-
-export class OctaneTexture extends Texture
-{}
+export { Texture as OctaneTexture } from 'pixi.js';
