@@ -244,12 +244,16 @@ export class PlaneMaskManager
         matrix.scale(xScale, ySkew);
         matrix.translate(tx, ty);
 
+        const sprite = new Sprite(texture);
+
         GetRenderer().render({
             target: targetTexture,
-            container: new Sprite(texture),
+            container: sprite,
             clear: false,
             transform: matrix
         });
+
+        sprite.destroy();
 
         return true;
     }
