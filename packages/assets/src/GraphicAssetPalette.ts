@@ -37,7 +37,7 @@ export class GraphicAssetPalette implements IGraphicAssetPalette
 
         ctx.putImageData(imageData, 0, 0);
 
-        const newTexture = Texture.from(canvas);
+        const newTexture = Texture.from(canvas, true);
 
         //@ts-ignore
         newTexture.source.hitMap = imageData.data;

@@ -192,7 +192,7 @@ export class PlaneVisualizationAnimationLayer
 
                 context.putImageData(imageData, 0, 0);
 
-                texture = Texture.from(source);
+                texture = Texture.from(source, true);
 
                 this._ownedTextures.add(texture);
             }

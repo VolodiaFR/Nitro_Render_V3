@@ -218,7 +218,7 @@ export class HabbiconAssetManager
 
         if(!composed) return null;
 
-        const texture = Texture.from(composed);
+        const texture = Texture.from(composed, true);
 
         this._composedTextures.set(cacheKey, texture);
 
