@@ -6,6 +6,8 @@ const BYTES_PER_PIXEL = 4;
 
 export class ExtendedSprite extends Sprite
 {
+    private static SCRATCH_POINT: Point = new Point();
+
     private _offsetX: number = 0;
     private _offsetY: number = 0;
     private _tag: string = '';
@@ -46,7 +48,7 @@ export class ExtendedSprite extends Sprite
     {
         if(!point || (this.alphaTolerance > 255) || !this.texture || (this.texture === Texture.EMPTY)) return false;
 
-        point = new Point((point.x * this.scale.x), (point.y * this.scale.y));
+        point = ExtendedSprite.SCRATCH_POINT.set((point.x * this.scale.x), (point.y * this.scale.y));
 
         if(!super.containsPoint(point)) return false;
 
