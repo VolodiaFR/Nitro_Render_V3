@@ -1,4 +1,1 @@
-import { AlphaFilter } from 'pixi.js';
-
-export class OctaneAlphaFilter extends AlphaFilter
-{}
+export { AlphaFilter as OctaneAlphaFilter } from 'pixi.js';

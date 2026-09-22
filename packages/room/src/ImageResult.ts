@@ -16,6 +16,23 @@ export class ImageResult implements IImageResult
 
         if(!this.data) return null;
 
-        return await TextureUtils.generateImage(this.data);
+        const texture = this.data;
+
+        // The extract reads the texture before its first await, so once the image
+        // exists the render texture has done its job and can go back to the GPU.
+        this.image = await TextureUtils.generateImage(texture);
+
+        if(this.data === texture) this.dispose();
+
+        return this.image;
+    }
+
+    public dispose(): void
+    {
+        if(!this.data) return;
+
+        if(!this.data.destroyed) this.data.destroy(true);
+
+        this.data = null;
     }
 }

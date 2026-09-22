@@ -1,9 +1,8 @@
 import { GetRoomEngine } from '@octane/room';
 import { GetDesiredScaleMode, GetRenderer, StartDprRenderingModeWatcher } from '@octane/utils';
-import { BrowserAdapter, DOMAdapter, HelloSystem, TextureSource } from 'pixi.js';
+import { BrowserAdapter, DOMAdapter, TextureSource } from 'pixi.js';
 import './pixi-augmentations';
 
-HelloSystem.defaultOptions.hello = true;
 StartDprRenderingModeWatcher();
 DOMAdapter.set(BrowserAdapter);
 

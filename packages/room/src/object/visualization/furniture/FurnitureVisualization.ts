@@ -1,5 +1,5 @@
 import { AlphaTolerance, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObjectSprite, IVector3D, RoomObjectVariable, RoomObjectVisualizationType } from '@octane/api';
-import { ChooserSelectionFilter, Vector3d } from '@octane/utils';
+import { ChooserSelectionFilter, OctaneLogger, Vector3d } from '@octane/utils';
 import { BLEND_MODES, Filter, Texture } from 'pixi.js';
 import { RoomObjectSpriteVisualization } from '../RoomObjectSpriteVisualization';
 import { IWindowReflectionUnitLayer, RoomWindowReflectionState } from '../RoomWindowReflectionState';
@@ -171,7 +171,7 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
         if(typeof window !== 'undefined' && (window as unknown as { OctaneFurniSizeDebug?: boolean }).OctaneFurniSizeDebug)
         {
             const note = scale === 32 ? (this._cacheSize === 32 ? ' ✓ size-32' : ' fallback -> size-' + this._cacheSize) : '';
-            console.log(`[FurniSize] ${this._type}: geometry ${scale} -> sprite size ${this._cacheSize}${note}`);
+            OctaneLogger.log(`[FurniSize] ${this._type}: geometry ${scale} -> sprite size ${this._cacheSize}${note}`);
         }
 
         this.setLayerCount(((this._data && this._data.getLayerCount(scale)) || 0) + this.getAdditionalLayerCount());
@@ -345,7 +345,7 @@ export class FurnitureVisualization extends RoomObjectSpriteVisualization
 
                 if(mirrorLayers) layersByDirection.set(mirrorDegrees, mirrorLayers);
 
-                if(reflectionDebug) console.log(`[Reflection] unit ${this.object.instanceId}: world ${worldDirection}° mirrored across (${normal.x.toFixed(2)}, ${normal.y.toFixed(2)}) -> ${mirrorDegrees}° (sprite dir ${mirrorDirection}, exact ${exactDirection}, live ${this._direction}, ${mirrorLayers ? mirrorLayers.length + ' layers' : 'live layers'})`);
+                if(reflectionDebug) OctaneLogger.log(`[Reflection] unit ${this.object.instanceId}: world ${worldDirection}° mirrored across (${normal.x.toFixed(2)}, ${normal.y.toFixed(2)}) -> ${mirrorDegrees}° (sprite dir ${mirrorDirection}, exact ${exactDirection}, live ${this._direction}, ${mirrorLayers ? mirrorLayers.length + ' layers' : 'live layers'})`);
             }
         }
 

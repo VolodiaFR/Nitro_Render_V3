@@ -1,4 +1,1 @@
-import { RenderTexture } from 'pixi.js';
-
-export class OctaneRenderTexture extends RenderTexture
-{}
+export { RenderTexture as OctaneRenderTexture } from 'pixi.js';

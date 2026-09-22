@@ -163,10 +163,14 @@ export class RoomObjectSpriteVisualization implements IRoomObjectSpriteVisualiza
             index++;
         }
 
-        return TextureUtils.generateTexture({
+        const renderTexture = TextureUtils.generateTexture({
             target: container,
             resolution: 1
         });
+
+        container.destroy({ children: true });
+
+        return renderTexture;
     }
 
     public getBoundingRectangle(): Rectangle

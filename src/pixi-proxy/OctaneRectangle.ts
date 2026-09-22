@@ -1,4 +1,1 @@
-import { Rectangle } from 'pixi.js';
-
-export class OctaneRectangle extends Rectangle
-{}
+export { Rectangle as OctaneRectangle } from 'pixi.js';

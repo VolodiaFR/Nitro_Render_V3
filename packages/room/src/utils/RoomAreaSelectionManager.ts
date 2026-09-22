@@ -1,7 +1,51 @@
 import { IRoomAreaSelectionManager, IRoomEngine, IRoomObject } from '@octane/api';
 import { GetEventDispatcher, RoomEngineObjectEvent, RoomObjectMouseEvent, RoomObjectTileMouseEvent } from '@octane/events';
-import { ColorMatrixFilter } from 'pixi.js';
+import { ColorMatrix, ColorMatrixFilter } from 'pixi.js';
 import { FurnitureVisualization, RoomVisualization } from '../object';
+
+const HIGHLIGHT_MATRICES: { [key: string]: ColorMatrix } = {
+    highlight_brighten: [
+        1.5, 0, 0, 0,
+        0, 1.5, 0, 0,
+        0, 0, 1.5, 0,
+        0, 0, 0, 1,
+        0, 0.0784, 0.0784, 0],
+    highlight_blue: [
+        1.05, 0, 0, 0,
+        0, 1.3, 0, 0,
+        0, 0, 1.8, 0,
+        0, 0, 0, 1,
+        0, 0.0314, 0.0784, 0],
+    highlight_darken: [
+        0.55, 0, 0, 0,
+        0, 0.55, 0, 0,
+        0, 0, 0.55, 0,
+        0, 0, 0, 1,
+        -0.0392, -0.0392, -0.0392, 0],
+    highlight_green: [
+        0.5, 0, 0, 0,
+        0, 1.6, 0, 0,
+        0, 0, 0.5, 0,
+        0, 0, 0, 1,
+        0, 0.15, 0, 0]
+};
+
+const HIGHLIGHT_FILTERS: { [key: string]: ColorMatrixFilter } = {};
+
+// Filters are shared across managers and built on first use.
+const getHighlightFilter = (type: string): ColorMatrixFilter =>
+{
+    if(!HIGHLIGHT_FILTERS[type] && HIGHLIGHT_MATRICES[type])
+    {
+        const filter = new ColorMatrixFilter();
+
+        filter.matrix = HIGHLIGHT_MATRICES[type];
+
+        HIGHLIGHT_FILTERS[type] = filter;
+    }
+
+    return HIGHLIGHT_FILTERS[type];
+};
 
 export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
 {
@@ -13,8 +57,6 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
     public static HIGHLIGHT_BRIGHTEN = 'highlight_brighten';
     public static HIGHLIGHT_BLUE = 'highlight_blue';
     public static HIGHLIGHT_GREEN = 'highlight_green';
-
-    private static HIGHLIGHT_FILTERS: { [key: string]: ColorMatrixFilter } = {};
 
     private _roomEngine: IRoomEngine = null;
     private _state: number = RoomAreaSelectionManager.NOT_ACTIVE;
@@ -53,47 +95,6 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
 
             if(roomObject.visualization instanceof FurnitureVisualization) roomObject.visualization.lookThrough = true;
         });
-
-        const brightenFilter = new ColorMatrixFilter();
-
-        brightenFilter.matrix = [
-            1.5, 0, 0, 0,
-            0, 1.5, 0, 0,
-            0, 0, 1.5, 0,
-            0, 0, 0, 1,
-            0, 0.0784, 0.0784, 0];
-
-        const blueFilter = new ColorMatrixFilter();
-
-        blueFilter.matrix = [
-            1.05, 0, 0, 0,
-            0, 1.3, 0, 0,
-            0, 0, 1.8, 0,
-            0, 0, 0, 1,
-            0, 0.0314, 0.0784, 0];
-
-        const darkenFilter = new ColorMatrixFilter();
-
-        darkenFilter.matrix = [
-            0.55, 0, 0, 0,
-            0, 0.55, 0, 0,
-            0, 0, 0.55, 0,
-            0, 0, 0, 1,
-            -0.0392, -0.0392, -0.0392, 0];
-
-        const greenFilter = new ColorMatrixFilter();
-
-        greenFilter.matrix = [
-            0.5, 0, 0, 0,
-            0, 1.6, 0, 0,
-            0, 0, 0.5, 0,
-            0, 0, 0, 1,
-            0, 0.15, 0, 0];
-
-        RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_DARKEN] = darkenFilter;
-        RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN] = brightenFilter;
-        RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_BLUE] = blueFilter;
-        RoomAreaSelectionManager.HIGHLIGHT_FILTERS[RoomAreaSelectionManager.HIGHLIGHT_GREEN] = greenFilter;
     }
 
     private getAllFurniture(): IRoomObject[]
@@ -233,7 +234,7 @@ export class RoomAreaSelectionManager implements IRoomAreaSelectionManager
 
         if(!roomObject) return;
 
-        (roomObject.visualization as RoomVisualization)?.initializeHighlightArea(rootX, rootY, width, height, RoomAreaSelectionManager.HIGHLIGHT_FILTERS[this._highlightType]);
+        (roomObject.visualization as RoomVisualization)?.initializeHighlightArea(rootX, rootY, width, height, getHighlightFilter(this._highlightType));
     }
 
     public activate(callback: (rootX: number, rootY: number, width: number, height: number) => void, highlightType: string): boolean

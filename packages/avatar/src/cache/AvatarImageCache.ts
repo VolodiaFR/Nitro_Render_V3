@@ -1,6 +1,6 @@
 import { AvatarDirectionAngle, AvatarFigurePartType, AvatarScaleType, GeometryType, IActiveActionData, IAvatarImage, IGraphicAsset } from '@octane/api';
 import { GraphicAsset } from '@octane/assets';
-import { GetRenderer, GetTickerTime } from '@octane/utils';
+import { GetRenderer, GetTexturePool, GetTickerTime } from '@octane/utils';
 import { Container, Matrix, Point, Rectangle, RenderTexture, Sprite, Texture } from 'pixi.js';
 import { AvatarImageBodyPartContainer } from '../AvatarImageBodyPartContainer';
 import { AvatarImagePartContainer } from '../AvatarImagePartContainer';
@@ -64,7 +64,7 @@ export class AvatarImageCache
             {
                 if(!asset) continue;
 
-                if(asset.texture instanceof RenderTexture) asset.texture.destroy(true);
+                if(asset.texture instanceof RenderTexture) GetTexturePool().putTexture(asset.texture);
 
                 asset.recycle();
             }
@@ -485,7 +485,7 @@ export class AvatarImageCache
         const halfWidth = Math.max(1, Math.round(largeAsset.width / 2));
         const halfHeight = Math.max(1, Math.round(largeAsset.height / 2));
 
-        const renderTexture = RenderTexture.create({ width: halfWidth, height: halfHeight, resolution: 1 });
+        const renderTexture = GetTexturePool().getTexture(halfWidth, halfHeight);
         const sprite = new Sprite(source);
 
         sprite.width = halfWidth;
