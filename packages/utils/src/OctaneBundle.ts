@@ -1,6 +1,5 @@
 import { inflate } from 'pako';
-import { Assets, Texture } from 'pixi.js';
-import { ArrayBufferToBase64 } from './ArrayBufferToBase64';
+import { Texture } from 'pixi.js';
 import { BinaryReader } from './BinaryReader';
 
 export type OctaneBundleTextureDecoder = (bytes: ArrayBuffer, entryName: string) => Promise<Texture>;
@@ -41,7 +40,7 @@ export class OctaneBundle
             }
             else
             {
-                this._texture = await textureDecoder(Uint8Array.from(inflatedBuffer).buffer, fileName);
+                this._texture = await textureDecoder(exactBuffer(inflatedBuffer), fileName);
             }
 
             fileCount--;
@@ -59,5 +58,51 @@ export class OctaneBundle
     }
 }
 
-const decodePngTexture: OctaneBundleTextureDecoder = bytes =>
-    Assets.load<Texture>(`data:image/png;base64,${ ArrayBufferToBase64(bytes) }`);
+/** The inflated bytes as their own buffer, without walking them when they already fill one. */
+const exactBuffer = (bytes: Uint8Array): ArrayBuffer =>
+    (bytes.byteOffset === 0) && (bytes.byteLength === bytes.buffer.byteLength)
+        ? bytes.buffer as ArrayBuffer
+        : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+
+/**
+ * The decoder used when a caller supplies none. {@link AssetManager} passes its own, which knows
+ * every format a bundle may carry; this one only has to read the PNG a bundle normally holds, and
+ * it does so from a blob. Turning the image into a base64 string first, as this used to, grows it
+ * by a third and makes the engine parse a megabytes-long URL.
+ */
+const decodePngTexture: OctaneBundleTextureDecoder = async bytes =>
+{
+    const blob = new Blob([ bytes ], { type: 'image/png' });
+
+    if(typeof createImageBitmap === 'function')
+    {
+        try
+        {
+            return Texture.from(await createImageBitmap(blob));
+        }
+        catch
+        {
+            // Fall through to the image element below.
+        }
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+
+    try
+    {
+        const image = await new Promise<HTMLImageElement>((resolve, reject) =>
+        {
+            const element = new Image();
+
+            element.onload = () => resolve(element);
+            element.onerror = () => reject(new Error('Could not decode the bundle image'));
+            element.src = objectUrl;
+        });
+
+        return Texture.from(image);
+    }
+    finally
+    {
+        URL.revokeObjectURL(objectUrl);
+    }
+};
