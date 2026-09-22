@@ -1,6 +1,6 @@
 import { AlphaTolerance } from '@octane/api';
 import { GetRenderer, TextureUtils } from '@octane/utils';
-import { Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
+import { Filter, Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
 
 const BYTES_PER_PIXEL = 4;
 
@@ -18,6 +18,7 @@ export class ExtendedSprite extends Sprite
 
     private _updateId1: number = -1;
     private _updateId2: number = -1;
+    private _filterSource: Filter[] = null;
 
     public needsUpdate(updateId1: number, updateId2: number): boolean
     {
@@ -27,6 +28,16 @@ export class ExtendedSprite extends Sprite
         this._updateId2 = updateId2;
 
         return true;
+    }
+
+    // Pixi copies and freezes every array handed to `filters`, so the reference a room
+    // sprite gave us is remembered here to skip the copy when it has not changed.
+    public setFilters(filters: Filter[]): void
+    {
+        if(filters === this._filterSource) return;
+
+        this._filterSource = filters;
+        this.filters = filters;
     }
 
     public setTexture(texture: Texture): void
