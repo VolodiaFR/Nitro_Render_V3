@@ -27,6 +27,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     private _lastBoundaryFlipped: boolean = false;
 
     private _sortableSprites: SortableSprite[] = [];
+    private _sortableSpritesDirty: boolean = false;
     private _spriteCount: number = 0;
     private _activeSpriteCount: number = 0;
     private _spritePool: ExtendedSprite[] = [];
@@ -482,7 +483,12 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             }
         }
 
-        this._sortableSprites.sort((a, b) => (b.z - a.z));
+        if(this._sortableSpritesDirty)
+        {
+            this._sortableSprites.sort((a, b) => (b.z - a.z));
+
+            this._sortableSpritesDirty = false;
+        }
 
         if(spriteCount < this._sortableSprites.length) this._sortableSprites.splice(spriteCount);
 
@@ -533,6 +539,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     public removeFromCache(identifier: string): void
     {
         this._objectCache.removeObjectCache(identifier);
+
+        this._sortableSpritesDirty = true;
     }
 
     private renderObject(object: IRoomObject, identifier: string, time: number, update: boolean, updateVisuals: boolean, count: number): number
@@ -625,6 +633,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
                 this._sortableSprites.push(sortableSprite);
 
+                this._sortableSpritesDirty = true;
+
                 sortableSprite.name = identifier;
             }
 
@@ -638,11 +648,20 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             sortableSprite.x = (spriteX - this._screenOffsetX);
             sortableSprite.y = (spriteY - this._screenOffsetY);
 
-            sortableSprite.z = ((z + sprite.relativeDepth) + (3.7E-11 * count));
+            const spriteZ = ((z + sprite.relativeDepth) + (3.7E-11 * count));
+
+            if(sortableSprite.z !== spriteZ)
+            {
+                sortableSprite.z = spriteZ;
+
+                this._sortableSpritesDirty = true;
+            }
 
             spriteCount++;
             count++;
         }
+
+        if(spriteCount < sortableCache.spriteCount) this._sortableSpritesDirty = true;
 
         sortableCache.setSpriteCount(spriteCount);
 
@@ -709,7 +728,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             extendedSprite.varyingDepth = objectSprite.varyingDepth;
             extendedSprite.clickHandling = objectSprite.clickHandling;
             extendedSprite.skipMouseHandling = objectSprite.skipMouseHandling;
-            extendedSprite.filters = objectSprite.filters;
+            extendedSprite.setFilters(objectSprite.filters);
 
             const alpha = (objectSprite.alpha / 255);
 
@@ -774,7 +793,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         extendedSprite.clickHandling = sprite.clickHandling;
         extendedSprite.skipMouseHandling = sprite.skipMouseHandling;
         extendedSprite.blendMode = sprite.blendMode;
-        extendedSprite.filters = sprite.filters;
+        extendedSprite.setFilters(sprite.filters);
 
         if(!textureSet) extendedSprite.setTexture(sprite.texture);
 

@@ -6,4 +6,5 @@ export interface IImageResult
     data: Texture;
     image: HTMLImageElement;
     getImage(): Promise<HTMLImageElement>;
+    dispose(): void;
 }
