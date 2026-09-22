@@ -58,4 +58,21 @@ describe('OctaneBundle image decoding', () =>
         expect(bundle.texture).toBe(texture);
         expect(bundle.jsonFile).toEqual({ name: 'chair' });
     });
+
+    it('hands the decoder the entry bytes as their own buffer, with nothing else attached', async () =>
+    {
+        const imageBytes = new Uint8Array([ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a ]);
+        const buffer = createBundle([
+            { name: 'sheet.json', bytes: new TextEncoder().encode('{"a":1}') },
+            { name: 'sheet.png', bytes: imageBytes }
+        ]);
+        const decodeTexture = vi.fn().mockResolvedValue({} as Texture);
+
+        await OctaneBundle.from(buffer, decodeTexture);
+
+        const decoded = decodeTexture.mock.calls[0][0] as ArrayBuffer;
+
+        expect(decoded.byteLength).toBe(imageBytes.length);
+        expect(new Uint8Array(decoded)).toEqual(imageBytes);
+    });
 });

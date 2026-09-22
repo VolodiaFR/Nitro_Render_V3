@@ -136,7 +136,7 @@ const decodeStaticWithContext = async (
 };
 
 const toBytes = (bytes: ArrayBuffer | Uint8Array): Uint8Array => bytes instanceof Uint8Array
-    ? Uint8Array.from(bytes)
+    ? bytes
     : new Uint8Array(bytes);
 
 const errorMessage = (error: unknown): string => error instanceof Error ? error.message : String(error);
