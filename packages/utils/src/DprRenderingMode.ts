@@ -16,9 +16,9 @@ export const GetDesiredResolution = (): number =>
 
 export const StartDprRenderingModeWatcher = (): void =>
 {
-    if(typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    TextureSource.defaultOptions.scaleMode = GetDesiredScaleMode();
 
-    TextureSource.defaultOptions.scaleMode = 'nearest';
+    if(typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
 
     const watch = (): void =>
     {

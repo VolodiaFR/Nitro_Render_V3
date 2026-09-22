@@ -61,6 +61,8 @@ describe('OctaneBundle image decoding', () =>
 
     it('hands the decoder the entry bytes as their own buffer, with nothing else attached', async () =>
     {
+        // The reader inflates into a buffer of its own; the decoder must see exactly the entry,
+        // never a view onto a larger one it would have to be told the bounds of.
         const imageBytes = new Uint8Array([ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a ]);
         const buffer = createBundle([
             { name: 'sheet.json', bytes: new TextEncoder().encode('{"a":1}') },

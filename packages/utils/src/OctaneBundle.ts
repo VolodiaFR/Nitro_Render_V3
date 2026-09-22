@@ -58,11 +58,18 @@ export class OctaneBundle
     }
 }
 
+/** The inflated bytes as their own buffer, without walking them when they already fill one. */
 const exactBuffer = (bytes: Uint8Array): ArrayBuffer =>
     (bytes.byteOffset === 0) && (bytes.byteLength === bytes.buffer.byteLength)
         ? bytes.buffer as ArrayBuffer
         : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 
+/**
+ * The decoder used when a caller supplies none. {@link AssetManager} passes its own, which knows
+ * every format a bundle may carry; this one only has to read the PNG a bundle normally holds, and
+ * it does so from a blob. Turning the image into a base64 string first, as this used to, grows it
+ * by a third and makes the engine parse a megabytes-long URL.
+ */
 const decodePngTexture: OctaneBundleTextureDecoder = async bytes =>
 {
     const blob = new Blob([ bytes ], { type: 'image/png' });
@@ -75,6 +82,7 @@ const decodePngTexture: OctaneBundleTextureDecoder = async bytes =>
         }
         catch
         {
+            // Fall through to the image element below.
         }
     }
 

@@ -3,6 +3,11 @@ import { GetRenderer } from './GetRenderer';
 
 export class TextureUtils
 {
+    private static _clearSprite: Sprite = null;
+    private static _fillSprite: Sprite = null;
+    private static _flipSprite: Sprite = null;
+    private static _flipMatrix: Matrix = null;
+
     public static generateTexture(options: GenerateTextureOptions | Container): Texture
     {
         return this.getRenderer().textureGenerator.generateTexture(options);
@@ -66,7 +71,9 @@ export class TextureUtils
 
     public static clearRenderTexture(texture: Texture): Texture
     {
-        return this.writeToTexture(new Sprite(Texture.EMPTY), texture);
+        if(!this._clearSprite) this._clearSprite = new Sprite(Texture.EMPTY);
+
+        return this.writeToTexture(this._clearSprite, texture);
     }
 
     public static createRenderTexture(width: number, height: number): Texture
@@ -94,7 +101,9 @@ export class TextureUtils
     {
         if(!texture) return null;
 
-        const sprite = new Sprite(Texture.WHITE);
+        if(!this._fillSprite) this._fillSprite = new Sprite(Texture.WHITE);
+
+        const sprite = this._fillSprite;
 
         sprite.tint = color;
 
@@ -120,38 +129,40 @@ export class TextureUtils
 
     public static flipTextureHorizontal(texture: Texture): Texture
     {
-        if(!texture) return null;
-
-        const matrix = new Matrix();
-
-        matrix.scale(-1, 1);
-        matrix.translate(texture.width, 0);
-
-        return this.createAndWriteRenderTexture(texture.width, texture.height, new Sprite(texture), matrix);
+        return this.flipTexture(texture, -1, 1);
     }
 
     public static flipTextureVertical(texture: Texture): Texture
     {
-        if(!texture) return null;
-
-        const matrix = new Matrix();
-
-        matrix.scale(1, -1);
-        matrix.translate(0, texture.height);
-
-        return this.createAndWriteRenderTexture(texture.width, texture.height, new Sprite(texture), matrix);
+        return this.flipTexture(texture, 1, -1);
     }
 
     public static flipTextureHorizontalAndVertical(texture: Texture): Texture
     {
+        return this.flipTexture(texture, -1, -1);
+    }
+
+    private static flipTexture(texture: Texture, scaleX: number, scaleY: number): Texture
+    {
         if(!texture) return null;
 
-        const matrix = new Matrix();
+        if(!this._flipSprite) this._flipSprite = new Sprite(Texture.EMPTY);
+        if(!this._flipMatrix) this._flipMatrix = new Matrix();
 
-        matrix.scale(-1, -1);
-        matrix.translate(texture.width, texture.height);
+        const matrix = this._flipMatrix.identity();
 
-        return this.createAndWriteRenderTexture(texture.width, texture.height, new Sprite(texture), matrix);
+        matrix.scale(scaleX, scaleY);
+        matrix.translate((scaleX < 0) ? texture.width : 0, (scaleY < 0) ? texture.height : 0);
+
+        const sprite = this._flipSprite;
+
+        sprite.texture = texture;
+
+        const flipped = this.createAndWriteRenderTexture(texture.width, texture.height, sprite, matrix);
+
+        sprite.texture = Texture.EMPTY;
+
+        return flipped;
     }
 
     public static getPixels(options: ExtractOptions | Container | Texture): GetPixelsOutput

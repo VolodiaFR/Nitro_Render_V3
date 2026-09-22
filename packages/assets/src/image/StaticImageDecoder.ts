@@ -71,6 +71,8 @@ export const decodeStaticImage = async (
 
 export const decodeNativeBrowserImage = async (bytes: Uint8Array, mimeType: string, source: string): Promise<NativeImageSource> =>
 {
+    // The Blob constructor copies the bytes it is given and honours a view's offset and length,
+    // so copying the image first only walks every byte a second time before the browser can start.
     const blob = new Blob([ bytes as Uint8Array<ArrayBuffer> ], { type: mimeType });
     let bitmapFailure: unknown = null;
 

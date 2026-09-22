@@ -491,9 +491,11 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
 
         textureCtx.putImageData(textureImageData, 0, 0);
 
-        const newTexture = new Sprite(Texture.from(textureCanvas));
+        const newTexture = new Sprite(Texture.from(textureCanvas, true));
 
         TextureUtils.writeToTexture(newTexture, texture, true);
+
+        newTexture.destroy({ texture: true, textureSource: true });
 
         return texture;
     }
