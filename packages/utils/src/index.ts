@@ -6,7 +6,6 @@ export * from './ColorConverter';
 export * from './DprRenderingMode';
 export * from './FurniId';
 export * from './GamedataLoader';
-export * from './GetPixi';
 export * from './GetRenderer';
 export * from './GetStage';
 export * from './GetTexturePool';

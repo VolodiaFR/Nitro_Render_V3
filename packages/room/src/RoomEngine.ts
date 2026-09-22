@@ -3,8 +3,9 @@ import { GetCommunication, RenderRoomMessageComposer, RenderRoomThumbnailMessage
 import { GetConfiguration } from '@octane/configuration';
 import { BadgeImageReadyEvent, GetEventDispatcher, OctaneToolbarAnimateIconEvent, RoomBackgroundColorEvent, RoomDragEvent, RoomEngineAreaHideStateEvent, RoomEngineEvent, RoomEngineObjectEvent, RoomObjectEvent, RoomObjectFurnitureActionEvent, RoomObjectMouseEvent, RoomSessionEvent, RoomToObjectOwnAvatarMoveEvent } from '@octane/events';
 import { GetRoomSessionManager, GetSessionDataManager } from '@octane/session';
-import { FurniId, GetTickerTime, OctaneLogger, NumberBank, TextureUtils, Vector3d } from '@octane/utils';
+import { FurniId, GetTexturePool, GetTickerTime, OctaneLogger, NumberBank, TextureUtils, Vector3d } from '@octane/utils';
 import { Container, Matrix, Point, PointData, Rectangle, RenderTexture, Sprite, Texture, Ticker } from 'pixi.js';
+import { DEFAULT_WIRED_CLICK_SETTINGS, normalizeWiredClickSettings, WiredClickSettings } from './utils/WiredClickSettings';
 import { GetRoomContentLoader } from './GetRoomContentLoader';
 import { GetRoomManager } from './GetRoomManager';
 import { GetRoomMessageHandler } from './GetRoomMessageHandler';
@@ -58,6 +59,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
     private _activeRoomDragX: number = 0;
     private _activeRoomDragY: number = 0;
     private _moveBlocked: boolean = false;
+    private _wiredClickSettings: WiredClickSettings = DEFAULT_WIRED_CLICK_SETTINGS;
     private _roomDraggingAlwaysCenters: boolean = false;
     private _roomAllowsDragging: boolean = true;
     private _roomDatas: Map<number, RoomData> = new Map();
@@ -137,7 +139,25 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
     public setActiveRoomId(roomId: number): void
     {
+        // A wired click setting belongs to the room that sent it.
+        if(roomId !== this._activeRoomId) this._wiredClickSettings = DEFAULT_WIRED_CLICK_SETTINGS;
+
         this._activeRoomId = roomId;
+    }
+
+    public setWiredClickSettings(userOption: number, furniOption: number): void
+    {
+        this._wiredClickSettings = normalizeWiredClickSettings(userOption, furniOption);
+    }
+
+    public get wiredClickUserOption(): number
+    {
+        return this._wiredClickSettings.userOption;
+    }
+
+    public get wiredClickFurniOption(): number
+    {
+        return this._wiredClickSettings.furniOption;
     }
 
     public destroyRoom(roomId: number): void
@@ -1757,13 +1777,13 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
                         const extras = roomObject.model.getValue<string>(RoomObjectVariable.FURNITURE_EXTRAS);
                         const dataKey = roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_DATA_FORMAT);
                         const objectData = ObjectDataFactory.getData(dataKey);
-                        const icon = this.getFurnitureFloorIcon(typeId, null, extras, objectData).data;
+                        const icon = this.getFurnitureFloorIcon(typeId, null, extras, objectData);
 
-                        if(icon)
+                        if(icon && icon.data)
                         {
                             (async () =>
                             {
-                                const image = await TextureUtils.generateImage(icon);
+                                const image = await icon.getImage();
                                 const event = new OctaneToolbarAnimateIconEvent(image, screenLocation.x, screenLocation.y);
 
                                 event.iconName = ToolbarIconEnum.INVENTORY;
@@ -1801,13 +1821,13 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
                 {
                     const typeId = roomObject.model.getValue<number>(RoomObjectVariable.FURNITURE_TYPE_ID);
                     const objectData = roomObject.model.getValue<string>(RoomObjectVariable.FURNITURE_DATA);
-                    const icon = this.getFurnitureWallIcon(typeId, null, objectData).data;
+                    const icon = this.getFurnitureWallIcon(typeId, null, objectData);
 
-                    if(icon)
+                    if(icon && icon.data)
                     {
                         (async () =>
                         {
-                            const image = await TextureUtils.generateImage(icon);
+                            const image = await icon.getImage();
 
                             if(GetEventDispatcher())
                             {
@@ -2430,7 +2450,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         matrix.scale((halfWidth / texture.width), (halfHeight / texture.height));
 
-        return TextureUtils.createAndWriteRenderTexture(halfWidth, halfHeight, new Sprite(texture), matrix);
+        return TextureUtils.writeToTexture(new Sprite(texture), GetTexturePool().getTexture(halfWidth, halfHeight), true, matrix);
     }
 
     public dispatchMouseEvent(canvasId: number, x: number, y: number, type: string, altKey: boolean, ctrlKey: boolean, shiftKey: boolean, buttonDown: boolean): void
@@ -3318,7 +3338,7 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         if(!displayObject) return null;
 
-        return displayObject.getChildByName(RoomEngine.OVERLAY) ?? null;
+        return displayObject.getChildByLabel(RoomEngine.OVERLAY) ?? null;
     }
 
     private removeOverlayIconSprite(container: Container, label: string): boolean
@@ -3345,6 +3365,9 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
                         firstChild.destroy();
                     }
+
+                    // The icon sprite owns the render texture it was handed by getRoomObjectImage.
+                    child.destroy({ texture: true, textureSource: true });
 
                     return true;
                 }

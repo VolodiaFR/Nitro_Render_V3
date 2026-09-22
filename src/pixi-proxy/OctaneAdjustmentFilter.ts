@@ -1,4 +1,1 @@
-import { AdjustmentFilter } from 'pixi-filters';
-
-export class OctaneAdjustmentFilter extends AdjustmentFilter
-{}
+export { AdjustmentFilter as OctaneAdjustmentFilter } from 'pixi-filters';

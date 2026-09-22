@@ -2,7 +2,7 @@ import { IPlaneVisualization, IRoomCanvasMouseListener, IRoomGeometry, IRoomObje
 import { GetConfiguration } from '@octane/configuration';
 import { RoomSpriteMouseEvent } from '@octane/events';
 import { GetTicker, TextureUtils, Vector3d } from '@octane/utils';
-import { Container, Graphics, Matrix, Point, PointData, Rectangle, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Matrix, Point, PointData, Rectangle, Texture } from 'pixi.js';
 import { RoomEnterEffect, RoomGeometry, RoomRotatingEffect, RoomShakingEffect } from '../utils';
 import { RoomObjectCache, RoomObjectCacheItem } from './cache';
 import { getObjectAltitudeDepth } from './ObjectAltitudeDepth';
@@ -18,15 +18,21 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
     private _master: Container = null;
     private _display: Container = null;
-    private _mask: Sprite = null;
+    private _mask: Graphics = null;
     private _boundaryMask: Graphics = null;
+    private _boundaryHull: { x: number; y: number }[] = null;
+    private _boundaryHullPlanes: IRoomPlane[] = null;
+    private _boundaryHullPlaneCount: number = -1;
+    private _boundaryHullGeometryId: number = -1;
+    private _lastBoundaryHull: { x: number; y: number }[] = null;
     private _lastBoundaryOffsetX: number = NaN;
     private _lastBoundaryOffsetY: number = NaN;
-    private _lastBoundaryGeometryId: number = -1;
-    private _lastBoundaryScale: number = NaN;
-    private _lastBoundaryFlipped: boolean = false;
+    private _lastBoundaryDisplayScale: number = NaN;
+    private _lastBoundaryWidth: number = NaN;
+    private _lastBoundaryHeight: number = NaN;
 
     private _sortableSprites: SortableSprite[] = [];
+    private _sortableSpritesDirty: boolean = false;
     private _spriteCount: number = 0;
     private _activeSpriteCount: number = 0;
     private _spritePool: ExtendedSprite[] = [];
@@ -185,9 +191,9 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         {
             if(!this._mask)
             {
-                this._mask = new Sprite(Texture.WHITE);
-                this._mask.width = width;
-                this._mask.height = height;
+                // A Graphics rectangle masks through the stencil buffer; a sprite
+                // mask would cost a render-to-texture plus a filter pass per frame.
+                this._mask = new Graphics().rect(0, 0, width, height).fill(0xFFFFFF);
 
                 if(this._master)
                 {
@@ -197,8 +203,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             }
             else
             {
-                this._mask.width = width;
-                this._mask.height = height;
+                this._mask.clear().rect(0, 0, width, height).fill(0xFFFFFF);
             }
         }
 
@@ -290,24 +295,60 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     {
         if(!this._boundaryMask || !this._display || !this._geometry) return;
 
-        const geometryId = this._geometry.updateId;
+        const hull = this.getBoundaryHull();
         const offsetX = this._screenOffsetX;
         const offsetY = this._screenOffsetY;
-        const scale = this._scale;
         const displayScale = this.displayScale;
-        const flipped = this._isFlipped;
+        const width = this._width;
+        const height = this._height;
 
-        if(geometryId === this._lastBoundaryGeometryId && offsetX === this._lastBoundaryOffsetX && offsetY === this._lastBoundaryOffsetY && scale === this._lastBoundaryScale && flipped === this._lastBoundaryFlipped) return;
+        if(hull === this._lastBoundaryHull && offsetX === this._lastBoundaryOffsetX && offsetY === this._lastBoundaryOffsetY && displayScale === this._lastBoundaryDisplayScale && width === this._lastBoundaryWidth && height === this._lastBoundaryHeight) return;
 
-        this._lastBoundaryGeometryId = geometryId;
+        // The polygon only depends on the hull, scale and canvas size; scrolling
+        // just moves the Graphics instead of rebuilding its geometry.
+        if(hull !== this._lastBoundaryHull || displayScale !== this._lastBoundaryDisplayScale || width !== this._lastBoundaryWidth || height !== this._lastBoundaryHeight)
+        {
+            const w2 = width / 2;
+            const h2 = height / 2;
+
+            this._boundaryMask.clear();
+
+            if(hull.length >= 3)
+            {
+                const maskPolygon = RoomSpriteCanvas.createMaskPolygon(hull.map(p => ({ x: (p.x + w2) * displayScale, y: (p.y + h2) * displayScale })));
+
+                this._boundaryMask.poly(maskPolygon.flatMap(p => [p.x, p.y]));
+                this._boundaryMask.fill(0xFFFFFF);
+            }
+        }
+
+        this._lastBoundaryHull = hull;
         this._lastBoundaryOffsetX = offsetX;
         this._lastBoundaryOffsetY = offsetY;
-        this._lastBoundaryScale = scale;
-        this._lastBoundaryFlipped = flipped;
+        this._lastBoundaryDisplayScale = displayScale;
+        this._lastBoundaryWidth = width;
+        this._lastBoundaryHeight = height;
 
-        const pts: { x: number; y: number }[] = [];
-        const w2 = this._width / 2;
-        const h2 = this._height / 2;
+        if(hull.length < 3)
+        {
+            if(this._display.mask === this._boundaryMask) this._display.mask = this._mask ?? null;
+
+            return;
+        }
+
+        this._boundaryMask.position.set(offsetX, offsetY);
+
+        if(this._display.mask !== this._boundaryMask)
+        {
+            this._display.mask = this._boundaryMask;
+        }
+    }
+
+    // Convex hull of the projected plane corners, cached until the plane set or
+    // the geometry changes. Points are in geometry screen space (no offset/scale).
+    private getBoundaryHull(): { x: number; y: number }[]
+    {
+        let planes: IRoomPlane[] = null;
 
         for(const object of this._container.objects.values())
         {
@@ -317,55 +358,51 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
             if(!viz || !viz.planes) continue;
 
-            for(const plane of (viz.planes))
-            {
-                if(!plane || plane.type === 3) continue;
-
-                const loc = plane.location;
-                const ls = plane.leftSide;
-                const rs = plane.rightSide;
-
-                if(!loc || !ls || !rs) continue;
-
-                const corners = [
-                    new Vector3d(loc.x, loc.y, loc.z),
-                    new Vector3d(loc.x + rs.x, loc.y + rs.y, loc.z + rs.z),
-                    new Vector3d(loc.x + ls.x + rs.x, loc.y + ls.y + rs.y, loc.z + ls.z + rs.z),
-                    new Vector3d(loc.x + ls.x, loc.y + ls.y, loc.z + ls.z)
-                ];
-
-                for(const c of corners)
-                {
-                    const sp = this._geometry.getScreenPosition(c);
-
-                    if(!sp) continue;
-
-                    pts.push({ x: (sp.x + w2) * displayScale + offsetX, y: (sp.y + h2) * displayScale + offsetY });
-                }
-            }
+            planes = viz.planes;
 
             break;
         }
 
-        this._boundaryMask.clear();
+        const planeCount = planes ? planes.length : 0;
+        const geometryId = this._geometry.updateId;
 
-        if(pts.length < 3)
+        if(this._boundaryHull && planes === this._boundaryHullPlanes && planeCount === this._boundaryHullPlaneCount && geometryId === this._boundaryHullGeometryId) return this._boundaryHull;
+
+        const pts: { x: number; y: number }[] = [];
+
+        for(const plane of (planes ?? []))
         {
-            if(this._display.mask === this._boundaryMask) this._display.mask = this._mask ?? null;
+            if(!plane || plane.type === 3) continue;
 
-            return;
+            const loc = plane.location;
+            const ls = plane.leftSide;
+            const rs = plane.rightSide;
+
+            if(!loc || !ls || !rs) continue;
+
+            const corners = [
+                new Vector3d(loc.x, loc.y, loc.z),
+                new Vector3d(loc.x + rs.x, loc.y + rs.y, loc.z + rs.z),
+                new Vector3d(loc.x + ls.x + rs.x, loc.y + ls.y + rs.y, loc.z + ls.z + rs.z),
+                new Vector3d(loc.x + ls.x, loc.y + ls.y, loc.z + ls.z)
+            ];
+
+            for(const c of corners)
+            {
+                const sp = this._geometry.getScreenPosition(c);
+
+                if(!sp) continue;
+
+                pts.push({ x: sp.x, y: sp.y });
+            }
         }
 
-        const hull = RoomSpriteCanvas.convexHull(pts);
-        const maskPolygon = RoomSpriteCanvas.createMaskPolygon(hull);
+        this._boundaryHull = RoomSpriteCanvas.convexHull(pts);
+        this._boundaryHullPlanes = planes;
+        this._boundaryHullPlaneCount = planeCount;
+        this._boundaryHullGeometryId = geometryId;
 
-        this._boundaryMask.poly(maskPolygon.flatMap(p => [p.x, p.y]));
-        this._boundaryMask.fill(0xFFFFFF);
-
-        if(this._display.mask !== this._boundaryMask)
-        {
-            this._display.mask = this._boundaryMask;
-        }
+        return this._boundaryHull;
     }
 
     private static convexHull(points: { x: number; y: number }[]): { x: number; y: number }[]
@@ -482,7 +519,12 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             }
         }
 
-        this._sortableSprites.sort((a, b) => (b.z - a.z));
+        if(this._sortableSpritesDirty)
+        {
+            this._sortableSprites.sort((a, b) => (b.z - a.z));
+
+            this._sortableSpritesDirty = false;
+        }
 
         if(spriteCount < this._sortableSprites.length) this._sortableSprites.splice(spriteCount);
 
@@ -533,6 +575,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     public removeFromCache(identifier: string): void
     {
         this._objectCache.removeObjectCache(identifier);
+
+        this._sortableSpritesDirty = true;
     }
 
     private renderObject(object: IRoomObject, identifier: string, time: number, update: boolean, updateVisuals: boolean, count: number): number
@@ -625,6 +669,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
                 this._sortableSprites.push(sortableSprite);
 
+                this._sortableSpritesDirty = true;
+
                 sortableSprite.name = identifier;
             }
 
@@ -638,11 +684,20 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             sortableSprite.x = (spriteX - this._screenOffsetX);
             sortableSprite.y = (spriteY - this._screenOffsetY);
 
-            sortableSprite.z = ((z + sprite.relativeDepth) + (3.7E-11 * count));
+            const spriteZ = ((z + sprite.relativeDepth) + (3.7E-11 * count));
+
+            if(sortableSprite.z !== spriteZ)
+            {
+                sortableSprite.z = spriteZ;
+
+                this._sortableSpritesDirty = true;
+            }
 
             spriteCount++;
             count++;
         }
+
+        if(spriteCount < sortableCache.spriteCount) this._sortableSpritesDirty = true;
 
         sortableCache.setSpriteCount(spriteCount);
 
@@ -709,7 +764,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             extendedSprite.varyingDepth = objectSprite.varyingDepth;
             extendedSprite.clickHandling = objectSprite.clickHandling;
             extendedSprite.skipMouseHandling = objectSprite.skipMouseHandling;
-            extendedSprite.filters = objectSprite.filters;
+            extendedSprite.setFilters(objectSprite.filters);
 
             const alpha = (objectSprite.alpha / 255);
 
@@ -774,7 +829,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         extendedSprite.clickHandling = sprite.clickHandling;
         extendedSprite.skipMouseHandling = sprite.skipMouseHandling;
         extendedSprite.blendMode = sprite.blendMode;
-        extendedSprite.filters = sprite.filters;
+        extendedSprite.setFilters(sprite.filters);
 
         if(!textureSet) extendedSprite.setTexture(sprite.texture);
 

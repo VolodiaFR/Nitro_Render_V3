@@ -28,6 +28,50 @@ export interface CanvasAnimatedTextureDependencies
     textureFrom(source: HTMLCanvasElement): Texture;
 }
 
+type AnimationUpdate = (tick: AnimationTick) => void;
+
+interface AnimationDriver
+{
+    updates: Set<AnimationUpdate>;
+    callback: AnimationUpdate;
+}
+
+// One ticker callback per ticker drives every animated source, so the
+// ticker's listener list stays flat no matter how many animations are alive.
+const ANIMATION_DRIVERS = new WeakMap<AnimationTicker, AnimationDriver>();
+
+const addAnimationUpdate = (ticker: AnimationTicker, update: AnimationUpdate): void =>
+{
+    let driver = ANIMATION_DRIVERS.get(ticker);
+
+    if(!driver)
+    {
+        const updates = new Set<AnimationUpdate>();
+
+        driver = {
+            updates,
+            callback: tick =>
+            {
+                for(const entry of updates) entry(tick);
+            }
+        };
+        ANIMATION_DRIVERS.set(ticker, driver);
+    }
+
+    if(!driver.updates.size) ticker.add(driver.callback);
+
+    driver.updates.add(update);
+};
+
+const removeAnimationUpdate = (ticker: AnimationTicker, update: AnimationUpdate): void =>
+{
+    const driver = ANIMATION_DRIVERS.get(ticker);
+
+    if(!driver || !driver.updates.delete(update)) return;
+
+    if(!driver.updates.size) ticker.remove(driver.callback);
+};
+
 export const createCanvasAnimatedResource = (
     animation: DecodedAnimation,
     format: ImageFormat,
@@ -57,7 +101,7 @@ export const createCanvasAnimatedResource = (
     {
         if(!registered) return;
 
-        dependencies.ticker.remove(update);
+        removeAnimationUpdate(dependencies.ticker, update);
         registered = false;
     };
 
@@ -66,6 +110,8 @@ export const createCanvasAnimatedResource = (
         if(!registered || disposed) return;
 
         elapsedMs += Math.max(0, Number.isFinite(tick?.deltaMS) ? tick.deltaMS : 0);
+
+        let frameChanged = false;
 
         while(elapsedMs >= normalizedDurations[frameIndex])
         {
@@ -78,7 +124,7 @@ export const createCanvasAnimatedResource = (
                 if(animation.loopCount > 0 && completedLoops >= animation.loopCount)
                 {
                     unregister();
-                    return;
+                    break;
                 }
 
                 frameIndex = 0;
@@ -88,12 +134,17 @@ export const createCanvasAnimatedResource = (
                 frameIndex++;
             }
 
-            surface.render(animation.frames[frameIndex].pixels);
-            texture.source?.update();
+            frameChanged = true;
         }
+
+        // Skipped frames are never uploaded; only the frame reached this tick is.
+        if(!frameChanged) return;
+
+        surface.render(animation.frames[frameIndex].pixels);
+        texture.source?.update();
     };
 
-    dependencies.ticker.add(update);
+    addAnimationUpdate(dependencies.ticker, update);
 
     return {
         texture,

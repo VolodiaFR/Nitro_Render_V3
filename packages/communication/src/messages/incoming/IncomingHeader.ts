@@ -400,6 +400,11 @@ export class IncomingHeader
     public static REWARD_TRACK_CLAIM_RESULT = 9451;
     public static REWARD_TRACK_PROGRESS = 9452;
     public static REWARD_TRACK_PREMIUM_PURCHASE_RESULT = 2248;
+    // Reward track staff editor (custom, 10100-10199).
+    public static REWARD_TRACK_ADMIN_DATA = 10100;
+    public static REWARD_TRACK_ADMIN_RESULT = 10105;
+    public static REWARD_TRACK_FURNI_SEARCH_RESULT = 10107;
+    public static REWARD_TRACK_TEXTS = 10109;
     public static BONUS_RARE_INFO = 1533;
     public static CRAFTABLE_PRODUCTS = 1000;
     public static CRAFTING_RECIPE = 2774;
@@ -674,6 +679,12 @@ export class IncomingHeader
     public static USER_BAN_INFO = 9471;
     // AIR 13 Discord preferences; official id 1600 is taken by GENERIC_ERROR, so 9472.
     public static DISCORD_PREFERENCES = 9472;
+    // Wired variable fx (server -> client): the drawn configs, their removal, the values to draw
+    // and the values that went away. Custom ids in the reserved 94xx block.
+    public static WIRED_VARIABLE_FX_CONFIGS = 9473;
+    public static WIRED_VARIABLE_FX_CONFIGS_REMOVED = 9474;
+    public static WIRED_VARIABLE_FX_STATUS = 9475;
+    public static WIRED_VARIABLE_FX_STATUS_REMOVED = 9476;
     // AIR 13 treasure hunt (server -> client). Official 1631 is taken by UNIT_EXPRESSION,
     // so the first-winner packet uses the reserved custom id 9485; the other two are official.
     public static TREASURE_HUNT_FIRST_WINNER = 9485;

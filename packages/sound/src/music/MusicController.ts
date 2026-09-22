@@ -15,7 +15,7 @@ export class MusicController implements IMusicController
     public static readonly SKIP_POSITION_SET: number = -1;
     private static readonly MAXIMUM_NOTIFY_PRIORITY: number = MusicPriorities.PRIORITY_ROOM_PLAYLIST;
 
-    private _timerInstance: number = 1;
+    private _timerInstance: number = undefined;
     private _songRequestList: number[] = [];
     private _requestedSongs: Map<number, boolean> = new Map();
     private _availableSongs: Map<number, SongDataEntry> = new Map();
@@ -51,7 +51,6 @@ export class MusicController implements IMusicController
             GetCommunication().registerMessageEvent(new UserSongDisksInventoryMessageEvent(this.onSongDiskInventoryMessage.bind(this)))
         );
 
-        this._timerInstance = window.setInterval(this.onTick.bind(this), 1000);
         this._musicPlayer = new MusicPlayer(GetConfiguration().getValue<string>('external.samples.url'));
 
         GetEventDispatcher().addEventListener(RoomObjectSoundMachineEvent.JUKEBOX_INIT, this.onJukeboxInit);
@@ -185,7 +184,7 @@ export class MusicController implements IMusicController
     {
         if(this._timerInstance)
         {
-            clearInterval(this._timerInstance);
+            clearTimeout(this._timerInstance);
             this._timerInstance = undefined;
         }
 
@@ -330,10 +329,20 @@ export class MusicController implements IMusicController
 
     private onTick(): void
     {
+        this._timerInstance = undefined;
+
         if(this._songRequestList.length === 0) return;
 
         GetCommunication().connection.send(new GetSongInfoMessageComposer(...this._songRequestList));
         this._songRequestList = [];
+    }
+
+    // Batches song info requests made within the same second; no timer runs while idle.
+    private scheduleSongRequestFlush(): void
+    {
+        if(this._timerInstance) return;
+
+        this._timerInstance = window.setTimeout(() => this.onTick(), 1000);
     }
 
     private requestSong(songId: number, arg2: boolean): void
@@ -342,6 +351,7 @@ export class MusicController implements IMusicController
         {
             this._requestedSongs.set(songId, arg2);
             this._songRequestList.push(songId);
+            this.scheduleSongRequestFlush();
         }
     }
 

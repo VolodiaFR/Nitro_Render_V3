@@ -8,6 +8,7 @@ import { isWiredChestFloorItem } from './utils/isWiredChestFloorItem';
 import { RoomEnterEffect, RoomObjectUpdateMessage } from '../../room';
 import { ObjectAvatarSelectedMessage, ObjectDataUpdateMessage, ObjectSelectedMessage, ObjectTileCursorUpdateMessage, ObjectVisibilityUpdateMessage } from './messages';
 import { SelectedRoomObjectData } from './utils';
+import { resolveWiredClickBehaviour, tileBehind } from './utils/WiredClickSettings';
 
 export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomObjectEventManager
 {
@@ -372,6 +373,55 @@ export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomOb
         }
     }
 
+    /**
+     * What the room's wired asked this player's clicks to do. Pass-through means the avatar or
+     * furni is not clicked at all and the player walks to the tile under it, as if it were not
+     * there; walk-behind lets the click reach the avatar and also walks the player to the tile
+     * behind it. Returns true when the click has been consumed.
+     */
+    private applyWiredClickSettings(event: RoomObjectMouseEvent, roomId: number, operation: string): boolean
+    {
+        if(!this._roomEngine || !event) return false;
+
+        if(operation && (operation !== RoomObjectOperationType.OBJECT_UNDEFINED)) return false;
+
+        if(event.altKey || event.ctrlKey || event.shiftKey) return false;
+
+        if((event instanceof RoomObjectTileMouseEvent) || (event instanceof RoomObjectWallMouseEvent)) return false;
+
+        const category = this._roomEngine.getRoomObjectCategoryForType(event.objectType);
+        const behaviour = resolveWiredClickBehaviour(category, { userOption: this._roomEngine.wiredClickUserOption, furniOption: this._roomEngine.wiredClickFurniOption });
+
+        if(behaviour === 'default') return false;
+
+        if(this._roomEngine.isDecorating) return false;
+
+        const session = GetRoomSessionManager().getSession(roomId);
+
+        if(!session || session.isSpectator) return false;
+
+        const roomObject = this._roomEngine.getRoomObject(roomId, event.objectId, category);
+
+        if(!roomObject) return false;
+
+        const location = roomObject.getLocation();
+        const x = Math.floor(location.x);
+        const y = Math.floor(location.y);
+
+        if(behaviour === 'pass-through')
+        {
+            if(!this._roomEngine.moveBlocked) this.sendWalkUpdate(x, y);
+
+            return true;
+        }
+
+        const behind = tileBehind(x, y, roomObject.getDirection().x);
+
+        if(!this._roomEngine.moveBlocked) this.sendWalkUpdate(behind.x, behind.y);
+
+        return false;
+    }
+
     private handleRoomObjectMouseClickEvent(event: RoomObjectMouseEvent, roomId: number): void
     {
         if(!event) return;
@@ -381,6 +431,8 @@ export class RoomObjectEventHandler implements IRoomCanvasMouseListener, IRoomOb
         const selectedData = this.getSelectedRoomObjectData(roomId);
 
         if(selectedData) operation = selectedData.operation;
+
+        if(this.applyWiredClickSettings(event, roomId, operation)) return;
 
         this.clickRoomObject(event, operation);
 

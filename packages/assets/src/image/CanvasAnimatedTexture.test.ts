@@ -100,7 +100,31 @@ describe('createCanvasAnimatedResource', () =>
         tick({ deltaMS: 100 });
 
         expect(dependencies.ticker.remove).not.toHaveBeenCalled();
-        expect(dependencies.render.mock.calls.length).toBeGreaterThan(2);
+        expect(dependencies.render).toHaveBeenCalledTimes(2);
+        expect(dependencies.update).toHaveBeenCalledOnce();
+    });
+
+    it('drives every animation on a ticker from one shared callback', () =>
+    {
+        const dependencies = createDependencies();
+        const first = createCanvasAnimatedResource(animation(0, [ 10, 10 ]), 'webp', dependencies);
+        const second = createCanvasAnimatedResource(animation(0, [ 10, 10 ]), 'webp', dependencies);
+        const tick = vi.mocked(dependencies.ticker.add).mock.calls[0][0];
+
+        expect(dependencies.ticker.add).toHaveBeenCalledTimes(1);
+
+        tick({ deltaMS: 10 });
+        expect(dependencies.render).toHaveBeenCalledTimes(4);
+
+        first.dispose();
+        expect(dependencies.ticker.remove).not.toHaveBeenCalled();
+
+        tick({ deltaMS: 10 });
+        expect(dependencies.render).toHaveBeenCalledTimes(5);
+
+        second.dispose();
+        expect(dependencies.ticker.remove).toHaveBeenCalledWith(tick);
+        expect(dependencies.ticker.remove).toHaveBeenCalledTimes(1);
     });
 
     it('rejects frames whose RGBA byte length does not match the canvas', () =>

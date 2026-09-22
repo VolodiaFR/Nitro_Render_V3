@@ -1,6 +1,6 @@
 import { IAssetPlaneVisualizationAnimatedLayer, IAssetPlaneVisualizationLayer, IAssetRoomVisualizationData, IRoomGeometry, IRoomPlane, IVector3D } from '@octane/api';
 import { GetAssetManager } from '@octane/assets';
-import { GetRenderer, GetTexturePool, PlaneMaskFilter, Vector3d } from '@octane/utils';
+import { GetRenderer, GetTexturePool, OctaneLogger, PlaneMaskFilter, Vector3d } from '@octane/utils';
 import { Container, Filter, Graphics, Matrix, Point, RenderTexture, Sprite, Texture, TilingSprite } from 'pixi.js';
 import { RoomGeometry } from '../../../utils';
 import { IWindowReflectionAvatarState, IWindowReflectionUnitState, RoomWindowReflectionState } from '../RoomWindowReflectionState';
@@ -1197,7 +1197,7 @@ export class RoomPlane implements IRoomPlane
 
             if(planeDistance > maxDistance)
             {
-                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) rejected — planeDist ${planeDistance.toFixed(2)} > ${maxDistance}`);
+                if(debugEnabled) OctaneLogger.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) rejected — planeDist ${planeDistance.toFixed(2)} > ${maxDistance}`);
 
                 return null;
             }
@@ -1221,7 +1221,7 @@ export class RoomPlane implements IRoomPlane
 
             if(!closestMask || (closestScore > 3))
             {
-                if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) rejected — mask score ${closestScore.toFixed(2)} (masks ${JSON.stringify(this._windowMasks)})`);
+                if(debugEnabled) OctaneLogger.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) rejected — mask score ${closestScore.toFixed(2)} (masks ${JSON.stringify(this._windowMasks)})`);
 
                 return null;
             }
@@ -1243,7 +1243,7 @@ export class RoomPlane implements IRoomPlane
 
             const edgeAlpha = (attenuate ? Math.max(0, Math.min(1, ((maxDistance - planeDistance) / 0.25))) : 1);
 
-            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) DRAWN — planeDist ${planeDistance.toFixed(2)}, maskScore ${closestScore.toFixed(2)}, leftSideLoc ${leftSideLoc.toFixed(2)}, mirrored to (${(this._location.x + mirroredX).toFixed(2)}, ${(this._location.y + mirroredY).toFixed(2)}, ${(this._location.z + mirroredZ).toFixed(2)}) screen (${screenSpot.x.toFixed(1)}, ${screenSpot.y.toFixed(1)}), edgeAlpha ${edgeAlpha.toFixed(2)}`);
+            if(debugEnabled) OctaneLogger.log(`[Reflection] plane ${this._uniqueId}: ${label} at (${location.x}, ${location.y}) DRAWN — planeDist ${planeDistance.toFixed(2)}, maskScore ${closestScore.toFixed(2)}, leftSideLoc ${leftSideLoc.toFixed(2)}, mirrored to (${(this._location.x + mirroredX).toFixed(2)}, ${(this._location.y + mirroredY).toFixed(2)}, ${(this._location.z + mirroredZ).toFixed(2)}) screen (${screenSpot.x.toFixed(1)}, ${screenSpot.y.toFixed(1)}), edgeAlpha ${edgeAlpha.toFixed(2)}`);
 
             return { screenSpot, planeDistance, edgeAlpha };
         };
@@ -1259,7 +1259,7 @@ export class RoomPlane implements IRoomPlane
             const mirrorDirection = RoomWindowReflectionState.reflectDirection(avatar.direction, normalX, normalY);
             const texture = (avatar.mirrors?.get(mirrorDirection) || avatar.texture);
 
-            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: avatar ${avatar.id} facing ${avatar.direction}° -> mirror ${mirrorDirection}° ${avatar.mirrors?.has(mirrorDirection) ? 'HIT' : 'MISS (live texture)'} available=[${Array.from(avatar.mirrors?.keys() || []).join(',')}]`);
+            if(debugEnabled) OctaneLogger.log(`[Reflection] plane ${this._uniqueId}: avatar ${avatar.id} facing ${avatar.direction}° -> mirror ${mirrorDirection}° ${avatar.mirrors?.has(mirrorDirection) ? 'HIT' : 'MISS (live texture)'} available=[${Array.from(avatar.mirrors?.keys() || []).join(',')}]`);
 
             if(!texture?.source || texture.source.destroyed || !texture.source.style) return false;
 
@@ -1283,7 +1283,7 @@ export class RoomPlane implements IRoomPlane
             const mirrorDirection = RoomWindowReflectionState.reflectDirection(unit.direction, normalX, normalY);
             const layers = (unit.layersByDirection?.get(mirrorDirection) || unit.layers);
 
-            if(debugEnabled) console.log(`[Reflection] plane ${this._uniqueId}: unit ${unit.id} facing ${unit.direction}° -> mirror ${mirrorDirection}° ${unit.layersByDirection?.has(mirrorDirection) ? 'HIT' : 'MISS (live layers)'} available=[${Array.from(unit.layersByDirection?.keys() || []).join(',')}]`);
+            if(debugEnabled) OctaneLogger.log(`[Reflection] plane ${this._uniqueId}: unit ${unit.id} facing ${unit.direction}° -> mirror ${mirrorDirection}° ${unit.layersByDirection?.has(mirrorDirection) ? 'HIT' : 'MISS (live layers)'} available=[${Array.from(unit.layersByDirection?.keys() || []).join(',')}]`);
 
             if(!layers?.length) return false;
 

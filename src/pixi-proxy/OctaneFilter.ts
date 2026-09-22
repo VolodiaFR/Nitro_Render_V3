@@ -1,4 +1,1 @@
-import { Filter } from 'pixi.js';
-
-export class OctaneFilter extends Filter
-{}
+export { Filter as OctaneFilter } from 'pixi.js';
