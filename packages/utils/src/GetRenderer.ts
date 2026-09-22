@@ -1,5 +1,6 @@
 import { AutoDetectOptions, Renderer, autoDetectRenderer } from 'pixi.js';
 import { GetDesiredScaleMode } from './DprRenderingMode';
+import { OctaneLogger } from './OctaneLogger';
 
 let renderer: Renderer = null;
 
@@ -77,7 +78,7 @@ const patchResizeSkip = (r: Renderer): void =>
 
 export const PrepareRenderer = async (options: Partial<AutoDetectOptions>): Promise<Renderer> =>
 {
-    renderer = await autoDetectRenderer(options);
+    renderer = await autoDetectRenderer({ hello: OctaneLogger.LOG_DEBUG, ...options });
 
     renderer.events?.destroy();
 

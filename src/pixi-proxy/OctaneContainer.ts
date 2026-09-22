@@ -1,4 +1,1 @@
-import { Container } from 'pixi.js';
-
-export class OctaneContainer extends Container
-{}
+export { Container as OctaneContainer } from 'pixi.js';
