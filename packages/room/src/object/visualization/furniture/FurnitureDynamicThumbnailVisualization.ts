@@ -34,7 +34,7 @@ export class FurnitureDynamicThumbnailVisualization extends IsometricImageFurniV
                     {
                         if(image.complete && image.width > 0 && image.height > 0)
                         {
-                            const texture = Texture.from(image);
+                            const texture = Texture.from(image, true);
                             texture.source.scaleMode = 'linear';
 
                             this.setThumbnailImages(texture, thumbnailUrl, true);

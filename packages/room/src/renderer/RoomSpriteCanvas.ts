@@ -51,6 +51,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
     private _mouseCheckCount: number = 0;
     private _mouseSpriteWasHit: boolean = false;
     private _mouseActiveObjects: Map<string, ObjectMouseData> = new Map();
+    private _mouseCheckedSprites: Set<string> = new Set();
     private _eventCache: Map<string, IRoomSpriteMouseEvent> = new Map();
     private _eventId: number = 0;
     private _scale: number = 1;
@@ -914,11 +915,6 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
     public update(): void
     {
-        if(!this._mouseCheckCount)
-        {
-            //this.checkMouseHits(this._mouseLocation.x, this._mouseLocation.y, MouseEventType.MOUSE_MOVE);
-        }
-
         this._mouseCheckCount = 0;
 
         this._eventId++;
@@ -992,7 +988,9 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
     private checkMouseHits(x: number, y: number, type: string, altKey: boolean = false, ctrlKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false): boolean
     {
-        const checkedSprites: string[] = [];
+        const checkedSprites = this._mouseCheckedSprites;
+
+        checkedSprites.clear();
 
         let didHitSprite = false;
         let mouseEvent: IRoomSpriteMouseEvent = null;
@@ -1016,7 +1014,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
                     {
                         const identifier = this.getExtendedSpriteIdentifier(extendedSprite);
 
-                        if(checkedSprites.indexOf(identifier) === -1)
+                        if(!checkedSprites.has(identifier))
                         {
                             const tag = extendedSprite.tag;
 
@@ -1059,7 +1057,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
                                 this.bufferMouseEvent(mouseEvent, identifier);
                             }
 
-                            checkedSprites.push(identifier);
+                            checkedSprites.add(identifier);
                         }
 
                         didHitSprite = true;
@@ -1070,40 +1068,18 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             spriteId--;
         }
 
-        const keys: string[] = [];
-
-        for(const key of this._mouseActiveObjects.keys()) key && keys.push(key);
-
-        let index = 0;
-
-        while(index < keys.length)
+        for(const [ key, existing ] of this._mouseActiveObjects)
         {
-            const key = keys[index];
+            if(!key || checkedSprites.has(key)) continue;
 
-            if(checkedSprites.indexOf(key) >= 0) keys[index] = null;
+            this._mouseActiveObjects.delete(key);
 
-            index++;
+            const mouseEvent = this.createMouseEvent(0, 0, 0, 0, MouseEventType.ROLL_OUT, existing.spriteTag, altKey, ctrlKey, shiftKey, buttonDown);
+
+            this.bufferMouseEvent(mouseEvent, key);
         }
 
-        index = 0;
-
-        while(index < keys.length)
-        {
-            const key = keys[index];
-
-            if(key !== null)
-            {
-                const existing = this._mouseActiveObjects.get(key);
-
-                if(existing) this._mouseActiveObjects.delete(key);
-
-                const mouseEvent = this.createMouseEvent(0, 0, 0, 0, MouseEventType.ROLL_OUT, existing.spriteTag, altKey, ctrlKey, shiftKey, buttonDown);
-
-                this.bufferMouseEvent(mouseEvent, key);
-            }
-
-            index++;
-        }
+        checkedSprites.clear();
 
         this.processMouseEvents();
         this._mouseOldX = x;

@@ -1,12 +1,12 @@
 import { AlphaTolerance } from '@octane/api';
 import { GetRenderer, TextureUtils } from '@octane/utils';
-import { DestroyOptions, Filter, Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
+import { Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
 
 const BYTES_PER_PIXEL = 4;
 
 export class ExtendedSprite extends Sprite
 {
-    private static SCRATCH_CANVAS: HTMLCanvasElement = null;
+    private static SCRATCH_POINT: Point = new Point();
 
     private _offsetX: number = 0;
     private _offsetY: number = 0;
@@ -18,7 +18,6 @@ export class ExtendedSprite extends Sprite
 
     private _updateId1: number = -1;
     private _updateId2: number = -1;
-    private _filterSource: Filter[] = null;
 
     public needsUpdate(updateId1: number, updateId2: number): boolean
     {
@@ -28,16 +27,6 @@ export class ExtendedSprite extends Sprite
         this._updateId2 = updateId2;
 
         return true;
-    }
-
-    // Pixi copies and freezes every array handed to `filters`, so the reference a room
-    // sprite gave us is remembered here to skip the copy when it has not changed.
-    public setFilters(filters: Filter[]): void
-    {
-        if(filters === this._filterSource) return;
-
-        this._filterSource = filters;
-        this.filters = filters;
     }
 
     public setTexture(texture: Texture): void
@@ -55,45 +44,11 @@ export class ExtendedSprite extends Sprite
         this.texture = texture;
     }
 
-    // A pooled or asset texture can be destroyed while this sprite still sits in the
-    // display list (TexturePool overflow, RoomPlane / AvatarImage disposal). Pixi would
-    // then batch a texture without a source, so drop it here, in the same call that
-    // destroys it, and let the next render pass pick up whatever the room sprite holds.
-    public override get texture(): Texture
-    {
-        return super.texture;
-    }
-
-    public override set texture(texture: Texture)
-    {
-        const previous = super.texture;
-
-        if(previous && (previous !== texture)) previous.off('destroy', this.onTextureDestroyed, this);
-
-        super.texture = texture;
-
-        const current = super.texture;
-
-        if(current && (current !== previous) && (current !== Texture.EMPTY)) current.on('destroy', this.onTextureDestroyed, this);
-    }
-
-    private onTextureDestroyed(): void
-    {
-        this.setTexture(null);
-    }
-
-    public override destroy(options?: DestroyOptions): void
-    {
-        super.texture?.off('destroy', this.onTextureDestroyed, this);
-
-        super.destroy(options);
-    }
-
     public containsPoint(point: Point): boolean
     {
         if(!point || (this.alphaTolerance > 255) || !this.texture || (this.texture === Texture.EMPTY)) return false;
 
-        point = new Point((point.x * this.scale.x), (point.y * this.scale.y));
+        point = ExtendedSprite.SCRATCH_POINT.set((point.x * this.scale.x), (point.y * this.scale.y));
 
         if(!super.containsPoint(point)) return false;
 
@@ -129,10 +84,39 @@ export class ExtendedSprite extends Sprite
     {
         if(!textureSource) return false;
 
+        const renderer = GetRenderer();
         const width = Math.max(Math.round(textureSource.width * textureSource.resolution), 1);
         const height = Math.max(Math.round(textureSource.height * textureSource.resolution), 1);
 
-        const pixels = (ExtendedSprite.readAlphaFromResource(textureSource, width, height) ?? ExtendedSprite.readAlphaFromGpu(textureSource, width, height));
+        let pixels: Uint8ClampedArray = null;
+
+        if(renderer instanceof WebGPURenderer)
+        {
+            pixels = TextureUtils.getPixels(new Texture(textureSource))?.pixels ?? null;
+        }
+
+        else if(renderer instanceof WebGLRenderer)
+        {
+            pixels = new Uint8ClampedArray(BYTES_PER_PIXEL * width * height);
+
+            const webglRenderer = renderer;
+            const renderTarget = webglRenderer.renderTarget.getRenderTarget(textureSource);
+            const glRenderTarget = webglRenderer.renderTarget.getGpuRenderTarget(renderTarget);
+
+            const gl = webglRenderer.gl;
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, glRenderTarget.resolveTargetFramebuffer);
+
+            gl.readPixels(
+                0,
+                0,
+                width,
+                height,
+                gl.RGBA,
+                gl.UNSIGNED_BYTE,
+                pixels
+            );
+        }
 
         if(!pixels) return false;
 
@@ -141,104 +125,6 @@ export class ExtendedSprite extends Sprite
         textureSource.hitMapTime = Date.now();
 
         return true;
-    }
-
-    // Decoded assets (spritesheets, palette canvases) still hold their pixels on the CPU,
-    // so their alpha can be read through a 2D canvas without stalling the GPU pipeline.
-    private static readAlphaFromResource(textureSource: TextureSource, width: number, height: number): Uint8ClampedArray
-    {
-        const image = ExtendedSprite.getDrawableResource(textureSource);
-
-        if(!image) return null;
-
-        const canvas = ExtendedSprite.getScratchCanvas(width, height);
-        const context = canvas?.getContext('2d', { willReadFrequently: true });
-
-        if(!context) return null;
-
-        context.clearRect(0, 0, width, height);
-        context.drawImage(image, 0, 0, width, height);
-
-        return context.getImageData(0, 0, width, height).data;
-    }
-
-    private static getDrawableResource(textureSource: TextureSource): CanvasImageSource
-    {
-        const resource = textureSource.resource;
-
-        if(!resource) return null;
-
-        if((typeof ImageBitmap !== 'undefined') && (resource instanceof ImageBitmap)) return resource;
-
-        if((typeof HTMLCanvasElement !== 'undefined') && (resource instanceof HTMLCanvasElement)) return resource;
-
-        if((typeof OffscreenCanvas !== 'undefined') && (resource instanceof OffscreenCanvas)) return resource;
-
-        if((typeof HTMLImageElement !== 'undefined') && (resource instanceof HTMLImageElement)) return ((resource.complete && resource.naturalWidth) ? resource : null);
-
-        return null;
-    }
-
-    private static getScratchCanvas(width: number, height: number): HTMLCanvasElement
-    {
-        if(typeof document === 'undefined') return null;
-
-        if(!ExtendedSprite.SCRATCH_CANVAS) ExtendedSprite.SCRATCH_CANVAS = document.createElement('canvas');
-
-        const canvas = ExtendedSprite.SCRATCH_CANVAS;
-
-        if(canvas.width !== width) canvas.width = width;
-        if(canvas.height !== height) canvas.height = height;
-
-        return canvas;
-    }
-
-    // Render textures (avatars, room planes) only exist on the GPU, so those still need a
-    // readback. The buffer is reused across regenerations of the same source.
-    private static readAlphaFromGpu(textureSource: TextureSource, width: number, height: number): Uint8ClampedArray
-    {
-        const renderer = GetRenderer();
-
-        if(renderer instanceof WebGPURenderer)
-        {
-            const texture = new Texture({ source: textureSource });
-
-            try
-            {
-                return TextureUtils.getPixels(texture)?.pixels ?? null;
-            }
-            finally
-            {
-                texture.destroy(false);
-            }
-        }
-
-        if(!(renderer instanceof WebGLRenderer)) return null;
-
-        const size = (BYTES_PER_PIXEL * width * height);
-
-        let pixels = textureSource.hitMap;
-
-        if(!(pixels instanceof Uint8ClampedArray) || (pixels.length !== size)) pixels = new Uint8ClampedArray(size);
-
-        const renderTarget = renderer.renderTarget.getRenderTarget(textureSource);
-        const glRenderTarget = renderer.renderTarget.getGpuRenderTarget(renderTarget);
-
-        const gl = renderer.gl;
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, glRenderTarget.resolveTargetFramebuffer);
-
-        gl.readPixels(
-            0,
-            0,
-            width,
-            height,
-            gl.RGBA,
-            gl.UNSIGNED_BYTE,
-            pixels
-        );
-
-        return pixels;
     }
 
     public get offsetX(): number

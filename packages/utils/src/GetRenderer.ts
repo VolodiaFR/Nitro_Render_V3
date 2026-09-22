@@ -1,6 +1,4 @@
-import { AutoDetectOptions, Renderer, autoDetectRenderer } from 'pixi.js';
-import { GetDesiredScaleMode } from './DprRenderingMode';
-import { OctaneLogger } from './OctaneLogger';
+import { AutoDetectOptions, Renderer, Texture, autoDetectRenderer } from 'pixi.js';
 
 let renderer: Renderer = null;
 
@@ -34,15 +32,9 @@ const patchGlTextureSystem = (r: Renderer): void =>
     {
         proto.bindSource = function(source: any, location = 0)
         {
-            if(source?.style && !source.octaneFixedScaleMode)
+            if(!source || source.destroyed || !source.style)
             {
-                const scaleMode = GetDesiredScaleMode();
-
-                if(source.style.scaleMode !== scaleMode)
-                {
-                    source.style.scaleMode = scaleMode;
-                    source.style.update();
-                }
+                source = Texture.EMPTY.source;
             }
 
             return origBindSource.call(this, source, location);
@@ -78,7 +70,7 @@ const patchResizeSkip = (r: Renderer): void =>
 
 export const PrepareRenderer = async (options: Partial<AutoDetectOptions>): Promise<Renderer> =>
 {
-    renderer = await autoDetectRenderer({ hello: OctaneLogger.LOG_DEBUG, ...options });
+    renderer = await autoDetectRenderer(options);
 
     renderer.events?.destroy();
 
