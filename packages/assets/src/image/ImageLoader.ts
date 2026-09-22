@@ -135,8 +135,10 @@ const decodeStaticWithContext = async (
     }
 };
 
+// Read-only from here on: the bytes are sniffed for a format and handed to a decoder that copies
+// them into a blob, so a view over what the caller gave us is enough and a copy is pure cost.
 const toBytes = (bytes: ArrayBuffer | Uint8Array): Uint8Array => bytes instanceof Uint8Array
-    ? Uint8Array.from(bytes)
+    ? bytes
     : new Uint8Array(bytes);
 
 const errorMessage = (error: unknown): string => error instanceof Error ? error.message : String(error);

@@ -3,29 +3,42 @@ import { Texture } from 'pixi.js';
 
 export class TexturePool
 {
-    private static MAX_IDLE: number = 1800;
-    private static MAX_POOL_SIZE: number = 200;
+    private static MAX_IDLE_MS: number = 30000;
+    private static SWEEP_INTERVAL_MS: number = 1000;
+    private static MAX_POOL_BYTES: number = 64 * 1024 * 1024;
 
     private _textures: { [index: string]: { [index: string]: Texture[] } } = {};
     private _pooledAt: WeakMap<Texture, number> = new WeakMap();
     private _totalTextures: number = 0;
-    private _runCount: number = 0;
+    private _totalBytes: number = 0;
+    private _lastSweepAt: number = 0;
 
     public getTotalTextures(): number
     {
         let total = 0;
+        let bytes = 0;
 
         for(const width in this._textures)
         {
             for(const height in this._textures[width])
             {
-                total += this._textures[width][height].length;
+                for(const texture of this._textures[width][height])
+                {
+                    total++;
+                    bytes += TexturePool.getTextureBytes(texture);
+                }
             }
         }
 
         this._totalTextures = total;
+        this._totalBytes = bytes;
 
         return this._totalTextures;
+    }
+
+    public getTotalBytes(): number
+    {
+        return this._totalBytes;
     }
 
     public getTexture(width: number, height: number): Texture
@@ -42,6 +55,7 @@ export class TexturePool
             {
                 this._pooledAt.delete(texture);
                 this._totalTextures--;
+                this._totalBytes -= TexturePool.getTextureBytes(texture);
 
                 return texture;
             }
@@ -54,14 +68,18 @@ export class TexturePool
     {
         if(!texture || texture.destroyed || !texture.source) return;
 
-        if(this._totalTextures >= TexturePool.MAX_POOL_SIZE)
-        {
-            delete texture.source.hitMap;
-            delete texture.source.hitMapDirty;
+        const bytes = TexturePool.getTextureBytes(texture);
 
-            if(!texture.destroyed) texture.destroy(true);
+        if(bytes > TexturePool.MAX_POOL_BYTES)
+        {
+            TexturePool.releaseTexture(texture);
 
             return;
+        }
+
+        while((this._totalBytes + bytes) > TexturePool.MAX_POOL_BYTES)
+        {
+            if(!this.evictOldest()) break;
         }
 
         if(!this._textures[texture.width]) this._textures[texture.width] = {};
@@ -72,16 +90,21 @@ export class TexturePool
         delete texture.source.hitMapDirty;
 
         this._textures[texture.width][texture.height].push(texture);
-        this._pooledAt.set(texture, this._runCount);
+        this._pooledAt.set(texture, Date.now());
 
         this._totalTextures++;
+        this._totalBytes += bytes;
     }
 
     public run(): void
     {
-        this._runCount++;
-
         if(!this._totalTextures) return;
+
+        const now = Date.now();
+
+        if((now - this._lastSweepAt) < TexturePool.SWEEP_INTERVAL_MS) return;
+
+        this._lastSweepAt = now;
 
         for(const width in this._textures)
         {
@@ -94,20 +117,71 @@ export class TexturePool
                     const texture = textures[i];
                     const pooledAt = this._pooledAt.get(texture);
 
-                    if((pooledAt === undefined) || ((this._runCount - pooledAt) <= TexturePool.MAX_IDLE)) continue;
+                    if((pooledAt === undefined) || ((now - pooledAt) <= TexturePool.MAX_IDLE_MS)) continue;
 
-                    delete texture.source?.hitMap;
-                    delete texture.source?.hitMapDirty;
-
-                    if(!texture.destroyed) texture.destroy(true);
-
-                    textures.splice(i, 1);
-                    this._pooledAt.delete(texture);
-
-                    this._totalTextures--;
+                    this.removeAt(textures, i);
                 }
             }
         }
+    }
+
+    private evictOldest(): boolean
+    {
+        let oldestTextures: Texture[] = null;
+        let oldestAt = Infinity;
+
+        for(const width in this._textures)
+        {
+            for(const height in this._textures[width])
+            {
+                const textures = this._textures[width][height];
+
+                if(!textures.length) continue;
+
+                const pooledAt = this._pooledAt.get(textures[0]) ?? -Infinity;
+
+                if(pooledAt < oldestAt)
+                {
+                    oldestAt = pooledAt;
+                    oldestTextures = textures;
+                }
+            }
+        }
+
+        if(!oldestTextures) return false;
+
+        this.removeAt(oldestTextures, 0);
+
+        return true;
+    }
+
+    private removeAt(textures: Texture[], index: number): void
+    {
+        const texture = textures[index];
+
+        textures.splice(index, 1);
+        this._pooledAt.delete(texture);
+
+        this._totalTextures--;
+        this._totalBytes -= TexturePool.getTextureBytes(texture);
+
+        TexturePool.releaseTexture(texture);
+    }
+
+    private static releaseTexture(texture: Texture): void
+    {
+        delete texture.source?.hitMap;
+        delete texture.source?.hitMapDirty;
+
+        if(!texture.destroyed) texture.destroy(true);
+    }
+
+    private static getTextureBytes(texture: Texture): number
+    {
+        const width = texture.source?.pixelWidth || texture.width;
+        const height = texture.source?.pixelHeight || texture.height;
+
+        return (width * height * 4);
     }
 
     public get textures(): { [index: string]: { [index: string]: Texture[] } }

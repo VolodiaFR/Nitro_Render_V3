@@ -94,6 +94,25 @@ describe('decodeStaticImage', () =>
 
 describe('decodeNativeBrowserImage', () =>
 {
+    it('hands the browser the bytes it was given, without copying the image first', async () =>
+    {
+        // The view sits inside a larger buffer, the way an inflated bundle entry does. Passing the
+        // whole buffer, or walking it into a copy, would be a second pass over every byte.
+        const backing = new Uint8Array([ 0, 0, 0, 0x89, 0x50, 0x4e, 0x47, 0, 0 ]);
+        const bytes = backing.subarray(3, 7);
+        const createImageBitmap = vi.fn().mockResolvedValue({ width: 2, height: 1 });
+
+        vi.stubGlobal('createImageBitmap', createImageBitmap);
+
+        await decodeNativeBrowserImage(bytes, 'image/png', 'fixture.png');
+
+        const blob = createImageBitmap.mock.calls[0][0] as Blob;
+
+        expect(blob.type).toBe('image/png');
+        expect(blob.size).toBe(4);
+        expect(new Uint8Array(await blob.arrayBuffer())).toEqual(new Uint8Array([ 0x89, 0x50, 0x4e, 0x47 ]));
+    });
+
     it('revokes the temporary object URL after the HTML image fallback loads', async () =>
     {
         const revokeObjectURL = vi.fn();

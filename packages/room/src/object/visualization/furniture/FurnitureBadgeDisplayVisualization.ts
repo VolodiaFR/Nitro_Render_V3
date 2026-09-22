@@ -348,7 +348,7 @@ export class FurnitureBadgeDisplayVisualization extends FurnitureAnimatedVisuali
                         frameCtx.drawImage(accCanvas, 0, 0);
 
                         // Create texture from canvas
-                        const frameTexture = Texture.from(frameCanvas);
+                        const frameTexture = Texture.from(frameCanvas, true);
                         this._frameTextures.push(frameTexture);
 
                         // GIF delays are in centiseconds (1/100th of a second)
