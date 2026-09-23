@@ -49,8 +49,26 @@ describe('WiredFurniMoveStyleParser', () =>
 
         expect(parser.parse(wrapper(writer))).toBe(true);
         expect(parser.itemIds).toEqual([ 42, 43 ]);
-        expect(parser.style).toBe(6);
-        expect(parser.intensity).toBe(100);
+        expect(parser.style).toBe(7);
+        expect(parser.intensity).toBe(250);
+    });
+
+    it('keeps an easing intensity within 0-100 and a jump strength signed', () =>
+    {
+        const easing = new BinaryWriter();
+        easing.writeInt(1); easing.writeInt(42); easing.writeInt(4); easing.writeInt(250);
+        const easingParser = new WiredFurniMoveStyleParser();
+
+        expect(easingParser.parse(wrapper(easing))).toBe(true);
+        expect(easingParser.intensity).toBe(100);
+
+        const jump = new BinaryWriter();
+        jump.writeInt(1); jump.writeInt(42); jump.writeInt(7); jump.writeInt(-80);
+        const jumpParser = new WiredFurniMoveStyleParser();
+
+        expect(jumpParser.parse(wrapper(jump))).toBe(true);
+        expect(jumpParser.style).toBe(WiredFurniMoveStyleParser.STYLE_JUMP);
+        expect(jumpParser.intensity).toBe(-80);
     });
 
     it('rejects oversized counts before looping', () =>

@@ -5,23 +5,16 @@ import { RoomObjectLogicBase } from './RoomObjectLogicBase';
 
 export class MovingObjectLogic extends RoomObjectLogicBase
 {
+    /** Habbo's jump strength, from the wired move-style hint (packet 5110). */
+    public static readonly STYLE_JUMP = 7;
+
     public static DEFAULT_UPDATE_INTERVAL: number = 500;
     private static LOCATION_EPSILON: number = 0.01;
     private static TEMP_VECTOR: Vector3d = new Vector3d();
-
-    // Roller pulses arrive once per server tick with the same duration the
-    // client interpolates at, so every hop finishes just before the next
-    // packet lands and the object visibly stalls for the network jitter.
-    // When consecutive slides arrive at a steady cadence we stretch each
-    // fresh hop slightly past that cadence so the next pulse still finds an
-    // active interpolation and chains through the queue, then drain queued
-    // hops at the cadence itself so the backlog stays a constant one buffer.
     private static SLIDE_CHAIN_BUFFER: number = 100;
     private static SLIDE_PERIOD_MIN: number = 100;
     private static SLIDE_PERIOD_MAX: number = 4000;
-
     private _liftAmount: number;
-
     private _location: Vector3d;
     private _locationDelta: Vector3d;
     private _followObject: IRoomObjectController;
@@ -38,7 +31,6 @@ export class MovingObjectLogic extends RoomObjectLogicBase
         super();
 
         this._liftAmount = 0;
-
         this._location = new Vector3d();
         this._locationDelta = new Vector3d();
         this._followObject = null;
@@ -108,9 +100,12 @@ export class MovingObjectLogic extends RoomObjectLogicBase
             }
             else if(this._locationDelta.length > 0)
             {
+                const progress = difference / this._updateInterval;
+
                 vector.assign(this._locationDelta);
-                vector.multiply(this.easeProgress(difference / this._updateInterval, model));
+                vector.multiply(this.easeProgress(progress, model));
                 vector.add(this._location);
+                vector.z += MovingObjectLogic.jumpLift(progress, model);
             }
             else
             {
@@ -183,10 +178,6 @@ export class MovingObjectLogic extends RoomObjectLogicBase
                 return this.processMoveMessage(message);
             }
 
-            // A chained slide must be queued BEFORE the base handler runs:
-            // super.processUpdateMessage snaps the object to the message's
-            // start location, which teleports it to the end of the hop it is
-            // still interpolating through.
             if(this.shouldQueueMoveMessage(message))
             {
                 if(this.object && message.direction) this.object.setDirection(message.direction);
@@ -234,9 +225,6 @@ export class MovingObjectLogic extends RoomObjectLogicBase
 
         if(!message.isSlide || !!message.anchorObject) return baseDuration;
 
-        // Only smooth cadences at or slightly above the hop duration (fast
-        // rollers). Slower cadences keep the classic move-then-rest look, and
-        // one-shot slides (wired choreography) keep their exact duration.
         const chained = ((this._estimatedSlidePeriod > 0) && (this._estimatedSlidePeriod <= (baseDuration + (2 * MovingObjectLogic.SLIDE_CHAIN_BUFFER))));
 
         if(!chained) return baseDuration;
@@ -403,6 +391,16 @@ export class MovingObjectLogic extends RoomObjectLogicBase
         const styled = MovingObjectLogic.applyMoveStyle(t, style);
 
         return t + ((styled - t) * intensity);
+    }
+
+    public static jumpLift(progress: number, model: IRoomObjectModel): number
+    {
+        if(!model || (model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE) !== MovingObjectLogic.STYLE_JUMP)) return 0;
+
+        const strength = (model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE_INTENSITY) ?? 0);
+        const t = Math.max(0, Math.min(1, progress));
+
+        return (strength / 100) * 4 * t * (1 - t);
     }
 
     private static applyMoveStyle(t: number, style: number): number

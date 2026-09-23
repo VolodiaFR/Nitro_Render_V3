@@ -1,6 +1,6 @@
 import { AlphaTolerance } from '@octane/api';
 import { GetRenderer, TextureUtils } from '@octane/utils';
-import { Filter, Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
+import { DestroyOptions, Filter, Point, Sprite, Texture, TextureSource, WebGLRenderer, WebGPURenderer } from 'pixi.js';
 
 const BYTES_PER_PIXEL = 4;
 
@@ -53,6 +53,40 @@ export class ExtendedSprite extends Sprite
         }
 
         this.texture = texture;
+    }
+
+    // A pooled or asset texture can be destroyed while this sprite still sits in the
+    // display list (TexturePool overflow, RoomPlane / AvatarImage disposal). Pixi would
+    // then batch a texture without a source, so drop it here, in the same call that
+    // destroys it, and let the next render pass pick up whatever the room sprite holds.
+    public override get texture(): Texture
+    {
+        return super.texture;
+    }
+
+    public override set texture(texture: Texture)
+    {
+        const previous = super.texture;
+
+        if(previous && (previous !== texture)) previous.off('destroy', this.onTextureDestroyed, this);
+
+        super.texture = texture;
+
+        const current = super.texture;
+
+        if(current && (current !== previous) && (current !== Texture.EMPTY)) current.on('destroy', this.onTextureDestroyed, this);
+    }
+
+    private onTextureDestroyed(): void
+    {
+        this.setTexture(null);
+    }
+
+    public override destroy(options?: DestroyOptions): void
+    {
+        super.texture?.off('destroy', this.onTextureDestroyed, this);
+
+        super.destroy(options);
     }
 
     public containsPoint(point: Point): boolean
