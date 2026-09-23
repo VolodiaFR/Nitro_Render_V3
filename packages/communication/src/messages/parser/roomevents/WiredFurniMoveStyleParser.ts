@@ -9,6 +9,11 @@ export class WiredFurniMoveStyleParser implements IMessageParser
     public static readonly JUMP_STRENGTH_MIN = -1000;
     public static readonly JUMP_STRENGTH_MAX = 1000;
     public static readonly MAXIMUM_ITEMS = 1000;
+    /** The ids name floor furni, or room units (avatars) the server moves with a jump. */
+    public static readonly KIND_FURNI = 0;
+    public static readonly KIND_UNIT = 1;
+    public static readonly OVERSHOOT_MIN = -64;
+    public static readonly OVERSHOOT_MAX = 64;
     private static readonly HEADER_BYTES = 4;
     private static readonly ITEM_BYTES = 4;
     private static readonly TRAILER_BYTES = 8;
@@ -16,12 +21,16 @@ export class WiredFurniMoveStyleParser implements IMessageParser
     private _itemIds: number[] = [];
     private _style = 0;
     private _intensity = 0;
+    private _overshoot = 0;
+    private _kind = WiredFurniMoveStyleParser.KIND_FURNI;
 
     public flush(): boolean
     {
         this._itemIds = [];
         this._style = 0;
         this._intensity = 0;
+        this._overshoot = 0;
+        this._kind = WiredFurniMoveStyleParser.KIND_FURNI;
         return true;
     }
 
@@ -53,6 +62,18 @@ export class WiredFurniMoveStyleParser implements IMessageParser
         this._intensity = (this._style === WiredFurniMoveStyleParser.STYLE_JUMP)
             ? Math.max(WiredFurniMoveStyleParser.JUMP_STRENGTH_MIN, Math.min(WiredFurniMoveStyleParser.JUMP_STRENGTH_MAX, intensity))
             : Math.max(0, Math.min(100, intensity));
+
+        // Trailing fields a server may leave out: tiles to fly past the target, and what the ids name.
+        if(this.hasBytes(wrapper, WiredFurniMoveStyleParser.ITEM_BYTES))
+        {
+            this._overshoot = Math.max(WiredFurniMoveStyleParser.OVERSHOOT_MIN, Math.min(WiredFurniMoveStyleParser.OVERSHOOT_MAX, wrapper.readInt()));
+        }
+
+        if(this.hasBytes(wrapper, WiredFurniMoveStyleParser.ITEM_BYTES))
+        {
+            this._kind = (wrapper.readInt() === WiredFurniMoveStyleParser.KIND_UNIT) ? WiredFurniMoveStyleParser.KIND_UNIT : WiredFurniMoveStyleParser.KIND_FURNI;
+        }
+
         return true;
     }
 
@@ -61,6 +82,16 @@ export class WiredFurniMoveStyleParser implements IMessageParser
         if(required <= 0) return true;
         if(typeof wrapper.remainingBytes === 'number') return wrapper.remainingBytes >= required;
         return wrapper.bytesAvailable;
+    }
+
+    public get overshoot(): number
+    {
+        return this._overshoot;
+    }
+
+    public get kind(): number
+    {
+        return this._kind;
     }
 
     public get itemIds(): readonly number[]
