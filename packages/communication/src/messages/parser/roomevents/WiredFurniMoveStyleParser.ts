@@ -3,7 +3,11 @@ import { IMessageDataWrapper, IMessageParser } from '@octane/api';
 export class WiredFurniMoveStyleParser implements IMessageParser
 {
     public static readonly STYLE_LINEAR = 0;
-    public static readonly STYLE_MAX = 6;
+    /** Habbo's jump strength: the furni hops to its tile in an arc; the intensity is the signed strength. */
+    public static readonly STYLE_JUMP = 7;
+    public static readonly STYLE_MAX = 7;
+    public static readonly JUMP_STRENGTH_MIN = -1000;
+    public static readonly JUMP_STRENGTH_MAX = 1000;
     public static readonly MAXIMUM_ITEMS = 1000;
     private static readonly HEADER_BYTES = 4;
     private static readonly ITEM_BYTES = 4;
@@ -44,7 +48,11 @@ export class WiredFurniMoveStyleParser implements IMessageParser
 
         this._itemIds = itemIds;
         this._style = Math.max(WiredFurniMoveStyleParser.STYLE_LINEAR, Math.min(WiredFurniMoveStyleParser.STYLE_MAX, wrapper.readInt()));
-        this._intensity = Math.max(0, Math.min(100, wrapper.readInt()));
+        const intensity = wrapper.readInt();
+
+        this._intensity = (this._style === WiredFurniMoveStyleParser.STYLE_JUMP)
+            ? Math.max(WiredFurniMoveStyleParser.JUMP_STRENGTH_MIN, Math.min(WiredFurniMoveStyleParser.JUMP_STRENGTH_MAX, intensity))
+            : Math.max(0, Math.min(100, intensity));
         return true;
     }
 
