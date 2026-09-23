@@ -11,10 +11,20 @@ export class MovingObjectLogic extends RoomObjectLogicBase
     public static DEFAULT_UPDATE_INTERVAL: number = 500;
     private static LOCATION_EPSILON: number = 0.01;
     private static TEMP_VECTOR: Vector3d = new Vector3d();
+
+    // Roller pulses arrive once per server tick with the same duration the
+    // client interpolates at, so every hop finishes just before the next
+    // packet lands and the object visibly stalls for the network jitter.
+    // When consecutive slides arrive at a steady cadence we stretch each
+    // fresh hop slightly past that cadence so the next pulse still finds an
+    // active interpolation and chains through the queue, then drain queued
+    // hops at the cadence itself so the backlog stays a constant one buffer.
     private static SLIDE_CHAIN_BUFFER: number = 100;
     private static SLIDE_PERIOD_MIN: number = 100;
     private static SLIDE_PERIOD_MAX: number = 4000;
+
     private _liftAmount: number;
+
     private _location: Vector3d;
     private _locationDelta: Vector3d;
     private _followObject: IRoomObjectController;
@@ -25,12 +35,15 @@ export class MovingObjectLogic extends RoomObjectLogicBase
     private _queuedMoveMessages: ObjectMoveUpdateMessage[];
     private _lastSlideArrivalTime: number;
     private _estimatedSlidePeriod: number;
+    private _hopping: boolean;
+    private _landing: Vector3d;
 
     constructor()
     {
         super();
 
         this._liftAmount = 0;
+
         this._location = new Vector3d();
         this._locationDelta = new Vector3d();
         this._followObject = null;
@@ -41,6 +54,8 @@ export class MovingObjectLogic extends RoomObjectLogicBase
         this._queuedMoveMessages = [];
         this._lastSlideArrivalTime = 0;
         this._estimatedSlidePeriod = 0;
+        this._hopping = false;
+        this._landing = null;
     }
 
     public dispose(): void
@@ -83,7 +98,7 @@ export class MovingObjectLogic extends RoomObjectLogicBase
             }
         }
 
-        if((this._locationDelta.length > 0) || locationOffset)
+        if(this.isAnimating() || locationOffset)
         {
             const vector = MovingObjectLogic.TEMP_VECTOR;
 
@@ -98,7 +113,7 @@ export class MovingObjectLogic extends RoomObjectLogicBase
                 vector.assign(this._followObject.getLocation());
                 vector.add(this._followOffset);
             }
-            else if(this._locationDelta.length > 0)
+            else if((this._locationDelta.length > 0) || this._hopping)
             {
                 const progress = difference / this._updateInterval;
 
@@ -128,12 +143,32 @@ export class MovingObjectLogic extends RoomObjectLogicBase
                 this._locationDelta.x = 0;
                 this._locationDelta.y = 0;
                 this._locationDelta.z = 0;
+                this._hopping = false;
                 completedInterpolation = true;
 
-                if(model && (model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE) > 0))
+                // An animation that flew past its target, or fell short of it, lands where the furni is.
+                if(this._landing)
                 {
-                    model.setValue(RoomObjectVariable.FURNITURE_MOVE_STYLE, 0);
-                    model.setValue(RoomObjectVariable.FURNITURE_MOVE_STYLE_INTENSITY, 0);
+                    this._location.assign(this._landing);
+                    this._landing = null;
+
+                    vector.assign(this._location);
+
+                    if(locationOffset) vector.add(locationOffset);
+
+                    this.object.setLocation(vector);
+                }
+
+                // A chained hop still to come was sent with the same hint; it keeps it.
+                if(model && !this._queuedMoveMessages.length)
+                {
+                    if(model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE) > 0)
+                    {
+                        model.setValue(RoomObjectVariable.FURNITURE_MOVE_STYLE, 0);
+                        model.setValue(RoomObjectVariable.FURNITURE_MOVE_STYLE_INTENSITY, 0);
+                    }
+
+                    if(model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_OVERSHOOT)) model.setValue(RoomObjectVariable.FURNITURE_MOVE_OVERSHOOT, 0);
                 }
             }
         }
@@ -178,6 +213,10 @@ export class MovingObjectLogic extends RoomObjectLogicBase
                 return this.processMoveMessage(message);
             }
 
+            // A chained slide must be queued BEFORE the base handler runs:
+            // super.processUpdateMessage snaps the object to the message's
+            // start location, which teleports it to the end of the hop it is
+            // still interpolating through.
             if(this.shouldQueueMoveMessage(message))
             {
                 if(this.object && message.direction) this.object.setDirection(message.direction);
@@ -225,6 +264,9 @@ export class MovingObjectLogic extends RoomObjectLogicBase
 
         if(!message.isSlide || !!message.anchorObject) return baseDuration;
 
+        // Only smooth cadences at or slightly above the hop duration (fast
+        // rollers). Slower cadences keep the classic move-then-rest look, and
+        // one-shot slides (wired choreography) keep their exact duration.
         const chained = ((this._estimatedSlidePeriod > 0) && (this._estimatedSlidePeriod <= (baseDuration + (2 * MovingObjectLogic.SLIDE_CHAIN_BUFFER))));
 
         if(!chained) return baseDuration;
@@ -262,6 +304,7 @@ export class MovingObjectLogic extends RoomObjectLogicBase
 
         this._locationDelta.assign(message.targetLocation);
         this._locationDelta.subtract(this._location);
+        this.applyTrajectory(message.targetLocation);
 
         if(this._followObject)
         {
@@ -296,8 +339,53 @@ export class MovingObjectLogic extends RoomObjectLogicBase
         }
     }
 
+    /**
+     * The projectile hint's overshoot stretches the flight past its target (or cuts it short) at the
+     * same speed, landing on the target when it ends; a jump with nowhere to go hops on the spot.
+     */
+    private applyTrajectory(targetLocation: IVector3D): void
+    {
+        this._hopping = false;
+        this._landing = null;
+
+        const model = this.object && this.object.model;
+
+        if(!model || this._followObject) return;
+
+        const factor = MovingObjectLogic.overshootFactor(this._locationDelta.x, this._locationDelta.y, model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_OVERSHOOT) ?? 0);
+
+        if(factor !== 1)
+        {
+            this._landing = new Vector3d(targetLocation.x, targetLocation.y, targetLocation.z);
+            this._locationDelta.x *= factor;
+            this._locationDelta.y *= factor;
+            this.updateInterval = Math.round(this._updateInterval * factor);
+        }
+
+        if((this._locationDelta.length === 0) && (model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE) === MovingObjectLogic.STYLE_JUMP)) this._hopping = true;
+    }
+
+    /** How much longer a flight gets for an overshoot of this many tiles: 1 leaves it alone. */
+    public static overshootFactor(dx: number, dy: number, overshootTiles: number): number
+    {
+        if(!overshootTiles || !Number.isFinite(overshootTiles)) return 1;
+
+        const distance = Math.max(Math.abs(dx), Math.abs(dy));
+
+        if(distance <= 0) return 1;
+
+        return Math.max(0, (distance + overshootTiles) / distance);
+    }
+
+    private isAnimating(): boolean
+    {
+        return (this._locationDelta.length > 0) || this._hopping || !!this._landing;
+    }
+
     private resetInterpolationState(): void
     {
+        this._hopping = false;
+        this._landing = null;
         this._locationDelta.x = 0;
         this._locationDelta.y = 0;
         this._locationDelta.z = 0;
@@ -393,6 +481,10 @@ export class MovingObjectLogic extends RoomObjectLogicBase
         return t + ((styled - t) * intensity);
     }
 
+    /**
+     * Habbo's jump strength (style 7): the object hops to its tile in a parabola that peaks halfway,
+     * a strength of 100 lifting it one tile height; a negative strength dips it instead.
+     */
     public static jumpLift(progress: number, model: IRoomObjectModel): number
     {
         if(!model || (model.getValue<number>(RoomObjectVariable.FURNITURE_MOVE_STYLE) !== MovingObjectLogic.STYLE_JUMP)) return 0;

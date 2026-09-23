@@ -50,6 +50,7 @@ describe('WiredFurniMoveStyleParser', () =>
         expect(parser.parse(wrapper(writer))).toBe(true);
         expect(parser.itemIds).toEqual([ 42, 43 ]);
         expect(parser.style).toBe(7);
+        // Clamped to the jump style, whose intensity is a signed strength rather than a percentage.
         expect(parser.intensity).toBe(250);
     });
 
@@ -89,5 +90,32 @@ describe('WiredFurniMoveStyleParser', () =>
         const parser = new WiredFurniMoveStyleParser();
         expect(parser.parse(wrapper(truncated))).toBe(false);
         expect(parser.itemIds).toEqual([]);
+    });
+
+    it('reads the trailing overshoot and kind, and defaults them for the original layout', () =>
+    {
+        const legacy = new BinaryWriter();
+        legacy.writeInt(1); legacy.writeInt(42); legacy.writeInt(7); legacy.writeInt(80);
+        const legacyParser = new WiredFurniMoveStyleParser();
+
+        expect(legacyParser.parse(wrapper(legacy))).toBe(true);
+        expect(legacyParser.overshoot).toBe(0);
+        expect(legacyParser.kind).toBe(WiredFurniMoveStyleParser.KIND_FURNI);
+
+        const extended = new BinaryWriter();
+        extended.writeInt(1); extended.writeInt(42); extended.writeInt(0); extended.writeInt(0); extended.writeInt(-99); extended.writeInt(1);
+        const parser = new WiredFurniMoveStyleParser();
+
+        expect(parser.parse(wrapper(extended))).toBe(true);
+        expect(parser.overshoot).toBe(WiredFurniMoveStyleParser.OVERSHOOT_MIN);
+        expect(parser.kind).toBe(WiredFurniMoveStyleParser.KIND_UNIT);
+
+        const unknownKind = new BinaryWriter();
+        unknownKind.writeInt(1); unknownKind.writeInt(42); unknownKind.writeInt(7); unknownKind.writeInt(50); unknownKind.writeInt(3); unknownKind.writeInt(9);
+        const unknownParser = new WiredFurniMoveStyleParser();
+
+        expect(unknownParser.parse(wrapper(unknownKind))).toBe(true);
+        expect(unknownParser.overshoot).toBe(3);
+        expect(unknownParser.kind).toBe(WiredFurniMoveStyleParser.KIND_FURNI);
     });
 });
