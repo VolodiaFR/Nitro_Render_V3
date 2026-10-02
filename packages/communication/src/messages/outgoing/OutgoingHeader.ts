@@ -3,11 +3,6 @@ export class OutgoingHeader
     public static CLICK_FURNI = 6002;
     public static CLICK_USER = 10020;
 
-    // MENTIONS
-    public static REQUEST_MENTIONS = 4803;
-    public static MARK_MENTIONS_READ = 4804;
-    public static DELETE_MENTION = 4805;
-
     public static ACHIEVEMENT_LIST = 219;
     public static BOT_CONFIGURATION = 1986;
     public static BOT_PICKUP = 3323;
@@ -665,11 +660,6 @@ export class OutgoingHeader
 
     // Custom features — IDs 9300+ reserved
     public static REQUEST_RARE_VALUES = 9300;
-    public static WHEEL_OPEN = 9301;
-    public static WHEEL_SPIN = 9302;
-    public static WHEEL_BUY_SPIN = 9303;
-    public static WHEEL_ADMIN_GET_PRIZES = 9304;
-    public static WHEEL_ADMIN_SAVE_PRIZES = 9305;
     public static SOUNDBOARD_PLAY = 9306;
     public static SOUNDBOARD_SET_ENABLED = 9307;
     public static EARNINGS_REQUEST = 9308;

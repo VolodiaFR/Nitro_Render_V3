@@ -33,13 +33,10 @@ import { CatalogRuntimeConfigurationEvent } from './messages/incoming/catalog/co
 import { CatalogRuntimeConfigurationComposer } from './messages/outgoing/catalog/configuration';
 import { RareValuesEvent, RequestRareValuesComposer } from './messages';
 import { GetHotLooksComposer, HotLooksEvent } from './messages';
-import { WheelBuySpinComposer, WheelDataEvent, WheelOpenComposer, WheelRecentWinsEvent, WheelResultEvent, WheelSpinComposer } from './messages';
-import { WheelAdminGetPrizesComposer, WheelAdminPrizesEvent, WheelAdminSavePrizesComposer } from './messages';
 import { ChestDataEvent, ChestDepositComposer, ChestDepositFurniComposer, ChestDepositInventoryItemComposer, ChestFurniChunkEvent, ChestFurniDeltaEvent, ChestOpenComposer, ChestOpenEvent, ChestStartDepositComposer, ChestWithdrawAllFurniComposer, ChestWithdrawComposer, ChestWithdrawFurniComposer, ChestLogEvent, ChestCloseComposer, ChestEnableWiredComposer, ChestSaveOptionsComposer, ChestSaveSettingsComposer, ChestSaveNotificationsComposer, ChestUpgradeCapacityComposer, ChestNotificationEvent, ChestUpgradeResultEvent, ChestRequestLogComposer, WiredChestRoomLogsComposer, WiredChestLockComposer, WiredChestTransactionDetailsComposer, WiredChestRoomLogsEvent, WiredChestLockStateEvent, WiredChestTransactionDetailsEvent, WiredTradeOpenEvent, WiredTradeItemsEvent, WiredTradeCancelledEvent, WiredTradeCompletedEvent, WiredTradeOfferItemsComposer, WiredTradeAcceptComposer, WiredTradeCancelComposer } from './messages';
 import { SoundboardCatalogEvent, SoundboardCatalogReorderComposer, SoundboardCatalogRequestComposer, SoundboardCatalogResultEvent, SoundboardCatalogUpsertComposer, SoundboardPlayComposer, SoundboardPlayDeniedEvent, SoundboardPlayEvent, SoundboardRequestSettingsComposer, SoundboardSaveVolumeComposer, SoundboardSetEnabledComposer, SoundboardSettingsEvent } from './messages';
 import { PressKeybindComposer } from './messages';
 import { EarningsCenterEvent, EarningsClaimResultEvent, IncomeRewardNotificationEvent, RequestEarningsCenterComposer, ClaimEarningsRewardComposer, ClaimAllEarningsRewardsComposer } from './messages';
-import { DeleteMentionComposer, MarkMentionsReadComposer, MentionReceivedEvent, MentionsListEvent, RequestMentionsComposer } from './messages';
 import { ActiveDailyTasksMessageEvent, ClaimDailyTaskMessageComposer, ClaimRewardTrackPrizeMessageComposer, DailyTaskUpdatedMessageEvent, DailyTasksAddedMessageEvent, DeleteRewardTrackEntityMessageComposer, GetDailyTasksMessageComposer, GetRewardTrackAdminDataMessageComposer, GetRewardTracksMessageComposer, PurchaseRewardTrackPremiumMessageComposer, RewardTrackAdminDataMessageEvent, RewardTrackAdminResultMessageEvent, RewardTrackClaimResultMessageEvent, RewardTrackFurniSearchResultMessageEvent, RewardTrackTextsMessageEvent, RewardTrackPremiumPurchaseResultMessageEvent, RewardTrackProgressMessageEvent, RewardTracksMessageEvent, SaveRewardTrackMessageComposer, SaveRewardTrackPrizeMessageComposer, SaveRewardTrackTaskMessageComposer, SaveRewardTrackTextsMessageComposer, SearchRewardTrackFurniMessageComposer } from './messages';
 import { TreasureHuntFirstWinnerMessageEvent, TreasureHuntFailMessageEvent, TreasureHuntUpdateMessageEvent } from './messages';
 import { SelfDonationResultMessageEvent, SelfDonationMessageComposer } from './messages';
@@ -385,10 +382,6 @@ export class OctaneMessages implements IMessageConfiguration
         this._events.set(IncomingHeader.MARKETPLACE_CANCEL_ALL_RESULT, MarketplaceCancelAllOffersResultEvent);
         this._events.set(IncomingHeader.MARKETPLACE_CLEAR_OWN_HISTORY_RESULT, MarketplaceClearOwnHistoryResultEvent);
 
-        // MENTIONS
-        this._events.set(IncomingHeader.MENTION_RECEIVED, MentionReceivedEvent);
-        this._events.set(IncomingHeader.MENTIONS_LIST, MentionsListEvent);
-
         // MODERATION
         this._events.set(IncomingHeader.USER_BANNED, UserBannedMessageEvent);
         this._events.set(IncomingHeader.MODERATION_CAUTION, ModeratorCautionEvent);
@@ -672,10 +665,6 @@ export class OctaneMessages implements IMessageConfiguration
         // Custom features
         this._events.set(IncomingHeader.RARE_VALUES, RareValuesEvent);
         this._events.set(IncomingHeader.HOT_LOOKS, HotLooksEvent);
-        this._events.set(IncomingHeader.WHEEL_DATA, WheelDataEvent);
-        this._events.set(IncomingHeader.WHEEL_RESULT, WheelResultEvent);
-        this._events.set(IncomingHeader.WHEEL_RECENT_WINS, WheelRecentWinsEvent);
-        this._events.set(IncomingHeader.WHEEL_ADMIN_PRIZES, WheelAdminPrizesEvent);
         this._events.set(IncomingHeader.SOUNDBOARD_SETTINGS, SoundboardSettingsEvent);
         this._events.set(IncomingHeader.SOUNDBOARD_PLAY, SoundboardPlayEvent);
         this._events.set(IncomingHeader.SOUNDBOARD_PLAY_DENIED, SoundboardPlayDeniedEvent);
@@ -1464,11 +1453,6 @@ export class OctaneMessages implements IMessageConfiguration
         this._composers.set(OutgoingHeader.REQUEST_SELL_ITEM, GetMarketplaceCanMakeOfferComposer);
         this._composers.set(OutgoingHeader.REQUEST_MARKETPLACE_ITEM_STATS, GetMarketplaceItemStatsComposer);
 
-        // MENTIONS
-        this._composers.set(OutgoingHeader.REQUEST_MENTIONS, RequestMentionsComposer);
-        this._composers.set(OutgoingHeader.MARK_MENTIONS_READ, MarkMentionsReadComposer);
-        this._composers.set(OutgoingHeader.DELETE_MENTION, DeleteMentionComposer);
-
         // CURRENCY
         this._composers.set(OutgoingHeader.USER_CURRENCY, UserCurrencyComposer);
 
@@ -1633,11 +1617,6 @@ export class OctaneMessages implements IMessageConfiguration
         // Custom features
         this._composers.set(OutgoingHeader.REQUEST_RARE_VALUES, RequestRareValuesComposer);
         this._composers.set(OutgoingHeader.GET_HOT_LOOKS, GetHotLooksComposer);
-        this._composers.set(OutgoingHeader.WHEEL_OPEN, WheelOpenComposer);
-        this._composers.set(OutgoingHeader.WHEEL_SPIN, WheelSpinComposer);
-        this._composers.set(OutgoingHeader.WHEEL_BUY_SPIN, WheelBuySpinComposer);
-        this._composers.set(OutgoingHeader.WHEEL_ADMIN_GET_PRIZES, WheelAdminGetPrizesComposer);
-        this._composers.set(OutgoingHeader.WHEEL_ADMIN_SAVE_PRIZES, WheelAdminSavePrizesComposer);
         this._composers.set(OutgoingHeader.SOUNDBOARD_PLAY, SoundboardPlayComposer);
         this._composers.set(OutgoingHeader.SOUNDBOARD_SET_ENABLED, SoundboardSetEnabledComposer);
         this._composers.set(OutgoingHeader.SOUNDBOARD_REQUEST_SETTINGS, SoundboardRequestSettingsComposer);

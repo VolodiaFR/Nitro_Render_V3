@@ -3,10 +3,6 @@ export class IncomingHeader
     // These packets do not belong to this revision, so these are custom packet ids
     public static AREA_HIDE = 6001;
 
-    // MENTIONS
-    public static MENTION_RECEIVED = 4801;
-    public static MENTIONS_LIST = 4802;
-
     // Original packets
     public static ACHIEVEMENT_LIST = 305;
     public static AUTHENTICATED = 2491;
@@ -602,10 +598,6 @@ export class IncomingHeader
 
     // Custom features — IDs 9400+ reserved
     public static RARE_VALUES = 9400;
-    public static WHEEL_DATA = 9401;
-    public static WHEEL_RESULT = 9402;
-    public static WHEEL_RECENT_WINS = 9403;
-    public static WHEEL_ADMIN_PRIZES = 9404;
     public static SOUNDBOARD_SETTINGS = 9405;
     public static SOUNDBOARD_PLAY = 9406;
     public static EARNINGS_CENTER = 9407;
