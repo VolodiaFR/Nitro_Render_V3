@@ -5,6 +5,5 @@ export * from './clothing';
 export * from './furniture';
 export * from './nickicons';
 export * from './pets';
-export * from './prefixes';
 export * from './purse';
 export * from './trading';

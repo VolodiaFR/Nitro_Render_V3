@@ -15,12 +15,6 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent
     private _overlayId: number | null;
     private _cardBackgroundId: number | null;
     private _nickIcon: string;
-    private _prefixText: string;
-    private _prefixColor: string;
-    private _prefixIcon: string;
-    private _prefixEffect: string;
-    private _prefixFont: string;
-    private _displayOrder: string;
     private _borderId: number | null;
 
     constructor(
@@ -35,12 +29,6 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent
         overlayId: number | null,
         cardBackgroundId: number | null = 0,
         nickIcon: string = '',
-        prefixText: string = '',
-        prefixColor: string = '',
-        prefixIcon: string = '',
-        prefixEffect: string = '',
-        prefixFont: string = '',
-        displayOrder: string = 'icon-prefix-name',
         borderId: number | null = 0
     )
     {
@@ -56,12 +44,6 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent
         this._overlayId = overlayId;
         this._cardBackgroundId = cardBackgroundId;
         this._nickIcon = nickIcon;
-        this._prefixText = prefixText;
-        this._prefixColor = prefixColor;
-        this._prefixIcon = prefixIcon;
-        this._prefixEffect = prefixEffect;
-        this._prefixFont = prefixFont;
-        this._displayOrder = displayOrder;
         this._borderId = borderId;
     }
 
@@ -113,36 +95,6 @@ export class RoomSessionUserFigureUpdateEvent extends RoomSessionEvent
     public get nickIcon(): string
     {
         return this._nickIcon;
-    }
-
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
     }
 
     public get borderId(): number | null

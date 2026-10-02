@@ -9,12 +9,6 @@ export class RoomUserData implements IRoomUserData
     private _figure: string = '';
     private _custom: string = '';
     private _nickIcon: string = '';
-    private _prefixText: string = '';
-    private _prefixColor: string = '';
-    private _prefixIcon: string = '';
-    private _prefixEffect: string = '';
-    private _prefixFont: string = '';
-    private _displayOrder: string = 'icon-prefix-name';
     private _activityPoints: number;
     private _background: number;
     private _stand: number;
@@ -323,66 +317,6 @@ export class RoomUserData implements IRoomUserData
     public set nickIcon(value: string)
     {
         this._nickIcon = value;
-    }
-
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public set prefixText(value: string)
-    {
-        this._prefixText = value;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public set prefixColor(value: string)
-    {
-        this._prefixColor = value;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public set prefixIcon(value: string)
-    {
-        this._prefixIcon = value;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public set prefixEffect(value: string)
-    {
-        this._prefixEffect = value;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
-    public set prefixFont(value: string)
-    {
-        this._prefixFont = value;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
-    }
-
-    public set displayOrder(value: string)
-    {
-        this._displayOrder = value;
     }
 
     public set isModerator(value: boolean)

@@ -14,12 +14,6 @@ export class UserMessageData
     private _figure: string = '';
     private _custom: string = '';
     private _nickIcon: string = '';
-    private _prefixText: string = '';
-    private _prefixColor: string = '';
-    private _prefixIcon: string = '';
-    private _prefixEffect: string = '';
-    private _prefixFont: string = '';
-    private _displayOrder: string = 'icon-prefix-name';
     private _activityPoints: number = 0;
     private _background: number = 0;
     private _stand: number = 0;
@@ -466,84 +460,6 @@ export class UserMessageData
         if(!this._isReadOnly)
         {
             this._nickIcon = value;
-        }
-    }
-
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public set prefixText(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._prefixText = value;
-        }
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public set prefixColor(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._prefixColor = value;
-        }
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public set prefixIcon(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._prefixIcon = value;
-        }
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public set prefixEffect(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._prefixEffect = value;
-        }
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
-    public set prefixFont(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._prefixFont = value;
-        }
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
-    }
-
-    public set displayOrder(value: string)
-    {
-        if(!this._isReadOnly)
-        {
-            this._displayOrder = value;
         }
     }
 

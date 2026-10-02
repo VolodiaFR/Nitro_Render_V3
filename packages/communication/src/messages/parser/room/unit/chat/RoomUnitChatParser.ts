@@ -9,13 +9,7 @@ export class RoomUnitChatParser implements IMessageParser
     private _urls: string[];
     private _chatColours: string;
     private _messageLength: number;
-    private _prefixText: string;
-    private _prefixColor: string;
-    private _prefixIcon: string;
-    private _prefixEffect: string;
-    private _prefixFont: string;
     private _nickIcon: string;
-    private _displayOrder: string;
     private _bubbleWidthOverride: number;
 
     public flush(): boolean
@@ -27,13 +21,7 @@ export class RoomUnitChatParser implements IMessageParser
         this._urls = [];
         this._chatColours = null;
         this._messageLength = 0;
-        this._prefixText = '';
-        this._prefixColor = '';
-        this._prefixIcon = '';
-        this._prefixEffect = '';
-        this._prefixFont = '';
         this._nickIcon = '';
-        this._displayOrder = 'icon-prefix-name';
         this._bubbleWidthOverride = -1;
 
         return true;
@@ -52,13 +40,7 @@ export class RoomUnitChatParser implements IMessageParser
 
         this._chatColours = wrapper.readString();
         this._messageLength = wrapper.readInt();
-        this._prefixText = wrapper.readString();
-        this._prefixColor = wrapper.readString();
-        this._prefixIcon = wrapper.readString();
-        this._prefixEffect = wrapper.readString();
-        this._prefixFont = wrapper.readString();
         this._nickIcon = wrapper.readString();
-        this._displayOrder = (wrapper.bytesAvailable ? wrapper.readString() : 'icon-prefix-name');
         // A wired message may carry a bubble width of its own; -1 leaves the room setting in charge.
         this._bubbleWidthOverride = (wrapper.bytesAvailable ? wrapper.readInt() : -1);
 
@@ -118,39 +100,9 @@ export class RoomUnitChatParser implements IMessageParser
         return this._messageLength;
     }
 
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
     public get nickIcon(): string
     {
         return this._nickIcon;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
     }
 
     public get bubbleWidthOverride(): number

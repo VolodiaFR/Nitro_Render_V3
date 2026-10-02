@@ -614,16 +614,9 @@ export class OutgoingHeader
     public static DELETE_PET = 10030;
     public static DELETE_BADGE = 10031;
 
-    // Custom Prefixes
-    public static REQUEST_PREFIXES = 7011;
-    public static SET_ACTIVE_PREFIX = 7012;
-    public static DELETE_PREFIX = 7013;
-    public static PURCHASE_PREFIX = 7014;
     public static REQUEST_NICK_ICONS = 7015;
     public static PURCHASE_NICK_ICON = 7016;
     public static SET_ACTIVE_NICK_ICON = 7017;
-    public static PURCHASE_CATALOG_PREFIX = 7018;
-    public static SET_DISPLAY_ORDER = 7019;
     public static ROOM_REMOVE_BACKGROUND = 7020;
     public static ROOM_REMOVE_PAINT = 7021;
 

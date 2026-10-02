@@ -188,23 +188,6 @@ export class UserDataManager implements IUserDataManager
         this.invalidateRoomUserListSnapshot();
     }
 
-    public updateCustomization(roomIndex: number, nickIcon: string, prefixText: string, prefixColor: string, prefixIcon: string, prefixEffect: string, prefixFont: string, displayOrder: string): void
-    {
-        const userData = this.getUserDataByIndex(roomIndex);
-
-        if(!userData) return;
-
-        userData.nickIcon = nickIcon;
-        userData.prefixText = prefixText;
-        userData.prefixColor = prefixColor;
-        userData.prefixIcon = prefixIcon;
-        userData.prefixEffect = prefixEffect;
-        userData.prefixFont = prefixFont;
-        userData.displayOrder = displayOrder;
-
-        this.invalidateRoomUserListSnapshot();
-    }
-
     public updateBackground(roomIndex: number, background: number, stand: number, overlay: number, cardBackground: number = 0, borderId: number = 0): void
     {
         const userData = this.getUserDataByIndex(roomIndex);

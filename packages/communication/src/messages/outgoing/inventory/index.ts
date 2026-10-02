@@ -4,6 +4,5 @@ export * from './bots';
 export * from './furni';
 export * from './nickicons';
 export * from './pets';
-export * from './prefixes';
 export * from './trading';
 export * from './unseen';

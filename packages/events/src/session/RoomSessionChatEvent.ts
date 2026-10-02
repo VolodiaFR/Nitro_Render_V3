@@ -28,16 +28,10 @@ export class RoomSessionChatEvent extends RoomSessionEvent
     private _links: string[];
     private _extraParam: number;
     private _style: number;
-    private _prefixText: string;
-    private _prefixColor: string;
-    private _prefixIcon: string;
-    private _prefixEffect: string;
-    private _prefixFont: string;
     private _nickIcon: string;
-    private _displayOrder: string;
     private _bubbleWidthOverride: number;
 
-    constructor(type: string, session: IRoomSession, objectId: number, message: string, chatType: number, style: number = 0, chatColours: string = '', links: string[] = null, extraParam: number = -1, prefixText: string = '', prefixColor: string = '', prefixIcon: string = '', prefixEffect: string = '', prefixFont: string = '', nickIcon: string = '', displayOrder: string = 'icon-prefix-name', bubbleWidthOverride: number = -1)
+    constructor(type: string, session: IRoomSession, objectId: number, message: string, chatType: number, style: number = 0, chatColours: string = '', links: string[] = null, extraParam: number = -1, nickIcon: string = '', bubbleWidthOverride: number = -1)
     {
         super(type, session);
 
@@ -48,13 +42,7 @@ export class RoomSessionChatEvent extends RoomSessionEvent
         this._links = links;
         this._extraParam = extraParam;
         this._style = style;
-        this._prefixText = prefixText;
-        this._prefixColor = prefixColor;
-        this._prefixIcon = prefixIcon;
-        this._prefixEffect = prefixEffect;
-        this._prefixFont = prefixFont;
         this._nickIcon = nickIcon;
-        this._displayOrder = displayOrder;
         this._bubbleWidthOverride = bubbleWidthOverride;
     }
 
@@ -93,39 +81,9 @@ export class RoomSessionChatEvent extends RoomSessionEvent
         return this._chatColours;
     }
 
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
     public get nickIcon(): string
     {
         return this._nickIcon;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
     }
 
     /** -1 when the message follows the room setting; otherwise 0 wide, 1 normal, 2 thin. */

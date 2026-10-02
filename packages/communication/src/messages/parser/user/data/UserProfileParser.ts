@@ -22,12 +22,6 @@ export class UserProfileParser implements IMessageParser
     private _cardBackgroundId: number;
     private _totalBadges: number;
     private _nickIcon: string;
-    private _prefixText: string;
-    private _prefixColor: string;
-    private _prefixIcon: string;
-    private _prefixEffect: string;
-    private _prefixFont: string;
-    private _displayOrder: string;
     private _onlineStatus: number;
     private _level: number;
     private _nextLevelStart: number;
@@ -54,12 +48,6 @@ export class UserProfileParser implements IMessageParser
         this._cardBackgroundId = 0;
         this._totalBadges = 0;
         this._nickIcon = '';
-        this._prefixText = '';
-        this._prefixColor = '';
-        this._prefixIcon = '';
-        this._prefixEffect = '';
-        this._prefixFont = '';
-        this._displayOrder = 'icon-prefix-name';
         this._onlineStatus = -1;
         this._level = 0;
         this._nextLevelStart = 0;
@@ -96,8 +84,7 @@ export class UserProfileParser implements IMessageParser
         //   block 1: background / stand / overlay (3 ints)
         //   block 2: card background (1 int)
         //   block 3: nick icon (1 string)
-        //   block 4: prefix decoration set (6 strings)
-        //   block 5: total badge count (1 int)
+        //   block 4: total badge count (1 int)
         // Each tier early-returns to keep the parser tolerant of older
         // servers that don't ship the later blocks. Defaults set by flush().
         if(!wrapper.bytesAvailable) return true;
@@ -113,15 +100,6 @@ export class UserProfileParser implements IMessageParser
         if(!wrapper.bytesAvailable) return true;
 
         this._nickIcon = wrapper.readString();
-
-        if(!wrapper.bytesAvailable) return true;
-
-        this._prefixText = wrapper.readString();
-        this._prefixColor = wrapper.readString();
-        this._prefixIcon = wrapper.readString();
-        this._prefixEffect = wrapper.readString();
-        this._prefixFont = wrapper.readString();
-        this._displayOrder = wrapper.readString();
 
         if(!wrapper.bytesAvailable) return true;
 
@@ -236,36 +214,6 @@ export class UserProfileParser implements IMessageParser
     public get nickIcon(): string
     {
         return this._nickIcon;
-    }
-
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
     }
 
     /** 1 online, 0 offline, 2 hidden (own profile only); -1 when the server does not send it. */

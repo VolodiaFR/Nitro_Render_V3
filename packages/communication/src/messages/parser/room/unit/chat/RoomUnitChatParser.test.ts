@@ -45,8 +45,7 @@ const chatPacket = () =>
     const writer = new BinaryWriter();
     writer.writeInt(7); writer.writeString('hello'); writer.writeInt(0); writer.writeInt(34);
     writer.writeInt(0); writer.writeString(''); writer.writeInt(5);
-    for(let i = 0; i < 6; i++) writer.writeString('');
-    writer.writeString('icon-prefix-name');
+    writer.writeString('');
     return writer;
 };
 
@@ -58,7 +57,6 @@ describe('RoomUnitChatParser bubble width override', () =>
 
         expect(parser.parse(wrapper(chatPacket()))).toBe(true);
         expect(parser.message).toBe('hello');
-        expect(parser.displayOrder).toBe('icon-prefix-name');
         expect(parser.bubbleWidthOverride).toBe(-1);
     });
 

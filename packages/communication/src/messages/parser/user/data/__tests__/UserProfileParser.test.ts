@@ -53,7 +53,6 @@ const writeProfile = (writer: BinaryWriter) =>
     writer.writeInt(3);
     writer.writeInt(4);
     writer.writeString('');
-    ['', '', '', '', '', 'icon-prefix-name'].forEach(value => writer.writeString(value));
     writer.writeInt(14);
 };
 

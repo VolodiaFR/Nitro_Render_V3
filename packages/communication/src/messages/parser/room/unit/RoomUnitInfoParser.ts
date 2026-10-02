@@ -13,12 +13,6 @@ export class RoomUnitInfoParser implements IMessageParser
     private _cardBackgroundId: number;
     private _borderId: number;
     private _nickIcon: string;
-    private _prefixText: string;
-    private _prefixColor: string;
-    private _prefixIcon: string;
-    private _prefixEffect: string;
-    private _prefixFont: string;
-    private _displayOrder: string;
 
     public flush(): boolean
     {
@@ -33,12 +27,6 @@ export class RoomUnitInfoParser implements IMessageParser
         this._cardBackgroundId = 0;
         this._borderId = 0;
         this._nickIcon = '';
-        this._prefixText = '';
-        this._prefixColor = '';
-        this._prefixIcon = '';
-        this._prefixEffect = '';
-        this._prefixFont = '';
-        this._displayOrder = 'icon-prefix-name';
 
         return true;
     }
@@ -57,12 +45,6 @@ export class RoomUnitInfoParser implements IMessageParser
         this._overlayId = wrapper.readInt();
         this._cardBackgroundId = (wrapper.bytesAvailable ? wrapper.readInt() : 0);
         this._nickIcon = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._prefixText = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._prefixColor = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._prefixIcon = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._prefixEffect = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._prefixFont = (wrapper.bytesAvailable ? wrapper.readString() : '');
-        this._displayOrder = (wrapper.bytesAvailable ? wrapper.readString() : 'icon-prefix-name');
         this._borderId = (wrapper.bytesAvailable ? wrapper.readInt() : 0);
 
         return true;
@@ -123,33 +105,4 @@ export class RoomUnitInfoParser implements IMessageParser
         return this._nickIcon;
     }
 
-    public get prefixText(): string
-    {
-        return this._prefixText;
-    }
-
-    public get prefixColor(): string
-    {
-        return this._prefixColor;
-    }
-
-    public get prefixIcon(): string
-    {
-        return this._prefixIcon;
-    }
-
-    public get prefixEffect(): string
-    {
-        return this._prefixEffect;
-    }
-
-    public get prefixFont(): string
-    {
-        return this._prefixFont;
-    }
-
-    public get displayOrder(): string
-    {
-        return this._displayOrder;
-    }
 }

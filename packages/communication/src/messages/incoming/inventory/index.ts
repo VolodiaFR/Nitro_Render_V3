@@ -6,5 +6,4 @@ export * from './furni';
 export * from './furni/gifts';
 export * from './nickicons';
 export * from './pets';
-export * from './prefixes';
 export * from './trading';

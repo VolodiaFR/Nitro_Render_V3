@@ -304,9 +304,7 @@ silently DROPPED — the request never reaches the server.
 
 **A feature usually needs BOTH directions registered.** `OctaneMessages` holds two
 maps — `_events` (incoming) and `_composers` (outgoing). When a panel is "dead",
-audit BOTH, not just `_events`: the inventory Prefixes panel was broken because
-`UserPrefixesEvent` (7001, incoming) AND `RequestPrefixesComposer` (7011, outgoing)
-were both defined+exported but never `set()` in `OctaneMessages`.
+audit BOTH, not just `_events`.
 
 **Gotchas:**
 - A branch based on `origin/Dev` may NOT contain the furni-editor slice
