@@ -662,6 +662,7 @@ export class OutgoingHeader
     public static HOUSEKEEPING_SEND_HOTEL_ALERT = 9121;
     public static HOUSEKEEPING_GET_DASHBOARD = 9122;
     public static HOUSEKEEPING_LIST_ACTION_LOG = 9123;
+    public static HOUSEKEEPING_SAVE_ROOM_SETTINGS = 9124;
 
     // Custom features — IDs 9300+ reserved
     public static REQUEST_RARE_VALUES = 9300;
