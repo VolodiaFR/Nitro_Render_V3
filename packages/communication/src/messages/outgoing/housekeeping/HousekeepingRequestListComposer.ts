@@ -5,9 +5,13 @@ export class HousekeepingRequestListComposer implements IMessageComposer<Constru
 {
     private _data: ConstructorParameters<typeof HousekeepingRequestListComposer>;
 
-    constructor(listKey: string, targetId: number)
+    // reveal = 1 asks for IP addresses in clear (acc_hk_view_private, audited). Left out, they come
+    // masked; a server that reads two fields ignores it.
+    constructor(listKey: string, targetId: number, reveal?: number)
     {
         this._data = [listKey, targetId];
+
+        if(reveal !== undefined) this._data.push(reveal);
     }
 
     public getMessageArray()

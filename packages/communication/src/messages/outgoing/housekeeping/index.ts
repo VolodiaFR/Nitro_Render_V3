@@ -11,6 +11,7 @@ export * from './HousekeepingGrantItemComposer';
 export * from './HousekeepingKickAllFromRoomComposer';
 export * from './HousekeepingKickUserComposer';
 export * from './HousekeepingListActionLogComposer';
+export * from './HousekeepingLockdownComposer';
 export * from './HousekeepingMuteRoomComposer';
 export * from './HousekeepingMuteUserComposer';
 export * from './HousekeepingMaintenanceComposer';
