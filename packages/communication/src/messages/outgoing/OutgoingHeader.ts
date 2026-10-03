@@ -666,6 +666,8 @@ export class OutgoingHeader
     public static HOUSEKEEPING_REQUEST_LIST = 9125;
     public static HOUSEKEEPING_RELOAD = 9126;
     public static HOUSEKEEPING_REVOKE_BAN = 9127;
+    public static HOUSEKEEPING_MAINTENANCE = 9128;
+    public static HOUSEKEEPING_WORD_FILTER = 9129;
 
     // Custom features — IDs 9300+ reserved
     public static REQUEST_RARE_VALUES = 9300;
