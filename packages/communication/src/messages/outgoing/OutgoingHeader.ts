@@ -665,6 +665,7 @@ export class OutgoingHeader
     public static HOUSEKEEPING_SAVE_ROOM_SETTINGS = 9124;
     public static HOUSEKEEPING_REQUEST_LIST = 9125;
     public static HOUSEKEEPING_RELOAD = 9126;
+    public static HOUSEKEEPING_REVOKE_BAN = 9127;
 
     // Custom features — IDs 9300+ reserved
     public static REQUEST_RARE_VALUES = 9300;

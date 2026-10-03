@@ -15,6 +15,7 @@ export * from './HousekeepingMuteRoomComposer';
 export * from './HousekeepingMuteUserComposer';
 export * from './HousekeepingReloadComposer';
 export * from './HousekeepingRequestListComposer';
+export * from './HousekeepingRevokeBanComposer';
 export * from './HousekeepingResetUserPasswordComposer';
 export * from './HousekeepingRoomStateComposer';
 export * from './HousekeepingSaveRoomSettingsComposer';
