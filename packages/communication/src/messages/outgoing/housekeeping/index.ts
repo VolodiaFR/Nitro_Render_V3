@@ -13,6 +13,7 @@ export * from './HousekeepingKickUserComposer';
 export * from './HousekeepingListActionLogComposer';
 export * from './HousekeepingMuteRoomComposer';
 export * from './HousekeepingMuteUserComposer';
+export * from './HousekeepingRequestListComposer';
 export * from './HousekeepingResetUserPasswordComposer';
 export * from './HousekeepingRoomStateComposer';
 export * from './HousekeepingSaveRoomSettingsComposer';
