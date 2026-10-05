@@ -300,6 +300,8 @@ under `messages/outgoing/<area>` -> wire the barrel chain. An unregistered compo
 makes `getComposerId()` return -1, logs "Unknown Composer", and the packet is
 silently DROPPED — the request never reaches the server.
 
+**Check registration with `node scripts/packet-coverage.mjs`**: it lists unused packets per area, used packets missing from `OctaneMessages` and headers set twice; `packetRegistration.test.ts` fails on the last two.
+
 **A feature usually needs BOTH directions registered.** `OctaneMessages` holds two
 maps — `_events` (incoming) and `_composers` (outgoing). When a panel is "dead",
 audit BOTH, not just `_events`: the inventory Prefixes panel was broken because

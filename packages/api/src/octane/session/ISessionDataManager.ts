@@ -26,6 +26,7 @@ export interface ISessionDataManager
     getGroupBadgeImage(name: string): Texture;
     loadGroupBadgeImage(name: string): string;
     hasSecurity(level: number): boolean;
+    hasPermission(key: string, fallbackLevel: number): boolean;
     giveRespect(userId: number): void;
     givePetRespect(petId: number): void;
     sendSpecialCommandMessage(text: string, styleId?: number): void;
@@ -64,6 +65,7 @@ export interface ISessionDataManager
     isSystemShutdown: boolean;
     isAuthenticHabbo: boolean;
     isModerator: boolean;
+    isAnyRoomController: boolean;
     isCameraFollowDisabled: boolean;
     uiFlags: number;
     tags: string[];

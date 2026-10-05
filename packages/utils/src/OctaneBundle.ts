@@ -9,6 +9,7 @@ export class OctaneBundle
     private static TEXT_DECODER: TextDecoder = new TextDecoder('utf-8');
 
     private _jsonFile: object = null;
+    private _atlasFile: string = null;
     private _texture: Texture = null;
 
     public static async from(buffer: ArrayBuffer, textureDecoder: OctaneBundleTextureDecoder = decodePngTexture): Promise<OctaneBundle>
@@ -38,6 +39,10 @@ export class OctaneBundle
             {
                 this._jsonFile = JSON.parse(OctaneBundle.TEXT_DECODER.decode(inflatedBuffer));
             }
+            else if(fileName.endsWith('.atlas'))
+            {
+                this._atlasFile = OctaneBundle.TEXT_DECODER.decode(inflatedBuffer);
+            }
             else
             {
                 this._texture = await textureDecoder(exactBuffer(inflatedBuffer), fileName);
@@ -50,6 +55,12 @@ export class OctaneBundle
     public get jsonFile(): object
     {
         return this._jsonFile;
+    }
+
+    /** The text atlas describing the sheet, when the bundle carries one; the json stays the source of the frames. */
+    public get atlasFile(): string
+    {
+        return this._atlasFile;
     }
 
     public get texture(): Texture

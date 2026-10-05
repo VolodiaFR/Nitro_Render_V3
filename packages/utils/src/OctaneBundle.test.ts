@@ -59,6 +59,25 @@ describe('OctaneBundle image decoding', () =>
         expect(bundle.jsonFile).toEqual({ name: 'chair' });
     });
 
+    it('reads a text atlas entry instead of sending it to the image decoder', async () =>
+    {
+        const texture = { label: '' } as Texture;
+        const decodeTexture = vi.fn().mockResolvedValue(texture);
+        const buffer = createBundle([
+            { name: 'face.atlas', bytes: new TextEncoder().encode('face.png\nsize: 4,4\n') },
+            { name: 'face.json', bytes: new TextEncoder().encode('{"name":"face"}') },
+            { name: 'face.png', bytes: new Uint8Array([ 0x89, 0x50, 0x4e, 0x47 ]) }
+        ]);
+
+        const bundle = await OctaneBundle.from(buffer, decodeTexture);
+
+        expect(decodeTexture).toHaveBeenCalledOnce();
+        expect(decodeTexture).toHaveBeenCalledWith(expect.any(ArrayBuffer), 'face.png');
+        expect(bundle.texture).toBe(texture);
+        expect(bundle.jsonFile).toEqual({ name: 'face' });
+        expect(bundle.atlasFile).toBe('face.png\nsize: 4,4\n');
+    });
+
     it('hands the decoder the entry bytes as their own buffer, with nothing else attached', async () =>
     {
         // The reader inflates into a buffer of its own; the decoder must see exactly the entry,
