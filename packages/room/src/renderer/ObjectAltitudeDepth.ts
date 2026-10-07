@@ -9,6 +9,10 @@ import { AvatarAction, IRoomObject, RoomObjectVariable } from '@octane/api';
 // while a closer tile still outranks anything elevated less than ~3.5 units.
 export const OBJECT_ALTITUDE_DEPTH: number = 0.2;
 
+// The riding effect; its wearer stands this high above the pet.
+export const RIDING_EFFECT_ID: number = 77;
+export const RIDER_MOUNT_HEIGHT: number = 1;
+
 // How much of an object's altitude is weighted into its sort depth.
 //
 // A unit resting on furniture must still sort against that furniture's own
@@ -18,7 +22,8 @@ export const OBJECT_ALTITUDE_DEPTH: number = 0.2;
 // altitude the seat itself is weighted by, and dropping it lets a step in the
 // room push the sofa 0.2 forward of its own sitter, which paints the whole seat
 // over the avatar. Ride-on furniture carries standing riders, so it keeps the
-// full weighting.
+// full weighting. A pet's rider is weighted at the pet's altitude, so the
+// pet's own layer depths decide which of its parts cover the rider.
 export const getObjectAltitudeDepth = (object: IRoomObject): number =>
 {
     const altitude = object.getLocation().z;
@@ -30,6 +35,11 @@ export const getObjectAltitudeDepth = (object: IRoomObject): number =>
         const seatHeight = (object.model?.getValue<number>(RoomObjectVariable.FIGURE_VERTICAL_OFFSET) || 0);
 
         return ((altitude - seatHeight) * OBJECT_ALTITUDE_DEPTH);
+    }
+
+    if(object.model?.getValue<number>(RoomObjectVariable.FIGURE_EFFECT) === RIDING_EFFECT_ID)
+    {
+        return (Math.max(0, (altitude - RIDER_MOUNT_HEIGHT)) * OBJECT_ALTITUDE_DEPTH);
     }
 
     return (altitude * OBJECT_ALTITUDE_DEPTH);

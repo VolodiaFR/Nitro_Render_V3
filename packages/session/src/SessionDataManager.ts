@@ -672,6 +672,17 @@ export class SessionDataManager implements ISessionDataManager
         return (this._securityLevel >= level);
     }
 
+    /**
+     * A permission key the server sent (1 = allowed). A server that sends no keys falls back to
+     * the rank level the feature had in Flash, `fallbackLevel`.
+     */
+    public hasPermission(key: string, fallbackLevel: number): boolean
+    {
+        if(this._permissions.size) return (this._permissions.get(key) === 1);
+
+        return this.hasSecurity(fallbackLevel);
+    }
+
     /** Matches the ratelimit on the server's RoomUserGiveRespectEvent. */
     private static readonly RESPECT_MIN_INTERVAL: number = 250;
 
@@ -961,6 +972,12 @@ export class SessionDataManager implements ISessionDataManager
     public get isModerator(): boolean
     {
         return (this._securityLevel >= SecurityLevel.MODERATOR);
+    }
+
+    /** Flash's `isAnyRoomController`: acts as a controller of every room (`acc_anyroomowner`). */
+    public get isAnyRoomController(): boolean
+    {
+        return this.hasPermission('acc_anyroomowner', SecurityLevel.MODERATOR);
     }
 
     public get isCameraFollowDisabled(): boolean

@@ -6,6 +6,7 @@ import { FloorHeightMapMessageParser } from '@octane/communication';
 import { ItemRemoveMultipleEvent, ItemsStateUpdateEvent, ObjectRemoveMultipleEvent } from '@octane/communication';
 import { GetRoomEngine } from './GetRoomEngine';
 import { RoomVariableEnum } from './RoomVariableEnum';
+import { settleUnitPosture } from './UnitStatusPosture';
 import { ObjectRoomMapUpdateMessage } from './messages';
 import { RoomPlaneParser } from './object/RoomPlaneParser';
 import { FurnitureStackingHeightMap, LegacyWallGeometry } from './utils';
@@ -39,6 +40,7 @@ export class RoomMessageHandler
     private _activeWiredUserMovements = new Map<number, { expiresAt: number, sourceX: number, sourceY: number, sourceZ: number, targetX: number, targetY: number, targetZ: number }>();
     private _activeRoomUserWalks = new Map<number, { startedAt: number, targetX: number, targetY: number, targetZ: number, duration: number }>();
     private _jumpingUnitIds = new Set<number>();
+    private _walkingUnitIds = new Set<number>();
     private _roomUnitIndexByIdentity = new Map<string, number>();
     private _activeConfInvisHiddenItemIds = new Set<number>();
     private _confInvisReapplyTimeouts: ReturnType<typeof setTimeout>[] = [];
@@ -135,6 +137,7 @@ export class RoomMessageHandler
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
         this._jumpingUnitIds.clear();
+        this._walkingUnitIds.clear();
         this._roomUnitIndexByIdentity.clear();
         if(this._planeParser)
         {
@@ -160,6 +163,7 @@ export class RoomMessageHandler
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
         this._jumpingUnitIds.clear();
+        this._walkingUnitIds.clear();
         this._roomUnitIndexByIdentity.clear();
         this._activeConfInvisHiddenItemIds.clear();
         this.clearConfInvisReapplyTimeouts();
@@ -175,6 +179,7 @@ export class RoomMessageHandler
         this._activeWiredUserMovements.clear();
         this._activeRoomUserWalks.clear();
         this._jumpingUnitIds.clear();
+        this._walkingUnitIds.clear();
         this._roomUnitIndexByIdentity.clear();
         this._activeConfInvisHiddenItemIds.clear();
         this.clearConfInvisReapplyTimeouts();
@@ -1466,6 +1471,7 @@ export class RoomMessageHandler
                 {
                     this._activeRoomUserWalks.delete(previousRoomIndex);
                     this._jumpingUnitIds.delete(previousRoomIndex);
+                    this._walkingUnitIds.delete(previousRoomIndex);
                     this._roomEngine.removeRoomObjectUser(this._currentRoomId, previousRoomIndex);
                 }
 
@@ -1551,6 +1557,7 @@ export class RoomMessageHandler
 
         this._activeRoomUserWalks.delete(unitId);
         this._jumpingUnitIds.delete(unitId);
+        this._walkingUnitIds.delete(unitId);
 
         for(const [identity, roomIndex] of this._roomUnitIndexByIdentity)
         {
@@ -1701,8 +1708,13 @@ export class RoomMessageHandler
                 parameter = '';
             }
 
-            if(postureUpdate) this._roomEngine.updateRoomObjectUserPosture(this._currentRoomId, status.id, postureType, parameter);
-            else if(isPosture) this._roomEngine.updateRoomObjectUserPosture(this._currentRoomId, status.id, RoomObjectVariable.STD, '');
+            const posture = settleUnitPosture(postureUpdate, isPosture, this._walkingUnitIds.has(status.id));
+
+            if(posture === 'apply') this._roomEngine.updateRoomObjectUserPosture(this._currentRoomId, status.id, postureType, parameter);
+            else if(posture === 'stand') this._roomEngine.updateRoomObjectUserPosture(this._currentRoomId, status.id, RoomObjectVariable.STD, '');
+
+            if(posture === 'apply' && postureType === 'mv') this._walkingUnitIds.add(status.id);
+            else if(posture !== 'keep') this._walkingUnitIds.delete(status.id);
         }
 
         this.updateGuideMarker();
