@@ -1,6 +1,7 @@
 import { inflate } from 'pako';
 import { Texture } from 'pixi.js';
 import { BinaryReader } from './BinaryReader';
+import { isHabBundle, readHabBundle } from './HabBundle';
 
 export type OctaneBundleTextureDecoder = (bytes: ArrayBuffer, entryName: string) => Promise<Texture>;
 
@@ -23,6 +24,8 @@ export class OctaneBundle
 
     public async parse(arrayBuffer: ArrayBuffer, textureDecoder: OctaneBundleTextureDecoder = decodePngTexture): Promise<void>
     {
+        if(isHabBundle(arrayBuffer)) return this.parseHab(arrayBuffer, textureDecoder);
+
         const binaryReader = new BinaryReader(arrayBuffer);
 
         let fileCount = binaryReader.readShort();
@@ -50,6 +53,34 @@ export class OctaneBundle
 
             fileCount--;
         }
+    }
+
+    /**
+     * A .hab holding the same files as a .nitro: the asset json and its sheet image (Habbo's own .hab of
+     * the old flash libraries, xml plus loose images, has to go through the converter first).
+     */
+    private async parseHab(arrayBuffer: ArrayBuffer, textureDecoder: OctaneBundleTextureDecoder): Promise<void>
+    {
+        const { name, entries } = readHabBundle(arrayBuffer);
+        const images = entries.filter(entry => entry.mimeType.startsWith('image/') || /\.(png|webp|jpe?g|gif)$/i.test(entry.name));
+        const json = entries.find(entry => entry.mimeType === 'application/json' || entry.name.endsWith('.json'));
+
+        if(!json || images.length > 1)
+            throw new Error(`HAB bundle "${ name }" is a flash-style library (xml and loose images); convert it to a sheet bundle first`);
+
+        this._jsonFile = JSON.parse(OctaneBundle.TEXT_DECODER.decode(json.bytes));
+
+        // Habbo's clothes and effect bundles name the library only in documentClass and the bundle index;
+        // collections are registered under json.name, so a library without it would never be found.
+        const data = this._jsonFile as { name?: string; documentClass?: string };
+
+        if(data && !data.name) data.name = (data.documentClass || name || undefined);
+
+        const atlas = entries.find(entry => entry.name.endsWith('.atlas'));
+
+        if(atlas) this._atlasFile = OctaneBundle.TEXT_DECODER.decode(atlas.bytes);
+
+        if(images.length) this._texture = await textureDecoder(exactBuffer(images[0].bytes), images[0].name);
     }
 
     public get jsonFile(): object

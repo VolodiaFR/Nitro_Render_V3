@@ -5,6 +5,8 @@ import { assetImageFallbackUrl, isAssetJsonUrl } from './AssetJsonUrl';
 import { GraphicAssetCollection } from './GraphicAssetCollection';
 import { detectImageFormat, ImageLoadRequest, LoadedImageResource, loadImageResource, normalizedSourceExtension } from './image';
 
+const isBundleExtension = (extension: string): boolean => extension === 'nitro' || extension === 'hab';
+
 export interface AssetManagerDependencies
 {
     fetch(url: string): Promise<Response>;
@@ -117,7 +119,7 @@ export class AssetManager implements IAssetManager
 
             if(url.startsWith('local://')) return this.downloadLocalAsset(url);
 
-            if(normalizedSourceExtension(url) === 'nitro')
+            if(isBundleExtension(normalizedSourceExtension(url)))
             {
                 const response = await this.fetchAsset(url);
                 const decodedResources: LoadedImageResource[] = [];

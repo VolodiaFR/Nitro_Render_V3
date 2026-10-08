@@ -47,7 +47,13 @@ export class RoomContentLoader implements IRoomContentLoader
 
         for(const [index, name] of (GetConfiguration().getValue<string[]>('pet.types') ?? []).entries()) this._pets[name] = index;
 
-        await Promise.all(RoomContentLoader.MANDATORY_LIBRARIES.map(value => this.downloadAsset(value)));
+        // One library that fails to load must not stop the room engine; its objects show placeholders.
+        const results = await Promise.allSettled(RoomContentLoader.MANDATORY_LIBRARIES.map(value => this.downloadAsset(value)));
+
+        results.forEach((result, index) =>
+        {
+            if(result.status === 'rejected') OctaneLogger.error(`Room library "${ RoomContentLoader.MANDATORY_LIBRARIES[index] }" failed to load`, result.reason);
+        });
     }
 
     public processFurnitureData(furnitureData: IFurnitureData[]): void
@@ -396,7 +402,20 @@ export class RoomContentLoader implements IRoomContentLoader
 
         this._pendingContentTypes.push(type);
 
-        if(!await GetAssetManager().downloadAsset(assetUrl))
+        let downloaded = false;
+
+        try
+        {
+            downloaded = await GetAssetManager().downloadAsset(assetUrl);
+        }
+        catch (error)
+        {
+            GetEventDispatcher().dispatchEvent(new RoomContentLoadedEvent(RoomContentLoadedEvent.RCLE_FAILURE, type));
+
+            throw error;
+        }
+
+        if(!downloaded)
         {
             GetEventDispatcher().dispatchEvent(new RoomContentLoadedEvent(RoomContentLoadedEvent.RCLE_FAILURE, type));
 

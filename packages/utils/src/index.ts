@@ -18,6 +18,7 @@ export * from './JsonParser';
 export * from './LegacyExternalInterface';
 export * from './LinkTracker';
 export * from './Matrix4x4';
+export * from './HabBundle';
 export * from './OctaneBundle';
 export * from './OctaneConfig';
 export * from './OctaneLogger';
